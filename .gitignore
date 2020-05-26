@@ -1,0 +1,9 @@
+#Ignore .csv files and embeddings
+*.csv
+*.txt
+#Ignore jupyter checkpoints
+.ipynb_checkpoints/
+.vscode/
+
+#Ignore virtual environment
+venv/
