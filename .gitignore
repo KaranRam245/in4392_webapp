@@ -607,3 +607,6 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/linux,python,pycharm,windows,visualstudio,visualstudiocode
+
+# Disable all .idea files.
+.idea/
