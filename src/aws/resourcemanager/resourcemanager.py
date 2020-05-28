@@ -1,3 +1,6 @@
+"""
+Module for the Resource Manager.
+"""
 from aws.utils.monitor import Monitor
 
 
@@ -13,7 +16,7 @@ class TaskPool:
         raise NotImplementedError()
 
 
-class TaskPoolMonitor(Monitor):
+class WorkerMonitor(Monitor):
 
     def __init__(self):
         pass
