@@ -4,7 +4,7 @@ Module for the Resource Manager.
 from aws.utils.monitor import Monitor
 
 
-class TaskPool:
+class ResourceManagerCore:
 
     def __init__(self):
         pass
@@ -12,14 +12,23 @@ class TaskPool:
     def run(self):
         raise NotImplementedError()
 
-    def add_job(self):
-        raise NotImplementedError()
 
-
-class WorkerMonitor(Monitor):
+class ResourceMonitor(Monitor):
 
     def __init__(self):
         pass
 
     def run(self):
+        """
+        Run the Monitor class.
+        """
         raise NotImplementedError()
+
+    def event(self, message):
+        """
+        Method called when the notify function is called in the Observable class. The Listener is
+        notified through the event function with a dict message result.
+        :param message: Message of the event in dict format.
+        """
+        raise NotImplementedError("The class is a listener but has not implemented the event "
+                                  "method.")
