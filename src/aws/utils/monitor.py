@@ -30,13 +30,3 @@ class Listener(ABC):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
-
-
-class Monitor(ABC, Listener):
-
-    @abstractmethod
-    def run(self):
-        """
-        Start the Monitor.
-        """
-        raise NotImplementedError("The class is a monitor but has not implemented the run method.")

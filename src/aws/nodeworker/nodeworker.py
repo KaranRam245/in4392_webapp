@@ -1,7 +1,7 @@
 """
 Module for the Node Worker.
 """
-from aws.utils.monitor import Observable, Monitor
+from aws.utils.monitor import Observable, Listener
 
 
 class WorkerCore(Observable):
@@ -16,16 +16,10 @@ class WorkerCore(Observable):
         raise NotImplementedError()
 
 
-class WorkerMonitor(Monitor):
+class WorkerMonitor(Listener):
 
     def __init__(self):
         pass
-
-    def run(self):
-        """
-        Run the Monitor class.
-        """
-        raise NotImplementedError()
 
     def event(self, message):
         """

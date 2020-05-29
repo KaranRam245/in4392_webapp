@@ -1,12 +1,11 @@
 """
 Module for the Instance Manager.
 """
-from abc import ABC
+from aws.utils.monitor import Observable, Listener
+from random import randint
 
-from aws.utils.monitor import Monitor
 
-
-class NodeScheduler:
+class NodeScheduler(Observable):
     """
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
@@ -15,18 +14,12 @@ class NodeScheduler:
         """
         Run function for starting the NodeScheduler.
         """
-        raise NotImplementedError()
+        while True:
+            if randint(0, 100) == 1:
+                self.notify(self.__dict__)
 
 
-class NodeMonitor(Monitor):
-
-    _listeners = []
-
-    def run(self):
-        """
-        Run the Monitor class.
-        """
-        raise NotImplementedError()
+class NodeMonitor(Listener):
 
     def event(self, message):
         """
@@ -34,6 +27,7 @@ class NodeMonitor(Monitor):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
+        print(message)
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
 
@@ -42,7 +36,11 @@ def start_node_scheduler():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    raise NotImplementedError()
+    scheduler = NodeScheduler()
+    monitor = NodeMonitor()
+    scheduler.add_listener(monitor)
+
+    scheduler.run()
 
 
 # Main function to start the InstanceManager

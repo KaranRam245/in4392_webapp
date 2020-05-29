@@ -1,7 +1,7 @@
 """
 Module for the Node Manager.
 """
-from aws.utils.monitor import Monitor, Observable
+from aws.utils.monitor import Listener, Observable
 
 
 class TaskPool(Observable):
@@ -26,13 +26,10 @@ class TaskPool(Observable):
         raise NotImplementedError()
 
 
-class TaskPoolMonitor(Monitor):
+class TaskPoolMonitor(Listener):
 
     def __init__(self):
         pass
-
-    def run(self):
-        raise NotImplementedError()
 
     def event(self, message):
         """

@@ -1,7 +1,7 @@
 """
 Module for the Resource Manager.
 """
-from aws.utils.monitor import Monitor
+from aws.utils.monitor import Listener
 
 
 class ResourceManagerCore:
@@ -13,16 +13,10 @@ class ResourceManagerCore:
         raise NotImplementedError()
 
 
-class ResourceMonitor(Monitor):
+class ResourceMonitor(Listener):
 
     def __init__(self):
         pass
-
-    def run(self):
-        """
-        Run the Monitor class.
-        """
-        raise NotImplementedError()
 
     def event(self, message):
         """
