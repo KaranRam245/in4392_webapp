@@ -47,7 +47,7 @@ class NodeScheduler(Observable):
         """
         Run function for starting the NodeScheduler.
         """
-        self.initilize_nodes()
+        self.initialize_nodes()
 
         while True:
             if randint(0, 100) == 1:
