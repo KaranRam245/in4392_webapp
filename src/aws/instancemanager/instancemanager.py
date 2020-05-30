@@ -2,7 +2,6 @@
 Module for the Instance Manager.
 """
 from aws.utils.monitor import Observable, Listener
-from random import randint
 
 import boto3
 
@@ -49,9 +48,7 @@ class NodeScheduler(Observable):
         """
         self.initialize_nodes()
 
-        while True:
-            if randint(0, 100) == 1:
-                self.notify(self.__dict__)
+        self.notify(self.__dict__) # TODO better notify function.
 
 
 class NodeMonitor(Listener):
