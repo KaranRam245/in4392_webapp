@@ -21,6 +21,14 @@ Create an AWS account and verify your account. After that we create an instance 
 
 <sup>1</sup> For Ubuntu users you can use a default console. For Windows users, please consider installing the Ubuntu console from the Windows store. This will save you some headaches caused by PuttY ;).
 
+### Setup user permissions
+1. Go to `https://console.aws.amazon.com/iam` and create a new user.
+2. Assign to the user the permissions you need.
+3. Add the user to the group `AmazonEC2ContainerRegistryReadOnly`.
+4. Download the access keys or at least remember them.
+5. Run in the console `aws configure`.
+6. Fill in the data of the access keys from the CSV you downloaded in step 4.
+
 ### Setup Streamlit application on AWS
 1. First step is to create an AWS EC2 server. We choose a Linux system.
 2. Run `sudo yum install python36`. We want need to install Python3.6 (or higher).
