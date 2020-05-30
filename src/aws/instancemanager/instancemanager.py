@@ -4,16 +4,51 @@ Module for the Instance Manager.
 from aws.utils.monitor import Observable, Listener
 from random import randint
 
+import boto3
+
 
 class NodeScheduler(Observable):
     """
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
+    def __init__(self):
+        self.instances = []
+        self.ec2 = boto3.client('ec2')
+        super().__init__()
+
+    def start_node_manager(self):
+        print(self.ec2.describe_instances())
+        self._init_instance()
+        pass
+
+    def start_worker(self):
+        self._init_instance()
+        pass
+
+    def start_resource_manager(self):
+        self._init_instance()
+        pass
+
+    def initialize_nodes(self):
+        self.start_node_manager()
+        self.start_resource_manager()
+
+    def _init_instance(self):
+        pass
+
+    def _kill_instance(self):
+        pass
+
+    def terminate(self):
+        pass
+
     def run(self):
         """
         Run function for starting the NodeScheduler.
         """
+        self.initilize_nodes()
+
         while True:
             if randint(0, 100) == 1:
                 self.notify(self.__dict__)
@@ -28,8 +63,7 @@ class NodeMonitor(Listener):
         :param message: Message of the event in dict format.
         """
         print(message)
-        raise NotImplementedError("The class is a listener but has not implemented the event "
-                                  "method.")
+        # TODO: Create actual monitor.
 
 
 def start_node_scheduler():
