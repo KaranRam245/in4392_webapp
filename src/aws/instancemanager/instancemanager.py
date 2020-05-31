@@ -34,7 +34,6 @@ class NodeScheduler(Observable):
 
     def initialize_nodes(self):
         self.start_node_manager()
-        self.start_resource_manager()
 
     def _init_instance(self, instances):
         response = self.ec2.start_instances(InstanceIds=instances)
