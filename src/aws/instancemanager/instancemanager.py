@@ -23,23 +23,24 @@ class NodeScheduler(Observable):
         nodemanagers = BotoInstanceReader.read(self.ec2, self.instance_id,
                                                filters=['is_node_manager', ('is_running', False)])
         nodemanager_ids = [manager.instance_id for manager in nodemanagers]
-        self._init_instance(nodemanager_ids)  # TODO: Smarter method to decide which to start.
+        # TODO: Smarter method to decide which to start.
+        self._init_instance(nodemanager_ids, cmd='nodemanager.py')
 
     def start_worker(self):
         workers = BotoInstanceReader.read(self.ec2, self.instance_id,
                                           filters=['is_worker', ('is_running', False)])
-        self._init_instance(workers)
+        self._init_instance(workers, cmd='nodeworker.py')
 
     def start_resource_manager(self):
         resourcemanagers = BotoInstanceReader.read(self.ec2, self.instance_id,
                                                    filters=['is_resource_manager',
                                                             ('is_running', False)])
-        self._init_instance(resourcemanagers)
+        self._init_instance(resourcemanagers, cmd='resourcemanager.py')
 
     def initialize_nodes(self):
         self.start_node_manager()
 
-    def _init_instance(self, instances):
+    def _init_instance(self, instances, cmd):
         if instances:
             print('No instances specified to start.')
             return
