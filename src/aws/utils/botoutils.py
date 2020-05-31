@@ -7,9 +7,10 @@ class BotoInstanceReader:
     def read(boto_response, own_instance, filters=None):
         if filters is None:
             filters = []
-        boto_response = json.loads(boto_response)['Reservations']
+        if isinstance(boto_response, str):
+            boto_response = json.loads(boto_response)
         boto_instances = []
-        for reserverations in boto_response:
+        for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]
             boto_instance = BotoInstance.instance(json_instance)
             # Remove the Instance Manager and if the filter_out option wants it.
