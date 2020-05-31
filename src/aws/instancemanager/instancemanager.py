@@ -4,6 +4,7 @@ Module for the Instance Manager.
 from aws.utils.monitor import Observable, Listener
 
 import boto3
+from ec2_metadata import ec2_metadata
 
 
 class NodeScheduler(Observable):
@@ -14,6 +15,7 @@ class NodeScheduler(Observable):
     def __init__(self):
         self.instances = []
         self.ec2 = boto3.client('ec2')
+        self.instance_id = ec2_metadata.instance_id
         super().__init__()
 
     def start_node_manager(self):
