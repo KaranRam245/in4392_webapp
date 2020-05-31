@@ -25,7 +25,7 @@ class BotoInstanceReader:
             for func in filters:
                 if isinstance(func, tuple) and not getattr(instance, func[0])() == func[1]:
                     return True
-                elif isinstance(func, str) and not getattr(instance, func)():
+                if isinstance(func, str) and not getattr(instance, func)():
                     return True
         return False
 

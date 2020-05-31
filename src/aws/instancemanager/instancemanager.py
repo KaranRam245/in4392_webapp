@@ -36,6 +36,8 @@ class NodeScheduler(Observable):
         self.start_node_manager()
 
     def _init_instance(self, instances):
+        if instances:
+            print('No instances specified to start.')
         response = self.ec2.start_instances(InstanceIds=instances)
         print(response)
 
