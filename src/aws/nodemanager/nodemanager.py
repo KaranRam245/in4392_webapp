@@ -37,5 +37,24 @@ class TaskPoolMonitor(Listener):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
-        raise NotImplementedError("The class is a listener but has not implemented the event "
-                                  "method.")
+        if isinstance(message, str):
+            print("[INFO] " + message)  # TODO: create logging system.
+        else:
+            raise NotImplementedError("The class is a listener but has not implemented the event "
+                                      "method.")
+        # TODO: Create actual monitor.
+
+
+def start_instance():
+    """
+    Function to start the Node Scheduler, which is the heart of the Instance Manager.
+    """
+    scheduler = TaskPool()
+    monitor = TaskPoolMonitor()
+    scheduler.add_listener(monitor)
+
+    scheduler.run()
+
+
+if __name__ == "__main__":
+    start_instance()

@@ -4,11 +4,13 @@ import json
 class BotoInstanceReader:
 
     @staticmethod
-    def read(boto_response, own_instance, filters=None):
+    def read(_input, own_instance, filters=None):
         if filters is None:
             filters = []
-        if isinstance(boto_response, str):
-            boto_response = json.loads(boto_response)
+        if isinstance(_input, str):
+            boto_response = json.loads(_input)
+        else:
+            boto_response = _input.describe_instances()
         boto_instances = []
         for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]
@@ -66,3 +68,6 @@ class BotoInstance:
 
     def is_node_manager(self) -> bool:
         return self.name == 'Node Manager'
+
+    def is_resource_manager(self) -> bool:
+        return self.name == 'Resource Manager'

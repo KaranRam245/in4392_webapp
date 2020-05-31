@@ -20,17 +20,21 @@ class NodeScheduler(Observable):
         super().__init__()
 
     def start_node_manager(self):
-        nodemanagers = self.get_instances(filters=['is_node_manager', ('is_running', False)])
+        nodemanagers = BotoInstanceReader.read(self.ec2, self.instance_id,
+                                               filters=['is_node_manager', ('is_running', False)])
         nodemanager_ids = [manager.instance_id for manager in nodemanagers]
         self._init_instance(nodemanager_ids)  # TODO: Smarter method to decide which to start.
 
     def start_worker(self):
-        self._init_instance()
-        pass
+        workers = BotoInstanceReader.read(self.ec2, self.instance_id,
+                                          filters=['is_worker', ('is_running', False)])
+        self._init_instance(workers)
 
     def start_resource_manager(self):
-        self._init_instance()
-        pass
+        resourcemanagers = BotoInstanceReader.read(self.ec2, self.instance_id,
+                                                   filters=['is_resource_manager',
+                                                            ('is_running', False)])
+        self._init_instance(resourcemanagers)
 
     def initialize_nodes(self):
         self.start_node_manager()
@@ -38,8 +42,9 @@ class NodeScheduler(Observable):
     def _init_instance(self, instances):
         if instances:
             print('No instances specified to start.')
-        response = self.ec2.start_instances(InstanceIds=instances)
-        print(response)
+            return
+        self.ec2.start_instances(InstanceIds=instances)
+        self.notify("Started instances and now pending {}.".format(instances))
 
     def _kill_instance(self):
         pass
@@ -53,11 +58,7 @@ class NodeScheduler(Observable):
         """
         self.initialize_nodes()
 
-        self.notify(self.__dict__)  # TODO better notify function.
-
-    def get_instances(self, *, filters):
-        return BotoInstanceReader.read(self.ec2.describe_instances(), self.instance_id,
-                                       filters=filters)
+        self.notify(str(self.__dict__))  # TODO better notify function.
 
 
 class NodeMonitor(Listener):
@@ -65,14 +66,18 @@ class NodeMonitor(Listener):
     def event(self, message):
         """
         Method called when the notify function is called in the Observable class. The Listener is
-        notified through the event function with a dict message result.
-        :param message: Message of the event in dict format.
+        notified through the event function with a message result.
+        :param message: Message of the event.
         """
-        print(message)
+        if isinstance(message, str):
+            print("[INFO] " + message)  # TODO: create logging system.
+        else:
+            raise NotImplementedError("The class is a listener but has not implemented the event "
+                                      "method.")
         # TODO: Create actual monitor.
 
 
-def start_node_scheduler():
+def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
@@ -85,4 +90,4 @@ def start_node_scheduler():
 
 # Main function to start the InstanceManager
 if __name__ == '__main__':
-    start_node_scheduler()
+    start_instance()
