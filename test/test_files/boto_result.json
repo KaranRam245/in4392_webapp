@@ -12,7 +12,7 @@
                         "Name": "running"
                     },
                     "EbsOptimized": false,
-                    "LaunchTime": "2020-05-26T11:53:45.000Z",
+                    "LaunchTime": "2020-05-31T12:10:44.000Z",
                     "PublicIpAddress": "18.157.146.255",
                     "PrivateIpAddress": "172.31.35.66",
                     "ProductCodes": [],
@@ -109,16 +109,8 @@
                     "VirtualizationType": "hvm",
                     "Tags": [
                         {
-                            "Value": "",
-                            "Key": "InstanceManager"
-                        },
-                        {
                             "Value": "Instance Manager",
                             "Key": "Name"
-                        },
-                        {
-                            "Value": "",
-                            "Key": "VMs"
                         }
                     ],
                     "HibernationOptions": {
@@ -143,14 +135,17 @@
                     "Monitoring": {
                         "State": "disabled"
                     },
-                    "PublicDnsName": "ec2-18-195-205-105.eu-central-1.compute.amazonaws.com",
+                    "PublicDnsName": "",
+                    "StateReason": {
+                        "Message": "Client.UserInitiatedShutdown: User initiated shutdown",
+                        "Code": "Client.UserInitiatedShutdown"
+                    },
                     "State": {
-                        "Code": 16,
-                        "Name": "running"
+                        "Code": 80,
+                        "Name": "stopped"
                     },
                     "EbsOptimized": false,
                     "LaunchTime": "2020-05-30T13:11:05.000Z",
-                    "PublicIpAddress": "18.195.205.105",
                     "PrivateIpAddress": "172.31.32.252",
                     "ProductCodes": [],
                     "VpcId": "vpc-4e01dc24",
@@ -158,7 +153,7 @@
                         "CoreCount": 1,
                         "ThreadsPerCore": 1
                     },
-                    "StateTransitionReason": "",
+                    "StateTransitionReason": "User initiated (2020-05-30 14:00:07 GMT)",
                     "InstanceId": "i-02279ee85141da9e1",
                     "EnaSupport": true,
                     "ImageId": "ami-0a9e2b8a093c02922",
@@ -187,13 +182,8 @@
                             "PrivateIpAddresses": [
                                 {
                                     "PrivateDnsName": "ip-172-31-32-252.eu-central-1.compute.internal",
-                                    "PrivateIpAddress": "172.31.32.252",
                                     "Primary": true,
-                                    "Association": {
-                                        "PublicIp": "18.195.205.105",
-                                        "PublicDnsName": "ec2-18-195-205-105.eu-central-1.compute.amazonaws.com",
-                                        "IpOwnerId": "amazon"
-                                    }
+                                    "PrivateIpAddress": "172.31.32.252"
                                 }
                             ],
                             "PrivateDnsName": "ip-172-31-32-252.eu-central-1.compute.internal",
@@ -213,13 +203,8 @@
                             ],
                             "Ipv6Addresses": [],
                             "OwnerId": "688183572067",
-                            "PrivateIpAddress": "172.31.32.252",
                             "SubnetId": "subnet-b68b78ca",
-                            "Association": {
-                                "PublicIp": "18.195.205.105",
-                                "PublicDnsName": "ec2-18-195-205-105.eu-central-1.compute.amazonaws.com",
-                                "IpOwnerId": "amazon"
-                            }
+                            "PrivateIpAddress": "172.31.32.252"
                         }
                     ],
                     "SourceDestCheck": true,
@@ -246,16 +231,8 @@
                     "VirtualizationType": "hvm",
                     "Tags": [
                         {
-                            "Value": "",
-                            "Key": "NodeManager"
-                        },
-                        {
                             "Value": "Node Manager",
                             "Key": "Name"
-                        },
-                        {
-                            "Value": "",
-                            "Key": "VMs"
                         }
                     ],
                     "HibernationOptions": {

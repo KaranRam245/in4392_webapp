@@ -4,15 +4,29 @@ import json
 class BotoInstanceReader:
 
     @staticmethod
-    def read(boto_response, own_instance):
+    def read(boto_response, own_instance, filters=None):
+        if filters is None:
+            filters = []
         boto_response = json.loads(boto_response)['Reservations']
         boto_instances = []
         for reserverations in boto_response:
             json_instance = reserverations['Instances'][0]
             boto_instance = BotoInstance.instance(json_instance)
-            if boto_instance.instance_id != own_instance:  # Remove the Instance Manager.
+            # Remove the Instance Manager and if the filter_out option wants it.
+            if boto_instance.instance_id != own_instance and not BotoInstanceReader._filter_out(
+                    boto_instance, filters):
                 boto_instances.append(boto_instance)
         return boto_instances
+
+    @staticmethod
+    def _filter_out(instance, filters):
+        if filters:
+            for func in filters:
+                if isinstance(func, tuple) and not getattr(instance, func[0])() == func[1]:
+                    return True
+                elif isinstance(func, str) and not getattr(instance, func)():
+                    return True
+        return False
 
 
 class BotoInstance:
@@ -39,3 +53,15 @@ class BotoInstance:
 
     def __repr__(self):
         return self.__str__()
+
+    def is_running(self) -> bool:
+        return self.state == 'running'
+
+    def is_worker(self) -> bool:
+        return self.name == 'Worker'
+
+    def is_instance_manger(self) -> bool:
+        return self.name == 'Instance Manager'
+
+    def is_node_manager(self) -> bool:
+        return self.name == 'Node Manager'

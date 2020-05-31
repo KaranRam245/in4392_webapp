@@ -1,6 +1,7 @@
 """
 Module for the Instance Manager.
 """
+from aws.utils.botoutils import BotoInstanceReader, BotoInstance
 from aws.utils.monitor import Observable, Listener
 
 import boto3
@@ -19,9 +20,9 @@ class NodeScheduler(Observable):
         super().__init__()
 
     def start_node_manager(self):
-        print(self.ec2.describe_instances())
-        self._init_instance()
-        pass
+        nodemanagers = self.get_instances(filters=['is_node_manager', ('is_running', False)])
+        nodemanager_ids = [manager.instance_id for manager in nodemanagers]
+        self._init_instance(nodemanager_ids)  # TODO: Smarter method to decide which to start.
 
     def start_worker(self):
         self._init_instance()
@@ -35,8 +36,9 @@ class NodeScheduler(Observable):
         self.start_node_manager()
         self.start_resource_manager()
 
-    def _init_instance(self):
-        pass
+    def _init_instance(self, instances):
+        response = self.ec2.start_instances(instances)
+        print(response)
 
     def _kill_instance(self):
         pass
@@ -50,7 +52,11 @@ class NodeScheduler(Observable):
         """
         self.initialize_nodes()
 
-        self.notify(self.__dict__) # TODO better notify function.
+        self.notify(self.__dict__)  # TODO better notify function.
+
+    def get_instances(self, *, filters):
+        return BotoInstanceReader.read(self.ec2.describe_instances(), self.instance_id,
+                                       filters=filters)
 
 
 class NodeMonitor(Listener):
