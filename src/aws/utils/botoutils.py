@@ -4,6 +4,11 @@ import json
 class BotoInstanceReader:
 
     @staticmethod
+    def read_ids(_input, own_instance, filters=None):
+        output = BotoInstanceReader.read(_input, own_instance, filters)
+        return [inst.instance_id for inst in output]
+
+    @staticmethod
     def read(_input, own_instance, filters=None):
         if filters is None:
             filters = []
