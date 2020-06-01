@@ -35,7 +35,7 @@ Create an AWS account and verify your account. After that we create an instance 
 ### Instance naming
 We name all our instances for the system to know which role each instance might have. In future releases, one could rename instances on the fly. To rename manually, click in the `Name` column on the AWS console and type the right name. The naming conventions are listed below.
 - For the instance manager nodes we give the name `Instance Manager`.
-- For the node manager we give the name `Node manager`.
+- For the node manager we give the name `Node Manager`.
 - For worker nodes we give the name `Worker`.
 - For the resource managers we give the name `Resource Manager`.
 
