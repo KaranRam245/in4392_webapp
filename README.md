@@ -32,6 +32,13 @@ Create an AWS account and verify your account. After that we create an instance 
 
 <sup>*</sup> __Any step indicated should be repeated for each new instance installed__
 
+### Instance naming
+We name all our instances for the system to know which role each instance might have. In future releases, one could rename instances on the fly. To rename manually, click in the `Name` column on the AWS console and type the right name. The naming conventions are listed below.
+- For the instance manager nodes we give the name `Instance Manager`.
+- For the node manager we give the name `Node manager`.
+- For worker nodes we give the name `Worker`.
+- For the resource managers we give the name `Resource Manager`.
+
 ### Install essentials on instance
 1. First step is to create an AWS EC2 server. We choose a Linux system.
 2. Run `sudo apt-get update -y`.
@@ -41,7 +48,7 @@ Create an AWS account and verify your account. After that we create an instance 
 6. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
 7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.
 8. Move into the folder with `cd in4392_webapp/`.
-9. (Optionally) Run `pip3 install --no-cache-dir tensorflow==2.2.0`. This step is required if your EC2 memory is too small to install TensorFlow with caching. Alternatively, you could run `pip install --no-cache-dir -r requirements.txt` instead of the below step.
+9. (Optionally) Run `pip3 install --no-cache-dir tensorflow==2.2.0`. This step is required if your EC2 memory is too small to install TensorFlow with caching. Alternatively, you could run `pip3 install --no-cache-dir -r requirements.txt` instead of the below step.
 10. Run `pip3 install -r requirements.txt`. This installs are additional requirements.
 
 #### Side notes
