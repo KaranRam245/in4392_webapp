@@ -16,7 +16,7 @@ def main():
     if len(args) < 2 or args[1] == 'instance_manager':
         print('[INFO] Initiating bootcall Instance Manager..')
         im.start_instance()
-    elif len(args) > 3:
+    elif len(args) >= 3:
         if args[1] == 'node_manager':
             print('[INFO] Initiating bootcall Node Manager..')
             nm.start_instance(host=args[2])
