@@ -47,7 +47,7 @@ class TaskPoolMonitor(Listener, Client):
         self._lock = RLock()
         self._tp = taskpool
         super(Listener, self).__init__()
-        super(Client, self).__init__()
+        super(Client, self).__init__(host=host)
 
     def event(self, message):
         self.send(message)

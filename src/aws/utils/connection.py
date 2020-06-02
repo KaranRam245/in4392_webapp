@@ -26,7 +26,7 @@ class Server(socketserver.BaseRequestHandler):
 
 
 class Client:
-    def __init__(self, host=HOST, port=PORT):
+    def __init__(self, host, port=PORT):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.host = host
         self.port = port
