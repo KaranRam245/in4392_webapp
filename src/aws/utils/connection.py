@@ -38,11 +38,8 @@ class Client:
         except Exception as e:
             print(e)
 
-    def send(self, message):
-        if isinstance(message, dict):
-            message = str(message)
-        else:
-            message = json.dumps(message)
+    def send(self, message: dict):
+        message = json.dumps(message)
         try:
             self.sock.sendall(message.encode('UTF-8'))
 
