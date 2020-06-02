@@ -1,10 +1,10 @@
-import time
+import time as timepackage
 
 
 class HeartBeatPacket(dict):
 
-    def __init__(self, state, cpu_usage, mem_usage, hb_time=None):
-        self._time = hb_time if hb_time else time.time()
+    def __init__(self, state, cpu_usage, mem_usage, time=None):
+        self._time = time if time else timepackage.time()
         self._state = state
         self._cpu_usage = cpu_usage
         self._mem_usage = mem_usage
