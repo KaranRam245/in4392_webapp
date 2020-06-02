@@ -1,10 +1,10 @@
 """
 Main function to be called when starting the AWS main instance.
 """
-import aws
 import sys
 sys.path.append('./src')
 
+import aws
 
 def main():
     args = str(sys.argv)
