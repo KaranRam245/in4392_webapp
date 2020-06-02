@@ -44,7 +44,7 @@ We name all our instances for the system to know which role each instance might 
 2. Run `sudo apt-get update -y`.
 3. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
 4. We want to use Python3.6 (or higher). Check this with `python -v`. 
-5. Run `sudo apt install python3-pip`.
+5. Run `sudo apt install python3-pip`. When installed with Yum, you might want to issue `python -m pip install --upgrade pip`.
 6. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
 7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.
 8. Move into the folder with `cd in4392_webapp/`.
