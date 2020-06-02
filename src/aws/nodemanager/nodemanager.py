@@ -65,4 +65,4 @@ def start_instance(host=con.HOST):
 
 
 if __name__ == "__main__":
-    start_instance()
+    start_instance(host='localhost')
