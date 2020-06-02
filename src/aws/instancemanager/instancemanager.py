@@ -150,12 +150,15 @@ class NodeMonitor(Thread):
         super().__init__()
 
     def run(self) -> None:
-        while True:
-            data, address = self._socket.recvfrom(1024)
-            data = data.decode(con.ENCODING)
-            json_data = json.loads(data)
-            print(data)
-            self._buffer.put(self._lock, HeartBeatPacket(**json_data), address)
+        try:
+            while True:
+                data, address = self._socket.recvfrom(1024)
+                data = data.decode(con.ENCODING)
+                json_data = json.loads(data)
+                print(data)
+                self._buffer.put(self._lock, HeartBeatPacket(**json_data), address)
+        except KeyboardInterrupt:
+            self._socket.close()
 
 
 def start_instance():
