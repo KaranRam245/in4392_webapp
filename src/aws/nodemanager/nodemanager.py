@@ -1,22 +1,31 @@
 """
 Module for the Node Manager.
 """
+import json
+import socket
+from threading import Thread, RLock
+
 from aws.utils.monitor import Listener, Observable
+from aws.utils.packets import HeartBeatPacket
+
+import  aws.utils.connection as con
+from aws.utils.state import InstanceState
 
 
-class TaskPool(Observable):
+class TaskPool(Thread, Observable):
     """
     The TaskPool accepts the tasks from the user.
     """
     def __init__(self):
         self._tasks = []
+        self._instance_state = InstanceState(InstanceState.RUNNING)
         super().__init__()
 
-    def run(self):
+    def run(self) -> None:
         """
         Start function for the TaskPool.
         """
-        raise NotImplementedError()
+        self.notify(self.generate_heartbeat())
 
     def add_task(self, task):
         """
@@ -25,35 +34,36 @@ class TaskPool(Observable):
         """
         raise NotImplementedError()
 
+    def generate_heartbeat(self):
+        return HeartBeatPacket(state=self._instance_state, cpu_usage=100, mem_usage=50)
+
 
 class TaskPoolMonitor(Listener):
 
-    def __init__(self):
-        pass
+    def __init__(self, taskpool):
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._socket.bind((con.HOST, con.PORT))
+        self._lock = RLock()
+        self._tp = taskpool
+        super().__init__()
 
     def event(self, message):
-        """
-        Method called when the notify function is called in the Observable class. The Listener is
-        notified through the event function with a dict message result.
-        :param message: Message of the event in dict format.
-        """
-        if isinstance(message, str):
-            print("[INFO] " + message)  # TODO: create logging system.
+        if isinstance(message, dict):
+            message = str(message)
         else:
-            raise NotImplementedError("The class is a listener but has not implemented the event "
-                                      "method.")
-        # TODO: Create actual monitor.
+            message = json.dumps(message.__dict__)
+        self._socket.sendall(message)
 
 
 def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    scheduler = TaskPool()
-    monitor = TaskPoolMonitor()
-    scheduler.add_listener(monitor)
+    taskpool = TaskPool()
+    monitor = TaskPoolMonitor(taskpool)
+    taskpool.add_listener(monitor)
 
-    scheduler.run()
+    taskpool.run()
 
 
 if __name__ == "__main__":

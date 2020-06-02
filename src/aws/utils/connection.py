@@ -24,6 +24,7 @@ class Server(socketserver.BaseRequestHandler):
         except Exception as e:
             print(e)
 
+
 class Client:
     def __init__(self, host=HOST, port=PORT):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

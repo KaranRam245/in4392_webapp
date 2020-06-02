@@ -24,11 +24,10 @@ class State:
 class ProgramState(State):
     # States of the program based on the Amazon Elastic Compute Cloud.
     # Note that this state is different from the EC2 instance state.
-    NEW = 0  # When the instance started but has not initialized yet.
-    PENDING = 1  # When the instance has been started but has not yet received a task.
-    RUNNING = 2  # When computing or managing.
-    STOPPING = 3  # When the stop comment has been received.
-    ERROR = 4  # When an error has occured.
+    PENDING = 0  # When the instance has been started but has not yet received a task.
+    RUNNING = 1  # When computing or managing.
+    STOPPING = 2  # When the stop comment has been received.
+    ERROR = 3  # When an error has occured.
 
     def __init__(self, state):
         """
