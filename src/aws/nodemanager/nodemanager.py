@@ -10,6 +10,8 @@ from aws.utils.connection import Client
 import aws.utils.connection as con
 from aws.utils.state import InstanceState
 
+import time
+
 
 class TaskPool(Thread, Observable):
     """
@@ -19,7 +21,7 @@ class TaskPool(Thread, Observable):
     def __init__(self):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
-        self.heart = RepeatingHeartBeat(func=self.generate_heartbeat)
+        self.heart = RepeatingHeartBeat(interval=5, func=self.generate_heartbeat)
         super(Thread, self).__init__()
         super(Observable, self).__init__()
 
@@ -27,7 +29,9 @@ class TaskPool(Thread, Observable):
         """
         Start function for the TaskPool.
         """
-        pass
+        while True:
+            print('...')
+            time.sleep(15)
 
     def add_task(self, task):
         """
