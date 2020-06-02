@@ -25,3 +25,20 @@ class State:
 
     def is_state(self, state) -> bool:
         return self._state == state
+
+class TaskState(State):
+    '''
+    Class for the indication of the current state of a task
+    '''
+    UPLOADING=0
+    READY=1
+    RUNNING=2
+    DONE=3
+
+    def __init__(self, state):
+        """
+        Initialize a State object indicating the current state of a task.
+        :param state: Initiger indicating the current state.
+        """
+        assert 0 <= state <= 3
+        super().__init__(state)

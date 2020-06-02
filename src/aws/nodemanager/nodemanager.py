@@ -2,12 +2,14 @@
 Module for the Node Manager.
 """
 from aws.utils.monitor import Listener, Observable
+from aws.utils.state import TaskState
 
 
 class TaskPool(Observable):
     """
     The TaskPool accepts the tasks from the user.
     """
+
     def __init__(self):
         self._tasks = []
         super().__init__()
@@ -18,12 +20,11 @@ class TaskPool(Observable):
         """
         raise NotImplementedError()
 
-    def add_task(self, task):
+    def add_task(self,task:Task):
         """
         Add a new task to the TaskPool.
-        :return:
         """
-        raise NotImplementedError()
+        self._tasks.append(task)
 
 
 class TaskPoolMonitor(Listener):
@@ -39,3 +40,24 @@ class TaskPoolMonitor(Listener):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
+
+
+class Task:
+    '''Task contains all information with regards to a tasks in the TaskPool'''
+
+    TEXT=0
+    CSV=1
+
+    def __init__(self, data, dataType):
+        self.data = data
+        self.taskType = dataType
+        self.state = TaskState.UPLOADING
+
+    def get_task_type(self):
+        return self.taskType
+
+    def get_task_data(self):
+        return self.data
+
+    def get_task_state(self):
+        return self.state
