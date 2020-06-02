@@ -37,6 +37,9 @@ class NodeScheduler:
         """
         if not self.has('node_managers', InstanceState.RUNNING):
             self.start_node_manager()
+        self.ec2.run_command(InstanceIds=self.get('instance_managers', state=InstanceState.RUNNING),
+                             DocumentName='AWS-RunShellScript',
+                             Parameters={'commands': 'python3 in4392_webapp/main.py node_manager'})
         # if not self.has('resource_managers', InstanceState.RUNNING):
         #     self.start_resource_manager()
         # if not self.has('workers', InstanceState.RUNNING):
@@ -97,14 +100,41 @@ class NodeScheduler:
     def running_instances(self):
         """
         Get all running instances.
+        :return: All instances that have a RUNNING state.
         """
         return BotoInstanceReader.read_ids(self.ec2, self.instance_id, filters=['is_running'])
 
+    def get(self, instance_type, state=None):
+        """
+        Get instances that are the given instance type with the given state.
+        :param instance_type:
+        Instance type is either 'node_managers', 'workers', or 'resource_managers'.
+        :param state: InstanceState for which you might want to filter.
+        :return: All instance ids that comply to the given filter and instance type.
+        """
+        instances = self.instances[instance_type]
+        if state:
+            instances = [inst_id for inst_id in instances.keys() if state in instances.values()]
+        else:
+            instances = instances.keys()
+        return instances
+
     def has(self, instance_type, state):
+        """
+        Check if there is an instance type with a specific state.
+        :param instance_type: Check for this specific instance type.
+        :param state: Check for the specified state in instances.
+        :return: Boolean indicating if such an instance is found.
+        """
         instances = self.instances[instance_type]
         return state in instances.values()
 
     def has_non_running(self, instance_type):
+        """
+        Check if there are instances that are not yet, or not anymore, in a running state.
+        :param instance_type: Instance type to check.
+        :return: Boolean indicating if there is an instance PENDING, STOPPING, or STOPPED.
+        """
         return self.has(instance_type, InstanceState.PENDING) or \
                self.has(instance_type, InstanceState.STOPPING) or \
                self.has(instance_type, InstanceState.STOPPED)
