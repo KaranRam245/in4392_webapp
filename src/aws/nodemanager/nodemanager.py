@@ -26,7 +26,9 @@ class TaskPool(Thread, Observable):
         """
         Start function for the TaskPool.
         """
+        print('Sending heartbeat message..')
         self.notify(self.generate_heartbeat())
+        print('Sent heartbeat message..')
 
     def add_task(self, task):
         """
