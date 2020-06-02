@@ -55,30 +55,32 @@ class InstanceState(State):
         :param state: Initiger indicating the current state.
         """
         if isinstance(state, str):
-            state = self.map_to_id(state)
+            state = self.map_to(state)
         assert 0 <= state <= 4
         super().__init__(state)
 
-    def map_to_id(self, state_name: str) -> int:
+    def map_to(self, state_to_map):
         """
         Map a string response of EC2 to a state id.
-        :param state_name: State name according to EC2.
+        :param state_to_map: State name or number according to EC2.
         :return: State id.
         """
-        if state_name == 'pending':
-            return self.PENDING
-        if state_name == 'running':
-            return self.RUNNING
-        if state_name == 'stopping':
-            return self.STOPPING
-        if state_name == 'stopped':
-            return self.STOPPED
-        if state_name == 'shutting-down':
-            return self.SHUTTING_DOWN
-        if state_name == 'terminated':
-            return self.TERMINATED
+        mapping = {
+            self.PENDING: 'pending',
+            self.RUNNING: 'running',
+            self.STOPPING: 'stopping',
+            self.STOPPED: 'stopped',
+            self.SHUTTING_DOWN: 'shutting_down',
+            self.TERMINATED: 'terminated'
+        }
+        if isinstance(state_to_map, str):
+            for key, value in mapping.items():
+                if value == state_to_map:
+                    return key
+        elif isinstance(state_to_map, int):
+            return mapping[state_to_map]
         raise Exception(
-            'Unknown instance detected. EC2 does not support the "{}" state'.format(state_name))
+            'Unknown instance detected. EC2 does not support the "{}" state'.format(state_to_map))
 
     def __str__(self):
-        return str(self._state)
+        return self.map_to(self._state)
