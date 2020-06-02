@@ -150,6 +150,7 @@ class NodeMonitor(Thread):
     def __init__(self, nodescheduler):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.bind((con.HOST, con.PORT))
+        self._socket.listen()
         self._lock = RLock()
         self._buffer = Buffer()
         self._ns = nodescheduler
@@ -158,7 +159,8 @@ class NodeMonitor(Thread):
     def run(self) -> None:
         try:
             while True:
-                data, address = self._socket.recvfrom(1024)
+                data, address = self._socket.accept()
+                data = self._socket.recv(1024)
                 data = data.decode(con.ENCODING)
                 json_data = json.loads(data)
                 print(data)
