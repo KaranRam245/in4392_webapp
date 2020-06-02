@@ -6,6 +6,7 @@ sys.path.append('./src')
 
 import aws
 
+
 def main():
     args = str(sys.argv)
     if not len(args):

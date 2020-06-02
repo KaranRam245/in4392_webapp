@@ -162,9 +162,11 @@ def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
+    print('Starting instance manager..')
     scheduler = NodeScheduler()
 
     monitor = NodeMonitor(scheduler)
+    print('Instance manager running..')
     monitor.run()
 
 
