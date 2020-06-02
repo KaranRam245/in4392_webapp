@@ -57,10 +57,5 @@ class Client:
         self.sock.close()
 
 
-def kill_remaining_socket():
-    output = subprocess.check_output(['sudo', 'lsof', '-i:{}'.format(PORT)])
-    print(output)
-
-
 if __name__ == '__main__':
     Server.connect()
