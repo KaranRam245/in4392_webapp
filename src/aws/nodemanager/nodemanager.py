@@ -19,11 +19,11 @@ class TaskPool(Observable):
     """
 
     def __init__(self):
+        super().__init__()
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self.heart = RepeatingHeartBeat(interval=5, func=self.generate_heartbeat)
         self.heart.start()
-        super().__init__()
 
     def run(self):
         """
