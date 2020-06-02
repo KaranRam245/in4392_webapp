@@ -59,6 +59,7 @@ The below command shows how to change the alternative version to `Python 3.6` if
 - If you encounter a `Permissions denied: (...)` error. You may try to add `sudo` in front instead or set the right permissions with, for example, `sudo chmod -R 707` or any other permissions level you need.
 - On some systems `pip3` is named `pip` instead.
 - If not the right version is installed on you system and you have Yum. Run `sudo yum install python36` and `sudo alternatives --set python /usr/bin/python3.6`. Followed by `sudo yum install python36-pip` and `alias python=python3`.
+- In case you receive an `OSError: [Errno 98] Address already in use` error when starting an application you terminated with <kbd>CTRL</kbd> + <kbd>Z</kbd>, you might want to kill the old process. You may do this with `lsof -i:8080` followed by `kill -9 PID`.
 
 ### Setup Streamlit application on AWS
 For this step, we assume you have done the previous steps successfully.
