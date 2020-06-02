@@ -2,7 +2,7 @@ import json
 import socket, socketserver
 
 
-HOST = 'localhost'
+HOST = '0.0.0.0'
 PORT = 8080
 ENCODING = 'UTF-8'
 
