@@ -16,9 +16,9 @@ class Server(socketserver.BaseRequestHandler):
         self.request.sendall(data.upper().encode(ENCODING))
 
     @staticmethod
-    def connect():
+    def connect(host=HOST):
         try:
-            server = socketserver.TCPServer((HOST, PORT), Server)
+            server = socketserver.TCPServer((host, PORT), Server)
             print('Monitor is running')
             server.serve_forever()
         except Exception as e:
@@ -56,4 +56,4 @@ class Client:
 
 
 if __name__ == '__main__':
-    Server.connect()
+    Server.connect('localhost')
