@@ -13,7 +13,7 @@ from aws.utils.state import InstanceState
 import time
 
 
-class TaskPool(Thread, Observable):
+class TaskPool(Observable):
     """
     The TaskPool accepts the tasks from the user.
     """
@@ -23,10 +23,9 @@ class TaskPool(Thread, Observable):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self.heart = RepeatingHeartBeat(interval=5, func=self.generate_heartbeat)
         self.heart.start()
-        super(Thread, self).__init__()
-        super(Observable, self).__init__()
+        super().__init__()
 
-    def run(self) -> None:
+    def run(self):
         """
         Start function for the TaskPool.
         """
