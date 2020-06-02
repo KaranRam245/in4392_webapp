@@ -160,6 +160,7 @@ class NodeMonitor(Thread):
             while True:
                 data, address = self._socket.recvfrom(1024)
                 data = data.decode(con.ENCODING)
+                print('[{}] sent: {}'.format(address, data))
                 json_data = json.loads(data)
                 self._buffer.put(self._lock, HeartBeatPacket(**json_data), address)
         except KeyboardInterrupt:
