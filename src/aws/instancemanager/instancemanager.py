@@ -158,8 +158,7 @@ class NodeMonitor(Thread):
     def run(self) -> None:
         try:
             while True:
-                data, address = self._socket.accept()
-                data = self._socket.recv(1024)
+                data, address = self._socket.recv_from(1024)
                 data = data.decode(con.ENCODING)
                 json_data = json.loads(data)
                 print(data)
