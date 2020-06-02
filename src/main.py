@@ -4,7 +4,10 @@ Main function to be called when starting the AWS main instance.
 import sys
 sys.path.append('./src')
 
-import aws
+import aws.instancemanager.instancemanager as im
+import aws.nodemanager.nodemanager as nm
+import aws.nodeworker.nodeworker as nw
+import aws.resourcemanager.resourcemanager as rm
 
 
 def main():
@@ -12,20 +15,20 @@ def main():
 
     if len(args) < 2:
         print('[INFO] Initiating bootcall Instance Manager..')
-        aws.instancemanager.instancemanager.start_instance()
+        im.start_instance()
     else:
         if args[1] == 'instance_manager':
             print('[INFO] Initiating bootcall Instance Manager..')
-            aws.instancemanager.instancemanager.start_instance()
+            im.start_instance()
         elif args[1] == 'node_manager':
             print('[INFO] Initiating bootcall Node Manager..')
-            aws.nodemanager.nodemanager.start_instance()
+            nm.start_instance()
         elif args[1] == 'worker' or args[0] == 'node_worker':
             print('[INFO] Initiating bootcall Worker..')
-            aws.nodeworker.nodeworker.start_instance()
+            nw.start_instance()
         elif args[1] == 'resource_manager':
             print('[INFO] Initiating bootcall Resource Manager..')
-            aws.resourcemanager.resourcemanager.start_instance()
+            rm.start_instance()
         else:
             print('[ERROR] Unknown argument passed to program {}\n'
                   'Expected "instance_manager", "node_manager", "worker", or '
