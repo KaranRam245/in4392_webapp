@@ -3,7 +3,6 @@ Module for the Instance Manager.
 """
 from aws.utils.botoutils import BotoInstanceReader
 from ec2_metadata import ec2_metadata
-from aws.utils.connection import Server, Client
 from threading import Thread, RLock
 
 import aws.utils.connection as con
@@ -153,6 +152,7 @@ class NodeMonitor(Thread):
     def run(self) -> None:
         while True:
             data, address = self._socket.recvfrom(1024)
+            data = data.decode(con.ENCODING)
             json_data = json.loads(data)
             print(data)
             self._buffer.put(self._lock, HeartBeatPacket(**json_data), address)

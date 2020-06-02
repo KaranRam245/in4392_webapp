@@ -1,11 +1,12 @@
-from time import time
+import time
 
 
-class HeartBeatPacket:
+class HeartBeatPacket(dict):
 
     def __init__(self, state, cpu_usage, mem_usage):
-        self.time = time
+        self._time: float = time.time()
         self._state = state
         self._cpu_usage = cpu_usage
         self._mem_usage = mem_usage
-        super().__init__()
+        super().__init__(time=self._time, state=self._state, cpu_usage=self._cpu_usage,
+                         mem_usage=self._mem_usage)
