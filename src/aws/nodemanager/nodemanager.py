@@ -42,8 +42,6 @@ class TaskPool(Thread, Observable):
 class TaskPoolMonitor(Listener, Client):
 
     def __init__(self, taskpool, host):
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._socket.connect((host, con.PORT))
         self._lock = RLock()
         self._tp = taskpool
         super(Listener, self).__init__()
