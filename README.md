@@ -68,3 +68,6 @@ For this step, we assume you have done the previous steps successfully.
 3. Run `export LANG=en_US.utf-8`.
 4. And finally `streamlit run app.py`. Have fun :).
 5. To enable for connections to the streamlit, create a new inbound rule in your security group for TCP access with the right port. Default is `8502`.
+
+### Run the applications
+To run the application, simply run `python src/main.py instance_manager`. Other instances can be called with `python src/main.py <instance_type> <ip>` where `instance_type` is `resource_manager`, `worker`, or `resource_manager` and `ip` is the public ipv4-address of the instance manager.
