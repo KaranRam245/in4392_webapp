@@ -22,7 +22,6 @@ class State:
 
 
 class ProgramState(State):
-
     # States of the program based on the Amazon Elastic Compute Cloud.
     # Note that this state is different from the EC2 instance state.
     NEW = 0  # When the instance started but has not initialized yet.
@@ -41,19 +40,43 @@ class ProgramState(State):
 
 
 class InstanceState(State):
-
-    # States of the instance based on the EC2 instance states.
-    # Note that this state is different from the EC2 instance state.
+    """
+    States of the instance based on the EC2 instance life-cycle states.
+    """
     PENDING = 0  # When the instance has been started but has not yet received a task.
     RUNNING = 1  # When computing or managing.
-    SHUTTING_DOWN = 2  # Instance is shutting down.
-    TERMINATED = 3  # Instance is terminated.
-    STOPPING = 4  # When the stop comment has been received.
+    STOPPING = 2  # When the stop comment has been received.
+    STOPPED = 3  # When the instance is stopped.
+    SHUTTING_DOWN = 3  # Instance is shutting down/preparing to terminate.
+    TERMINATED = 4  # Instance is terminated/permanently deleted.
 
     def __init__(self, state):
         """
         Initialize a State object indicating the current state of an instance.
         :param state: Initiger indicating the current state.
         """
+        if isinstance(state, str):
+            state = self.map_to_id(state)
         assert 0 <= state <= 4
         super().__init__(state)
+
+    def map_to_id(self, state_name: str) -> int:
+        """
+        Map a string response of EC2 to a state id.
+        :param state_name: State name according to EC2.
+        :return: State id.
+        """
+        if state_name == 'pending':
+            return self.PENDING
+        if state_name == 'running':
+            return self.RUNNING
+        if state_name == 'stopping':
+            return self.STOPPING
+        if state_name == 'stopped':
+            return self.STOPPED
+        if state_name == 'shutting-down':
+            return self.SHUTTING_DOWN
+        if state_name == 'terminated':
+            return self.TERMINATED
+        raise Exception(
+            'Unknown instance detected. EC2 does not support the "{}" state'.format(state_name))
