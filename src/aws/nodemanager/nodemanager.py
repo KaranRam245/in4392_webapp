@@ -1,14 +1,13 @@
 """
 Module for the Node Manager.
 """
-import socket
 from threading import Thread, RLock
 
-from aws.utils.monitor import Listener, Observable
+from aws.utils.monitor import Listener, Observable, RepeatingHeartBeat
 from aws.utils.packets import HeartBeatPacket
 from aws.utils.connection import Client
 
-import  aws.utils.connection as con
+import aws.utils.connection as con
 from aws.utils.state import InstanceState
 
 
@@ -16,9 +15,11 @@ class TaskPool(Thread, Observable):
     """
     The TaskPool accepts the tasks from the user.
     """
+
     def __init__(self):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
+        self.heart = RepeatingHeartBeat(func=self.generate_heartbeat)
         super(Thread, self).__init__()
         super(Observable, self).__init__()
 
@@ -26,9 +27,7 @@ class TaskPool(Thread, Observable):
         """
         Start function for the TaskPool.
         """
-        print('Sending heartbeat message..')
-        self.notify(self.generate_heartbeat())
-        print('Sent heartbeat message..')
+        pass
 
     def add_task(self, task):
         """
@@ -38,7 +37,8 @@ class TaskPool(Thread, Observable):
         raise NotImplementedError()
 
     def generate_heartbeat(self):
-        return HeartBeatPacket(state=self._instance_state, cpu_usage=100, mem_usage=50)
+        self.notify(
+            message=HeartBeatPacket(state=self._instance_state, cpu_usage=100, mem_usage=50))
 
 
 class TaskPoolMonitor(Listener):

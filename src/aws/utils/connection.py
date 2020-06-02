@@ -42,9 +42,6 @@ class Client:
         message = json.dumps(message)
         try:
             self.sock.sendall(message.encode('UTF-8'))
-
-            received = self.sock.recv(1024)
-            print(received.decode(ENCODING))
         except Exception as e:
             print(e)
 
