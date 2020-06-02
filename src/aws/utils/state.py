@@ -79,3 +79,6 @@ class InstanceState(State):
             return self.TERMINATED
         raise Exception(
             'Unknown instance detected. EC2 does not support the "{}" state'.format(state_name))
+
+    def __str__(self):
+        return str(self._state)
