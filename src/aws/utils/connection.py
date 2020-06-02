@@ -1,5 +1,6 @@
 import json
 import socket, socketserver
+import subprocess
 
 
 HOST = 'localhost'
@@ -54,6 +55,11 @@ class Client:
 
     def close(self):
         self.sock.close()
+
+
+def kill_remaining_socket():
+    output = subprocess.check_output(['sudo', 'lsof', '-i:{}'.format(PORT)])
+    print(output)
 
 
 if __name__ == '__main__':

@@ -165,6 +165,7 @@ def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
+    con.kill_remaining_socket()
     print('Starting instance manager..')
     scheduler = NodeScheduler()
 
