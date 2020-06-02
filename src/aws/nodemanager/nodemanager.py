@@ -41,16 +41,16 @@ class TaskPool(Thread, Observable):
         return HeartBeatPacket(state=self._instance_state, cpu_usage=100, mem_usage=50)
 
 
-class TaskPoolMonitor(Listener, Client):
+class TaskPoolMonitor(Listener):
 
     def __init__(self, taskpool, host):
         self._lock = RLock()
         self._tp = taskpool
-        super(Listener, self).__init__()
-        super(Client, self).__init__(host=host)
+        self.client = Client(host=host)
+        super().__init__()
 
     def event(self, message):
-        self.send(message)
+        self.client.send(message)
 
 
 def start_instance(host=con.HOST):
