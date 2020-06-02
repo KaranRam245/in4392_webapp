@@ -22,6 +22,7 @@ class TaskPool(Thread, Observable):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self.heart = RepeatingHeartBeat(interval=5, func=self.generate_heartbeat)
+        self.heart.start()
         super(Thread, self).__init__()
         super(Observable, self).__init__()
 
