@@ -8,7 +8,7 @@ import aws
 
 
 def main():
-    args = str(sys.argv)
+    args = list(sys.argv)
 
     if len(args) < 2:
         print('[INFO] Initiating bootcall Instance Manager..')
