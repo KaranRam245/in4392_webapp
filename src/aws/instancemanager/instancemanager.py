@@ -148,7 +148,7 @@ class NodeScheduler:
 class NodeMonitor(Thread):
 
     def __init__(self, nodescheduler):
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._socket.bind((con.HOST, con.PORT))
         self._socket.listen()
         self._lock = RLock()
