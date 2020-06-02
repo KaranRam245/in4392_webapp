@@ -49,8 +49,7 @@ We name all our instances for the system to know which role each instance might 
 7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.
 8. Move into the folder with `cd in4392_webapp/`.
 9. (Optionally) Run `pip3 install --no-cache-dir tensorflow==2.2.0`. This step is required if your EC2 memory is too small to install TensorFlow with caching. Alternatively, you could run `pip3 install --no-cache-dir -r requirements.txt` instead of the below step.
-10. Run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`).
-11. Run `pip3 install -r requirements.txt`. This installs are additional requirements.
+10. Run `pip3 install -r requirements.txt`. This installs are additional requirements. In case `psutil` does not install, run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`) first.
 
 #### Side notes
 - Sometimes there may be some problems with the new instance. One of the problems we found was with the version of python being 2.7.
