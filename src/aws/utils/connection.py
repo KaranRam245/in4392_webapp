@@ -1,6 +1,5 @@
 import json
 import socket, socketserver
-import subprocess
 
 
 HOST = 'localhost'

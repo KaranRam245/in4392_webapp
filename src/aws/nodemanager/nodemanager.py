@@ -41,9 +41,9 @@ class TaskPool(Thread, Observable):
 
 class TaskPoolMonitor(Listener, Client):
 
-    def __init__(self, taskpool):
+    def __init__(self, taskpool, host):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._socket.bind((con.HOST, con.PORT))
+        self._socket.bind((host, con.PORT))
         self._lock = RLock()
         self._tp = taskpool
         super(Listener, self).__init__()
@@ -53,12 +53,12 @@ class TaskPoolMonitor(Listener, Client):
         self.send(message)
 
 
-def start_instance():
+def start_instance(host=con.HOST):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
     taskpool = TaskPool()
-    monitor = TaskPoolMonitor(taskpool)
+    monitor = TaskPoolMonitor(taskpool, host)
     taskpool.add_listener(monitor)
 
     taskpool.run()

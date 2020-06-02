@@ -28,6 +28,8 @@ class NodeScheduler:
         }
         self.ec2 = boto3.client('ec2')
         self.instance_id = ec2_metadata.instance_id
+        self.ipv4 = ec2_metadata.public_ipv4
+        self.dns = ec2_metadata.public_hostname
         super().__init__()
 
     def initialize_nodes(self):
@@ -36,13 +38,17 @@ class NodeScheduler:
         """
         if not self.has('node_managers', InstanceState.RUNNING):
             self.start_node_manager()
-        self.ec2.run_command(InstanceIds=self.get('instance_managers', state=InstanceState.RUNNING),
-                             DocumentName='AWS-RunShellScript',
-                             Parameters={'commands': 'python3 in4392_webapp/main.py node_manager'})
+        self._send_start_command('node_manager')
         # if not self.has('resource_managers', InstanceState.RUNNING):
         #     self.start_resource_manager()
         # if not self.has('workers', InstanceState.RUNNING):
         #     self.start_worker()
+
+    def _send_start_command(self, instance_type):
+        self.ec2.run_command(InstanceIds=self.get('instance_managers', state=InstanceState.RUNNING),
+                             DocumentName='AWS-RunShellScript',
+                             Parameters={'commands': 'python3 in4392_webapp/main.py {} {}'.format(
+                                 instance_type, self.ipv4)})
 
     def start_node_manager(self):
         nodemanagers = BotoInstanceReader.read_ids(self.ec2, self.instance_id,
