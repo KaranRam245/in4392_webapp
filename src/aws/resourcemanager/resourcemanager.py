@@ -23,9 +23,10 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
+        bucket_region = self.S3.aws_region
         bucket_response = self.S3.create_bucket(
-            bucket_name)
-        print(bucket_name)
+            Bucket=bucket_name)
+        print(bucket_name, bucket_region)
         return bucket_name, bucket_response
 
 class ResourceMonitor(Listener):
