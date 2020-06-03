@@ -7,6 +7,7 @@ sys.path.append('./src')
 from aws.utils.monitor import Listener
 from S3Connector import S3Connector
 import uuid
+import ClientError
 
 
 class ResourceManagerCore:
@@ -15,7 +16,10 @@ class ResourceManagerCore:
         self.S3 = S3Connector()
 
     def run(self):
-        #self.create_bucket()
+        try:
+            self.create_bucket()
+        except ClientError:
+            print("You should add the AmazonS3ReadOnlyAccess permission to the user")
         print(self.S3.get_bucket_list())
 
     def create_bucket(self):
