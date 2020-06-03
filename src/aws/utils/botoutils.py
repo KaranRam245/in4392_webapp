@@ -8,7 +8,7 @@ class BotoInstanceReader:
     EC2 = boto3.client('ec2')
 
     @staticmethod
-    def read_ids(_input, own_instance, filters=None):
+    def read_ids(own_instance, filters=None):
         output = BotoInstanceReader.read(own_instance, filters)
         return [inst.instance_id for inst in output]
 
