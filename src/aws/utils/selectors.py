@@ -13,7 +13,7 @@ class DefaultSelector:
         pass
 
     def select(self, timeout):
-        pass
+        return []
 
     def close(self):
         pass
