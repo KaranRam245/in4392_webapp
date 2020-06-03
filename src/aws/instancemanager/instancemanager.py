@@ -212,6 +212,7 @@ def start_instance():
     try:
         for proc in procs:
             proc.start()
+            proc.join()
     except KeyboardInterrupt:
         for proc in procs:
             proc.terminate()
