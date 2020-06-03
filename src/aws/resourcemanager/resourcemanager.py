@@ -21,10 +21,10 @@ class ResourceManagerCore:
     def run(self):
         try:
             bucket_list = self.S3.list_buckets()
-            print(self.S3.list_buckets() + "\n first")
+            print(self.S3.list_buckets())
             if not bucket_list:
                 name,response = self.create_bucket()
-                print(self.S3.list_buckets() + "\n second")
+                print(self.S3.list_buckets())
                 bucket_list = self.S3.list_buckets()
             bucket_name = ''#bucket_list.get("Buckets")[0].get("Name")
             key = 'text'
@@ -32,7 +32,7 @@ class ResourceManagerCore:
             self.download_file(bucket_name, key, 'src/aws/resourcemanager/download.txt')
         except ClientError:
             print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
-        print(self.S3.list_buckets() + "\n third")
+        print(self.S3.list_buckets())
 
     def create_bucket(self):
         """
