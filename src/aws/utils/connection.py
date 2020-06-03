@@ -25,7 +25,7 @@ class MultiConnectionServer:
         conn, addr = sock.accept()
         conn.setblocking(False)
         data = {'addr': addr, 'inb': b"", 'outb': b""}
-        events = selectors.EVENT_READ
+        events = selectors.EVENT_READ | selectors.EVENT_WRITE
         self.sel.register(conn, events, data=data)
 
     def service_connection(self, key, mask):
@@ -43,8 +43,10 @@ class MultiConnectionServer:
                     self.sel.unregister(sock)
                     sock.close()
             if mask & selectors.EVENT_WRITE:
-                print("Echoing to ", data['addr'])
-                sock.sendall(json.dumps(data['outb']).encode(ENCODING))
+                if data['outb']:
+                    print("Echoing: {}, to: {}".format(data['outb'], data['addr']))
+                    sock.sendall(data['outb'])
+                    data['outb'] = b""
         except ConnectionResetError:
             self.sel.unregister(key.fileobj)
 
@@ -104,8 +106,9 @@ class MultiConnectionClient:
         if mask & selectors.EVENT_READ:
             recv_data = sock.recv(1024)
             if recv_data:
+                recv_decoded = recv_data.decode(ENCODING)
+                print("Received:", recv_decoded, "from connection:", self.host)
                 recv_message = json.loads(recv_data.decode(ENCODING))
-                print("Received:", recv_message, "from connection:", self.host)
                 data['recv_total'] += len(recv_data)
             if not recv_data:
                 print("Closing connection")
@@ -113,9 +116,10 @@ class MultiConnectionClient:
                 sock.close()
         if mask & selectors.EVENT_WRITE:
             while self.message_buffer:
-                message = self.message_buffer.pop(0)
+                message = self.message_buffer[0]
                 print("Sending", message, "to connection", self.host)
                 self.sock.sendall(json.dumps(message).encode(ENCODING))
+                self.message_buffer.pop(0)
                 data['messages_sent'] += 1
             self.sel.modify(key.fileobj, events=selectors.EVENT_READ, data=data)
 
@@ -137,7 +141,7 @@ class MultiConnectionClient:
         except OSError:
             print("Server appears to be down. Waiting for a retry.")
             sleep(5)
-            self._send_buffer()
+            self.start_connection()
         finally:
             self.sel.close()
 
