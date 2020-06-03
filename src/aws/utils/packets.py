@@ -11,15 +11,16 @@ class Packet(dict):
 
 class HeartBeatPacket(Packet):
 
-    def __init__(self, state, packet_type='HeartBeat', time=None, cpu_usage=None, mem_usage=None):
-        assert packet_type == 'HeartBeat'
+    def __init__(self, state, packet_type='HeartBeat', time=None, cpu_usage=None, mem_usage=None,
+                 **kwargs):
         cpu_usage = cpu_usage if cpu_usage else self.get_cpu_usage()
         mem_usage = mem_usage if mem_usage else self.get_mem_usage()
-        super().__init__(packet_type='HeartBeat',
+        super().__init__(packet_type=packet_type,
                          time=time,
-                         state=state,
+                         state=str(state),
                          cpu_usage=cpu_usage,
-                         mem_usage=mem_usage)
+                         mem_usage=mem_usage,
+                         **kwargs)
 
     @staticmethod
     def get_cpu_usage():
@@ -32,8 +33,8 @@ class HeartBeatPacket(Packet):
 
 class CommandPacket(Packet):
 
-    def __init__(self, command, time=None):
-        super().__init__(packet_type='Command', time=time, command=command)
+    def __init__(self, command, packet_type='Command', time=None, **kwargs):
+        super().__init__(packet_type=packet_type, time=time, command=command, **kwargs)
 
 
 class PacketTranslator:

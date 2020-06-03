@@ -145,26 +145,17 @@ class NodeScheduler:
                self.has(instance_type, InstanceState.STOPPED)
 
 
-class NodeMonitor(Thread):
+class NodeMonitor(con.MultiConnectionServer):
 
-    def __init__(self, nodescheduler):
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._socket.bind((con.HOST, con.PORT))
-        self._lock = RLock()
+    def __init__(self, nodescheduler, host=con.HOST, port=con.PORT):
         self._buffer = Buffer()
         self._ns = nodescheduler
-        super().__init__()
+        self._lock = RLock()
+        super().__init__(host, port)
 
-    def run(self) -> None:
-        try:
-            while True:
-                data, address = self._socket.recvfrom(1024)
-                data = data.decode(con.ENCODING)
-                print('[{}] sent: {}'.format(address, data))
-                json_data = json.loads(data)
-                self._buffer.put(self._lock, HeartBeatPacket(**json_data), address)
-        except KeyboardInterrupt:
-            self._socket.close()
+    def process_heartbeat(self, hb, source):
+        print('Received Heartbeat: {}, from: {}'.format(hb, source))
+        self._buffer.put(self._lock, hb, source)
 
 
 def start_instance():
