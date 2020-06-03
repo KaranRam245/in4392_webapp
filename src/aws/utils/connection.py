@@ -1,8 +1,9 @@
 import json
-import selectors
+# import selectors
 import socket
 from abc import abstractmethod
 from time import sleep
+import aws.utils.selectors as selectors
 
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket
 
