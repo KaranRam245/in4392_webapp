@@ -5,15 +5,15 @@ import sys
 sys.path.append('./src')
 
 from aws.utils.monitor import Listener
-from S3Connector import S3Connector
 import uuid
+import boto3
 from botocore.exceptions import ClientError
 
 
 class ResourceManagerCore:
 
     def __init__(self):
-        self.S3 = S3Connector()
+        self.S3 = boto3.client('s3')
 
     def run(self):
         try:
@@ -27,10 +27,9 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
-        bucket_region = self.S3.aws_region
         bucket_response = self.S3.create_bucket(
             Bucket=bucket_name)
-        print(bucket_name, bucket_region)
+        print(bucket_name)
         return bucket_name, bucket_response
 
 class ResourceMonitor(Listener):
