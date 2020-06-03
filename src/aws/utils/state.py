@@ -46,8 +46,8 @@ class InstanceState(State):
     RUNNING = 1  # When computing or managing.
     STOPPING = 2  # When the stop comment has been received.
     STOPPED = 3  # When the instance is stopped.
-    SHUTTING_DOWN = 3  # Instance is shutting down/preparing to terminate.
-    TERMINATED = 4  # Instance is terminated/permanently deleted.
+    SHUTTING_DOWN = 4  # Instance is shutting down/preparing to terminate.
+    TERMINATED = 5  # Instance is terminated/permanently deleted.
 
     def __init__(self, state):
         """
