@@ -4,7 +4,7 @@ Module for the Instance Manager.
 from multiprocessing import Pool, Manager
 from time import sleep
 
-#from ec2_metadata import ec2_metadata
+from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
 # from aws.utils.botoutils import BotoInstanceReader
@@ -84,9 +84,9 @@ class NodeScheduler:
 
     def __init__(self):
         self.instances = Instances()
-        # self.instance_id = 1#ec2_metadata.instance_id
-        #self.ipv4 = 2#ec2_metadata.public_ipv4
-        #self.dns = 3 #ec2_metadata.public_hostname
+        self.instance_id = ec2_metadata.instance_id
+        self.ipv4 = ec2_metadata.public_ipv4
+        self.dns = ec2_metadata.public_hostname
         super().__init__()
 
     def initialize_nodes(self):
