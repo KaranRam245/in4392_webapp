@@ -174,16 +174,12 @@ class NodeScheduler:
         return BotoInstanceReader.read_ids(self.ec2, self.instance_id, filters=['is_running'])
 
     def run(self):
-        keep_processing = True
-        try:
-            while keep_processing:
-                boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
-                self.instances.update_all(boto_response=boto_response)
+        while True:
+            boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
+            self.instances.update_all(boto_response=boto_response)
 
-                print(self.instances)
-                sleep(15)
-        except KeyboardInterrupt:
-            keep_processing = False
+            print(self.instances)
+            sleep(15)
 
 class NodeMonitor(con.MultiConnectionServer):
 
@@ -209,8 +205,12 @@ def start_instance():
 
     procs = [Process(target=scheduler.run),
              Process(target=monitor.run)]
-    for proc in procs:
-        proc.start()
+    try:
+        for proc in procs:
+            proc.start()
+    except KeyboardInterrupt:
+        for proc in procs:
+            proc.terminate()
 
 
 # Main function to start the InstanceManager
