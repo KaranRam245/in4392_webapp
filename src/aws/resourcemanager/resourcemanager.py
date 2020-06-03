@@ -44,7 +44,7 @@ class ResourceManagerCore:
         Method called to delete the bucket with the name bucket_name.
         :param bucket_name: Name of the bucket to be deleted.
         """
-        delete_bucket(bucket_name)
+        self.S3.delete_bucket(bucket_name)
 
 class ResourceMonitor(Listener):
 
