@@ -83,8 +83,8 @@ class NodeScheduler:
     """
 
     def __init__(self):
-        #self.instances = Instances()
-        #self.instance_id = 1#ec2_metadata.instance_id
+        self.instances = Instances()
+        # self.instance_id = 1#ec2_metadata.instance_id
         #self.ipv4 = 2#ec2_metadata.public_ipv4
         #self.dns = 3 #ec2_metadata.public_hostname
         super().__init__()
