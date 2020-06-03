@@ -184,6 +184,7 @@ class NodeScheduler:
         #         sleep(15)
         # except KeyboardInterrupt:
         #     pass
+        print("Running describe-instances")
         stdout,stderr = subprocess.Popen(['aws', 'ec2', 'describe-instances'],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
