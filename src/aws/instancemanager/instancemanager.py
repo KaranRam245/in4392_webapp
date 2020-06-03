@@ -174,7 +174,7 @@ class NodeScheduler:
                 # with lock:
                 #    self.instances.update_all(boto_response=boto_response)
                 print(self.instances)
-                # sleep(15)
+                sleep(15)
                 print('hello')
         except KeyboardInterrupt:
             pass
