@@ -168,7 +168,8 @@ class NodeScheduler:
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
     def run(self, lock):
-        ec2 = boto3.client('ec2')
+        session = boto3.session.Session()
+        ec2 = session.client('ec2')
         try:
             while True:
                 boto_response = BotoInstanceReader.read(ec2, self.instance_id)
