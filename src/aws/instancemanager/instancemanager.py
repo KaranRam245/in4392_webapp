@@ -5,7 +5,6 @@ from multiprocessing import Process, Lock
 from time import sleep
 
 import boto3
-import signal
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
@@ -95,7 +94,6 @@ class NodeScheduler:
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
         self._lock = Lock()
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
         super().__init__()
 
     def initialize_nodes(self):
@@ -189,7 +187,6 @@ class NodeMonitor(con.MultiConnectionServer):
     def __init__(self, nodescheduler, host=con.HOST, port=con.PORT):
         self._buffer = Buffer()
         self._ns = nodescheduler
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
         super().__init__(host, port)
 
     def process_heartbeat(self, hb, source):
