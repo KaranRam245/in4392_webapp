@@ -4,6 +4,7 @@ Module for the Instance Manager.
 from multiprocessing import Pool, Manager
 from time import sleep
 
+import boto3
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
@@ -167,7 +168,6 @@ class NodeScheduler:
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
     def run(self, lock, ec2):
-        import boto3
         session = boto3.session.Session()
         ec2 = session.client('ec2')
         try:
