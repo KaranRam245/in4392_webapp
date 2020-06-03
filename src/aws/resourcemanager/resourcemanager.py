@@ -20,7 +20,7 @@ class ResourceManagerCore:
             self.create_bucket()
         except ClientError:
             print("You should add the AmazonS3ReadOnlyAccess permission to the user")
-        print(self.S3.get_bucket_list())
+        print(self.S3.list_buckets())
 
     def create_bucket(self):
         """
