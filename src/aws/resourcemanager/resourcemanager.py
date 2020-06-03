@@ -20,7 +20,7 @@ class ResourceManagerCore:
 
     def run(self):
         # try:
-        self.delete_bucket('6c45ca04-dfe7-45c0-839e-89c0b5fdc424')
+        self.delete_bucket('fc14b6ee-a1ea-42e3-8293-cbb14a42fa17')
         bucket_name, bucket_response = self.create_bucket()
         self.upload_file('src/aws/resourcemanager/textdocument.txt', bucket_name, 'text')
         self.download_file(bucket_name, 'text', 'src/aws/resourcemanager/textdocument2.txt')
