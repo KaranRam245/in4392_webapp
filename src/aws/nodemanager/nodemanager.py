@@ -43,7 +43,7 @@ class TaskPool(Observable):
 
     def generate_heartbeat(self):
         self.notify(
-            message=HeartBeatPacket(state=self._instance_state))
+            message=HeartBeatPacket(state=self._instance_state, instance_type='node_manager'))
 
 
 class TaskPoolMonitor(Listener, MultiConnectionClient):

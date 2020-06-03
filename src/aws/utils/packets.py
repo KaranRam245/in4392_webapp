@@ -11,13 +11,14 @@ class Packet(dict):
 
 class HeartBeatPacket(Packet):
 
-    def __init__(self, state, packet_type='HeartBeat', time=None, cpu_usage=None, mem_usage=None,
-                 **kwargs):
+    def __init__(self, state, instance_type, packet_type='HeartBeat', time=None, cpu_usage=None,
+                 mem_usage=None, **kwargs):
         cpu_usage = cpu_usage if cpu_usage else self.get_cpu_usage()
         mem_usage = mem_usage if mem_usage else self.get_mem_usage()
         super().__init__(packet_type=packet_type,
                          time=time,
                          state=str(state),
+                         instance_type=instance_type,
                          cpu_usage=cpu_usage,
                          mem_usage=mem_usage,
                          **kwargs)

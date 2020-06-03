@@ -51,7 +51,7 @@ class BotoInstance:
         self.name = ''
         for tag in self.tags:
             if tag['Key'] == 'Name':
-                self.name = tag['Value']
+                self.name = self.map_name(tag['Value'])
                 break
 
     def __str__(self) -> str:
@@ -61,6 +61,10 @@ class BotoInstance:
 
     def __repr__(self):
         return self.__str__()
+
+    @staticmethod
+    def map_name(name: str):
+        return name.lower().replace('_', ' ')
 
     def is_running(self) -> bool:
         return self.state == 'running'

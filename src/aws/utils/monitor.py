@@ -41,15 +41,13 @@ class Buffer:
     def __init__(self):
         self._items = PriorityQueue()
 
-    def put(self, lock, packet: HeartBeatPacket, host):
-        packet.host = host  # TODO: May need a better way to distinguish hosts.
-        with lock:
-            self._items.put((packet.time, packet))
+    def put(self, packet: HeartBeatPacket, host):
+        packet['host'] = host  # TODO: May need a better way to distinguish hosts.
+        self._items.put((packet['time'], packet))
 
     def flush(self, lock):
-        with lock:
-            buffer = self._items
-            self._items = PriorityQueue()
+        buffer = self._items
+        self._items = PriorityQueue()
         return buffer
 
 
