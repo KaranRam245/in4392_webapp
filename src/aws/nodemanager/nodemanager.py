@@ -5,7 +5,8 @@ import time
 
 import aws.utils.connection as con
 from aws.utils.connection import MultiConnectionClient
-from aws.utils.monitor import Listener, Observable, RepeatingHeartBeat
+from aws.utils.monitor import Listener, Observable
+from aws.utils.heartbeat import RepeatingHeartBeat
 from aws.utils.packets import HeartBeatPacket
 from aws.utils.state import InstanceState
 
