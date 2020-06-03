@@ -1,8 +1,9 @@
 import json
 import socket, socketserver
 import selectors
+from abc import abstractmethod, ABC
 
-from aws.utils.packets import HeartBeatPacket
+from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket
 from time import sleep
 
 HOST = '0.0.0.0'
@@ -10,7 +11,7 @@ PORT = 8080
 ENCODING = 'UTF-8'
 
 
-class MultiConnectionServer:
+class MultiConnectionServer(ABC):
     """
     Class for multiple connections handling.
     The code is based on https://github.com/realpython/materials/blob/master/python-sockets-tutorial
@@ -36,8 +37,8 @@ class MultiConnectionServer:
                 recv_data = sock.recv(1024)
                 if recv_data:
                     data['outb'] += recv_data  # TODO: Process.
-                    print("Received: {}, from: {}".format(json.loads(recv_data.decode(ENCODING)),
-                                                          data['addr']))
+                    message = json.loads(recv_data.decode(ENCODING))
+                    self.process_packet(message, data['addr'])
                 else:
                     print("Closing connection to", data['addr'])
                     self.sel.unregister(sock)
@@ -50,6 +51,20 @@ class MultiConnectionServer:
         except ConnectionResetError:
             self.sel.unregister(key.fileobj)
 
+    def process_packet(self, message, source):
+        packet = PacketTranslator.translate(message)
+        if isinstance(packet, CommandPacket):
+            pass  # The server currently does not take commands.
+        elif isinstance(packet, HeartBeatPacket):
+            self.process_heartbeat(packet, source)
+        else:
+            print("Unknown packet found: {}".format(packet['packet_type']))
+
+    @abstractmethod
+    def process_heartbeat(self, hb, source):
+        print("Heartbeat: {}, from: {}".format(hb, source))
+        # TODO: process heartbeat
+
     def run(self):
         lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         lsock.bind((self.host, self.port))
@@ -59,7 +74,7 @@ class MultiConnectionServer:
 
         try:
             while True:
-                events = self.sel.select(timeout=None)  # TODO: timeout
+                events = self.sel.select(timeout=None)
                 for key, mask in events:
                     if key.data:
                         self.service_connection(key, mask)
@@ -72,7 +87,7 @@ class MultiConnectionServer:
             self.sel.close()
 
 
-class MultiConnectionClient:
+class MultiConnectionClient(ABC):
 
     def __init__(self, host, port):
         self.host = host
@@ -109,6 +124,7 @@ class MultiConnectionClient:
                 recv_decoded = recv_data.decode(ENCODING)
                 print("Received:", recv_decoded, "from connection:", self.host)
                 recv_message = json.loads(recv_data.decode(ENCODING))
+                self.process_message(recv_message)
                 data['recv_total'] += len(recv_data)
             if not recv_data:
                 print("Closing connection")
@@ -122,6 +138,19 @@ class MultiConnectionClient:
                 self.message_buffer.pop(0)
                 data['messages_sent'] += 1
             self.sel.modify(key.fileobj, events=selectors.EVENT_READ, data=data)
+
+    def process_message(self, message):
+        packet = PacketTranslator.translate(message)
+        if isinstance(packet, CommandPacket):
+            self.process_command(packet['command'])
+        elif isinstance(packet, HeartBeatPacket):
+            print("Someone send me a heartbeat. This should not happen.")
+        else:
+            print("I do not know this packet type: {}".format(packet['packet_type']))
+
+    @abstractmethod
+    def process_command(self, command):
+        raise NotImplementedError("Client has not yet implemented process_command.")
 
     def close(self):
         self.sel.close()
