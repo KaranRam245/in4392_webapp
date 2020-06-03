@@ -16,12 +16,11 @@ class ResourceManagerCore:
         self.S3 = boto3.client('s3')
 
     def run(self):
-        # try:
-
-        bucket_name, bucket_response = self.create_bucket()
-        self.delete_bucket(bucket_name)
-        # except ClientError:
-        #     print("You should add the AmazonS3ReadOnlyAccess permission to the user")
+        try:
+            bucket_name, bucket_response = self.create_bucket()
+            self.delete_bucket(bucket_name)
+        except ClientError:
+            print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
         print(self.S3.list_buckets())
 
     def create_bucket(self):
@@ -36,7 +35,6 @@ class ResourceManagerCore:
                 'LocationConstraint': current_region,
             }
         )
-        print(bucket_name)
         return bucket_name, bucket_response
 
     def delete_bucket(self, bucket_name):
