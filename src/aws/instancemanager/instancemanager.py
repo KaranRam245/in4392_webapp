@@ -205,8 +205,8 @@ def start_instance():
 
     pool = Pool()
     procs = [
-        pool.apply(monitor.run, args=(lock,)),
-        pool.apply(scheduler.run, args=(lock,))
+        pool.apply_async(monitor.run, args=(lock,)),
+        pool.apply_async(scheduler.run, args=(lock,))
     ]
     try:
         for proc in procs:
