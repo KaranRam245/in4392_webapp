@@ -9,17 +9,14 @@ class BotoInstanceReader:
 
     @staticmethod
     def read_ids(_input, own_instance, filters=None):
-        output = BotoInstanceReader.read(_input, own_instance, filters)
+        output = BotoInstanceReader.read(own_instance, filters)
         return [inst.instance_id for inst in output]
 
     @staticmethod
     def read(own_instance, filters=None):
         if filters is None:
             filters = []
-        if isinstance(BotoInstanceReader.EC2, str):
-            boto_response = json.loads(BotoInstanceReader.EC2)
-        else:
-            boto_response = BotoInstanceReader.EC2.describe_instances()
+        boto_response = BotoInstanceReader.EC2.describe_instances()
         boto_instances = []
         for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]
