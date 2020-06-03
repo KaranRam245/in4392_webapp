@@ -7,7 +7,7 @@ sys.path.append('./src')
 from aws.utils.monitor import Listener
 from S3Connector import S3Connector
 import uuid
-import ClientError
+from botocore.exceptions import ClientError
 
 
 class ResourceManagerCore:
