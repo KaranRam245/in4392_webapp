@@ -178,9 +178,12 @@ class MultiConnectionClient():
             self.sel.close()
 
     def run(self):
-        while True:
-            print('...')
-            self.send_message(HeartBeatPacket(1))
-            # self.send_message({'test':'message'})
-            self._send_buffer()
-            sleep(5)
+        try:
+            while True:
+                print('...')
+                self.send_message(HeartBeatPacket(1))
+                # self.send_message({'test':'message'})
+                self._send_buffer()
+                sleep(5)
+        except KeyboardInterrupt:
+            pass
