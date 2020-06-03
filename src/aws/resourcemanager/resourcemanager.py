@@ -15,9 +15,6 @@ class ResourceManagerCore:
         create_bucket()
         print(self.S3.get_bucket_list())
 
-    if __name__ == "__main__":
-        ResourceManagerCore().run()
-
     def create_bucket(self):
         """
         Method called to create a bucket.
@@ -48,3 +45,8 @@ class ResourceMonitor(Listener):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
+
+if __name__ == "__main__":
+    import sys
+    sys.path.append('./src')
+    ResourceManagerCore().run()
