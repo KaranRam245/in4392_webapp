@@ -64,7 +64,7 @@ class MultiConnectionServer:
                     else:
                         self.accept_wrapper(key.fileobj)
         except KeyboardInterrupt:
-            print("Client interrupted manually.")
+            print("Interrupted manually.")
         finally:
             lsock.close()
             self.sel.close()
@@ -77,6 +77,7 @@ class MultiConnectionClient:
         self.port = port
         self.sel = selectors.DefaultSelector()
         self.sock = self.start_connection()
+        self.message_buffer = []
 
     def start_connection(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -88,11 +89,14 @@ class MultiConnectionClient:
     def send_message(self, message):
         events = selectors.EVENT_WRITE
         data = {
-            'msg_total': len(message),
             'recv_total': 0,
-            'message': message
+            'messages_sent': 0
         }
-        self.sel.register(self.sock, events, data=data)
+        self.message_buffer.append(message)
+        try:
+            self.sel.register(self.sock, events, data=data)
+        except KeyError:
+            pass  # Already registered.
 
     def service_connection(self, key, mask):
         sock = key.fileobj
@@ -108,9 +112,11 @@ class MultiConnectionClient:
                 self.sel.unregister(sock)
                 sock.close()
         if mask & selectors.EVENT_WRITE:
-            print("Sending", data['message'], "to connection", self.host)
-            self.sock.sendall(json.dumps(data['message']).encode(ENCODING))
-            data['message'] = ''
+            while self.message_buffer:
+                message = self.message_buffer.pop(0)
+                print("Sending", message, "to connection", self.host)
+                self.sock.sendall(json.dumps(message).encode(ENCODING))
+                data['messages_sent'] += 1
             self.sel.modify(key.fileobj, events=selectors.EVENT_READ, data=data)
 
     def close(self):
@@ -125,7 +131,6 @@ class MultiConnectionClient:
                         self.service_connection(key, mask)
                     # Check for a socket being monitored to continue.
                 else:
-                    print("All messages sent")
                     break
         except KeyboardInterrupt:
             print("Manual program interruption initiated..")
