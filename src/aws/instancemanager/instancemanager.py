@@ -1,7 +1,7 @@
 """
 Module for the Instance Manager.
 """
-import subprocess
+import commands
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
 from time import sleep
@@ -185,11 +185,9 @@ class NodeScheduler:
         # except KeyboardInterrupt:
         #     pass
         print("Running describe-instances")
-        stdout,stderr = subprocess.Popen(['aws', 'ec2', 'describe-instances'],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
-        print(stdout)
-        print(stderr)
+        status, output = commands.getstatusoutput('aws ec2 describe-instances')
+        print(status)
+        print(output)
 
 
 class NodeMonitor(con.MultiConnectionServer):
