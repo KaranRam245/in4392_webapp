@@ -19,9 +19,9 @@ class ResourceManagerCore:
 
     def run(self):
         try:
-        bucket_name, bucket_response = self.create_bucket()
-        # self.delete_bucket(bucket_name)
-        self.upload_file('/home/ec2-user/in4392_webapp/src/aws/resourcemanager/textdocument.txt', bucket_name, 'text')
+            bucket_name, bucket_response = self.create_bucket()
+            # self.delete_bucket(bucket_name)
+            self.upload_file('/home/ec2-user/in4392_webapp/src/aws/resourcemanager/textdocument.txt', bucket_name, 'text')
 
         except ClientError:
             print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
