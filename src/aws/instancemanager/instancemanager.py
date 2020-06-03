@@ -73,6 +73,14 @@ class Instances:
             self.set_state(instance_id=boto_instance.instance_id, instance_type=boto_instance.name,
                            state=InstanceState(boto_instance.state))
 
+    def __str__(self):
+        with self._lock:
+            return "All instances:\n" \
+                   "  node_managers: {}" \
+                   "  resource_managers: {}" \
+                   "  workers: {}".format(str(self._node_managers), str(self._resource_managers),
+                                          str(self._workers))
+
 
 class NodeScheduler:
     """
@@ -170,7 +178,7 @@ class NodeScheduler:
             boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
             self.instances.update_all(boto_response=boto_response)
 
-            print('All instances:\n{}'.format(self.instances))
+            print(self.instances)
             sleep(15)
 
 
