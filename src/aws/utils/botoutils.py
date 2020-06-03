@@ -4,8 +4,8 @@ import boto3
 class BotoInstanceReader:
 
     def __init__(self):
-        sess = boto3.session.Session()
-        self.EC2 = sess.client('ec2')
+        # sess = boto3.session.Session()
+        # self.EC2 = sess.client('ec2')
     #
     # @staticmethod
     # def read_ids(own_instance, filters=None):
