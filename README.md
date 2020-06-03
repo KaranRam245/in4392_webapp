@@ -25,7 +25,7 @@ Create an AWS account and verify your account. After that we create an instance 
 1. Run `sudo apt install awscli`.<sup>*</sup>
 2. Go to `https://console.aws.amazon.com/iam` and create a new user.
 3. Assign to the user the permissions you need.
-4. Add the user to the group `AmazonEC2ContainerRegistryReadOnly` and `AmazonS3ReadOnlyAccess`.
+4. Add the user to the group `AmazonEC2ContainerRegistryReadOnly`,`AmazonS3ReadOnlyAccess`, and `AmazonS3FullAccess`.
 5. Download the access keys or at least remember them.
 6. Run in the console `sudo aws configure`.<sup>*</sup>
 7. Fill in the data of the access keys from the CSV you downloaded in step 4 with the region name of your AWS instance. My region is, for example, `eu-central-1`. Then set default output format to `json`.<sup>*</sup>
@@ -43,7 +43,7 @@ We name all our instances for the system to know which role each instance might 
 1. First step is to create an AWS EC2 server. We choose a Linux system.
 2. Run `sudo apt-get update -y`.
 3. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
-4. We want to use Python3.6 (or higher). Check this with `python -v`. 
+4. We want to use Python3.6 (or higher). Check this with `python -v`.
 5. Run `sudo apt install python3-pip`.
 6. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
 7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.

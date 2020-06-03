@@ -17,7 +17,9 @@ class ResourceManagerCore:
 
     def run(self):
         # try:
-        self.create_bucket()
+
+        bucket_name, bucket_response = self.create_bucket()
+        self.delete_bucket(bucket_name)
         # except ClientError:
         #     print("You should add the AmazonS3ReadOnlyAccess permission to the user")
         print(self.S3.list_buckets())
@@ -27,15 +29,22 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
-        print(bucket_name)
+        current_region = 'eu-central-1'
         bucket_response = self.S3.create_bucket(
             Bucket=bucket_name,
             CreateBucketConfiguration={
-                'LocationConstraint': 'eu-central-1',
+                'LocationConstraint': current_region,
             }
         )
         print(bucket_name)
         return bucket_name, bucket_response
+
+    def delete_bucket(self, bucket_name):
+        """
+        Method called to delete the bucket with the name bucket_name.
+        :param bucket_name: Name of the bucket to be deleted.
+        """
+        delete_bucket(bucket_name)
 
 class ResourceMonitor(Listener):
 
