@@ -17,7 +17,7 @@ class ResourceManagerCore:
 
     def run(self):
         # try:
-            self.create_bucket()
+        self.create_bucket()
         # except ClientError:
         #     print("You should add the AmazonS3ReadOnlyAccess permission to the user")
         print(self.S3.list_buckets())
@@ -32,7 +32,7 @@ class ResourceManagerCore:
             Bucket=bucket_name,
             CreateBucketConfiguration={
                 'LocationConstraint': 'eu-central-1',
-            },
+            }
         )
         print(bucket_name)
         return bucket_name, bucket_response
