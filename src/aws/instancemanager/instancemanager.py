@@ -168,9 +168,7 @@ class NodeScheduler:
         """
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
-    def run(self, lock):
-        session = boto3.session.Session()
-        ec2 = session.client('ec2')
+    def run(self, lock, ec2):
         try:
             while True:
                 boto_response = self.read(ec2, self.instance_id)
@@ -181,21 +179,6 @@ class NodeScheduler:
                 print('hello')
         except KeyboardInterrupt:
             pass
-
-    @staticmethod
-    def read(ec2, own_instance, filters=None):
-        if filters is None:
-            filters = []
-        boto_response = ec2.describe_instances()
-        boto_instances = []
-        for reserverations in boto_response['Reservations']:
-            json_instance = reserverations['Instances'][0]
-            boto_instance = BotoInstance.instance(json_instance)
-            # Remove the Instance Manager and if the filter_out option wants it.
-            if boto_instance.instance_id != own_instance and not BotoInstanceReader._filter_out(
-                    boto_instance, filters):
-                boto_instances.append(boto_instance)
-        return boto_instances
 
 
 class NodeMonitor(con.MultiConnectionServer):
@@ -221,9 +204,12 @@ def start_instance():
     monitor = NodeMonitor(scheduler)
     print('Instance manager running..')
 
+    session = boto3.session.Session()
+    ec2 = session.client('ec2')
+
     pool = Pool()
     procs = [
-        pool.apply_async(monitor.run, args=(lock,)),
+        pool.apply_async(monitor.run, args=(lock,ec2)),
         pool.apply_async(scheduler.run, args=(lock,))
     ]
     try:
