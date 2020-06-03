@@ -16,10 +16,10 @@ class ResourceManagerCore:
         self.S3 = boto3.client('s3')
 
     def run(self):
-        try:
+        # try:
             self.create_bucket()
-        except ClientError:
-            print("You should add the AmazonS3ReadOnlyAccess permission to the user")
+        # except ClientError:
+        #     print("You should add the AmazonS3ReadOnlyAccess permission to the user")
         print(self.S3.list_buckets())
 
     def create_bucket(self):
