@@ -80,7 +80,8 @@ class InstanceState(State):
         elif isinstance(state_to_map, int):
             return mapping[state_to_map]
         raise Exception(
-            'Unknown instance detected. EC2 does not support the "{}" state'.format(state_to_map))
+            'Unknown instance detected. EC2 does not support the "{}" state with type "{}"'.format(
+                state_to_map, type(state_to_map)))
 
     def __str__(self):
         return self.map_to(self._state)
