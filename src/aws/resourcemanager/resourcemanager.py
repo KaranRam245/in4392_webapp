@@ -21,15 +21,15 @@ class ResourceManagerCore:
         dirname = os.path.dirname(__file__)
         print(dirname)
         # filename = os.path.join(dirname, 'relative/path/to/file/you/want')
-        try:
+        # try:
             # bucket_name, bucket_response = self.create_bucket()
             # self.delete_bucket(bucket_name)
             # bucket_name = '6c45ca04-dfe7-45c0-839e-89c0b5fdc424'
             # self.upload_file('/home/ec2-user/in4392_webapp/src/aws/resourcemanager/textdocument.txt', bucket_name, 'text')
             # self.download_file(bucket_name, 'text', '/home/ec2-user/in4392_webapp/src/aws/resourcemanager/textdocument2.txt')
 
-        except ClientError:
-            print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
+        # except ClientError:
+        #     print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
         print(self.S3.list_buckets())
 
     def create_bucket(self):
