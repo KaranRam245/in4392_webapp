@@ -170,10 +170,10 @@ class NodeScheduler:
         try:
             while True:
                 #boto_response = BotoInstanceReader.read(self.instance_id)
-                #with lock:
+                with lock:
                 #    self.instances.update_all(boto_response=boto_response)
-                #    print(self.instances)
-                #sleep(15)
+                   print(self.instances)
+                sleep(15)
                 print('hello')
         except KeyboardInterrupt:
             pass
