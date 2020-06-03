@@ -19,10 +19,9 @@ class ResourceManagerCore:
         self.S3_Session = boto3.session.Session()
 
     def run(self):
-        dirname = os.path.dirname(__file__)
-        print(dirname)
         try:
-            bucket_name = '6c45ca04-dfe7-45c0-839e-89c0b5fdc424'
+            delete_bucket('6c45ca04-dfe7-45c0-839e-89c0b5fdc424')
+            bucket_name, bucket_response = create_bucket()
             self.upload_file('src/aws/resourcemanager/textdocument.txt', bucket_name, 'text')
             self.download_file(bucket_name, 'text', 'src/aws/resourcemanager/textdocument2.txt')
         except ClientError:
