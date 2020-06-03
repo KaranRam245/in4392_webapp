@@ -2,6 +2,7 @@
 Module for the Instance Manager.
 """
 from concurrent.futures import ThreadPoolExecutor
+import multiprocessing
 from time import sleep
 
 from ec2_metadata import ec2_metadata
@@ -168,11 +169,12 @@ class NodeScheduler:
 
     def run(self, lock):
         print("Running NodeScheduler..")
-        boto_reader = BotoInstanceReader()
+        with lock:
+            boto_reader = BotoInstanceReader()
         print("Reader created..")
         try:
             while True:
-                boto_response = boto_reader.read(self.instance_id)
+                # boto_response = boto_reader.read(self.instance_id)
                 # with lock:
                 #    self.instances.update_all(boto_response=boto_response)
                 print(self.instances)
@@ -197,8 +199,8 @@ def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    # manager = Manager()
-    # lock = manager.RLock()
+    manager = multiprocessing.Manager()
+    lock = manager.RLock()
     scheduler = NodeScheduler()
 
     monitor = NodeMonitor(scheduler)
@@ -215,7 +217,7 @@ def start_instance():
     # except KeyboardInterrupt:
     #     print("Manual program interruption initiated..")
     with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(monitor.run), executor.submit(scheduler.run)]
+        futures = [executor.submit(monitor.run), executor.submit(scheduler.run, lock)]
         for future in futures:
             future.result()
 
