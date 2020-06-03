@@ -1,7 +1,11 @@
 import json
 
+import boto3
+
 
 class BotoInstanceReader:
+
+    EC2 = boto3.client('ec2')
 
     @staticmethod
     def read_ids(_input, own_instance, filters=None):
@@ -9,13 +13,13 @@ class BotoInstanceReader:
         return [inst.instance_id for inst in output]
 
     @staticmethod
-    def read(_input, own_instance, filters=None):
+    def read(own_instance, filters=None):
         if filters is None:
             filters = []
-        if isinstance(_input, str):
-            boto_response = json.loads(_input)
+        if isinstance(BotoInstanceReader.EC2, str):
+            boto_response = json.loads(BotoInstanceReader.EC2)
         else:
-            boto_response = _input.describe_instances()
+            boto_response = BotoInstanceReader.EC2.describe_instances()
         boto_instances = []
         for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]

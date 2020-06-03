@@ -4,7 +4,6 @@ Module for the Instance Manager.
 from multiprocessing import Lock, Pool, Manager
 from time import sleep
 
-import boto3
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
@@ -89,7 +88,6 @@ class NodeScheduler:
 
     def __init__(self, lock):
         self.instances = Instances(lock)
-        self.ec2 = boto3.client('ec2')
         self.instance_id = ec2_metadata.instance_id
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
@@ -109,14 +107,14 @@ class NodeScheduler:
         #     self.start_worker()
 
     def _send_start_command(self, instance_type):
-        self.ec2.run_command(
+        BotoInstanceReader.EC2.run_command(
             InstanceIds=self.instances.get_all(instance_type, state=InstanceState.RUNNING),
             DocumentName='AWS-RunShellScript',
             Parameters={'commands': 'python3 in4392_webapp/main.py {} {}'.format(
                 instance_type, self.ipv4)})
 
     def start_node_manager(self):
-        nodemanagers = BotoInstanceReader.read_ids(self.ec2, self.instance_id,
+        nodemanagers = BotoInstanceReader.read_ids(self.instance_id,
                                                    filters=['is_node_manager',
                                                             ('is_running', False)])
         to_start = nodemanagers[0]  # TODO: Smarter method to decide which to start.
@@ -126,7 +124,7 @@ class NodeScheduler:
         self._init_instance(to_start, instance_type='node_managers', wait=True)
 
     def start_worker(self):
-        workers = BotoInstanceReader.read_ids(self.ec2, self.instance_id,
+        workers = BotoInstanceReader.read_ids(self.instance_id,
                                               filters=['is_worker', ('is_running', False)])
         if not workers:
             print('No worker instances found with the given filters.')
@@ -135,7 +133,7 @@ class NodeScheduler:
         self._init_instance(to_start, instance_type='workers', wait=False)
 
     def start_resource_manager(self):
-        resourcemanagers = BotoInstanceReader.read_ids(self.ec2, self.instance_id,
+        resourcemanagers = BotoInstanceReader.read_ids(self.instance_id,
                                                        filters=['is_resource_manager',
                                                                 ('is_running', False)])
         if not resourcemanagers:
@@ -145,7 +143,7 @@ class NodeScheduler:
         self._init_instance(to_start, instance_type='resource_managers', wait=True)
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
-        instance = self.ec2.Instance(id=instance_id)
+        instance = BotoInstanceReader.EC2.Instance(id=instance_id)
         if wait:
             instance.wait_until_running()
             self.instances.set_state(instance_id, instance_type,
@@ -156,7 +154,7 @@ class NodeScheduler:
                                      InstanceState(InstanceState.PENDING))
 
     def _kill_instance(self, instance_id, instance_type, wait=False):
-        instance = self.ec2.Instance(id=instance_id)
+        instance = BotoInstanceReader.EC2.Instance(id=instance_id)
         if wait:
             instance.wait_until_stopped()
             self.instances.set_state(instance_id, instance_type,
@@ -171,12 +169,12 @@ class NodeScheduler:
         Get all running instances.
         :return: All instances that have a RUNNING state.
         """
-        return BotoInstanceReader.read_ids(self.ec2, self.instance_id, filters=['is_running'])
+        return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
     def run(self):
         try:
             while True:
-                boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
+                boto_response = BotoInstanceReader.read(self.instance_id)
                 self.instances.update_all(boto_response=boto_response)
 
                 print(self.instances)
