@@ -16,7 +16,7 @@ class BotoInstanceReader:
     def read(own_instance, filters=None):
         if filters is None:
             filters = []
-        boto_response = BotoInstanceReader.EC2.describe_instances()
+        boto_response = self.EC2.describe_instances()
         boto_instances = []
         for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]
