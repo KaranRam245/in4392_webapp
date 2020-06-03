@@ -174,12 +174,15 @@ class NodeScheduler:
         return BotoInstanceReader.read_ids(self.ec2, self.instance_id, filters=['is_running'])
 
     def run(self):
-        while True:
-            boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
-            self.instances.update_all(boto_response=boto_response)
+        try:
+            while True:
+                boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
+                self.instances.update_all(boto_response=boto_response)
 
-            print(self.instances)
-            sleep(15)
+                print(self.instances)
+                sleep(15)
+        except KeyboardInterrupt:
+            pass
 
 
 class NodeMonitor(con.MultiConnectionServer):
