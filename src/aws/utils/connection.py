@@ -11,7 +11,7 @@ PORT = 8080
 ENCODING = 'UTF-8'
 
 
-class MultiConnectionServer():
+class MultiConnectionServer:
     """
     Class for multiple connections handling.
     The code is based on https://github.com/realpython/materials/blob/master/python-sockets-tutorial
@@ -67,6 +67,7 @@ class MultiConnectionServer():
         # TODO: process heartbeat
 
     def run(self):
+        print('Starting Server instance..')
         lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         lsock.bind((self.host, self.port))
         lsock.listen(10)  # Maximum nodes that can connect. If needed this can be leveraged.
@@ -89,7 +90,7 @@ class MultiConnectionServer():
             self.sel.close()
 
 
-class MultiConnectionClient():
+class MultiConnectionClient:
 
     def __init__(self, host, port):
         self.host = host
