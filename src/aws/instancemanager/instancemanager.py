@@ -166,10 +166,11 @@ class NodeScheduler:
         """
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
-    def run(self):
+    def run(self, lock):
+        print("Running NodeScheduler..")
         try:
             while True:
-                boto_response = BotoInstanceReader.read(self.instance_id)
+                boto_response = BotoInstanceReader().read(self.instance_id)
                 # with lock:
                 #    self.instances.update_all(boto_response=boto_response)
                 print(self.instances)
