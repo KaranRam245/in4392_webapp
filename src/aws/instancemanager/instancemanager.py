@@ -174,7 +174,8 @@ class NodeScheduler:
         print("Reader created..")
         try:
             while True:
-                boto_response = boto_reader.read(self.instance_id)
+                with lock:
+                    boto_response = boto_reader.read(self.instance_id)
                 # with lock:
                 #    self.instances.update_all(boto_response=boto_response)
                 print(self.instances)
