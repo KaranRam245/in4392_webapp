@@ -11,7 +11,7 @@ PORT = 8080
 ENCODING = 'UTF-8'
 
 
-class MultiConnectionServer(ABC):
+class MultiConnectionServer():
     """
     Class for multiple connections handling.
     The code is based on https://github.com/realpython/materials/blob/master/python-sockets-tutorial
@@ -38,6 +38,7 @@ class MultiConnectionServer(ABC):
                 if recv_data:
                     data['outb'] += recv_data  # TODO: Process.
                     message = json.loads(recv_data.decode(ENCODING))
+                    print('Processing: {}'.format(message))
                     self.process_packet(message, data['addr'])
                 else:
                     print("Closing connection to", data['addr'])
@@ -71,6 +72,7 @@ class MultiConnectionServer(ABC):
         lsock.listen(10)  # Maximum nodes that can connect. If needed this can be leveraged.
         lsock.setblocking(False)
         self.sel.register(lsock, selectors.EVENT_READ, data=None)
+        print('Listening on {}:{}'.format(self.host, self.port))
 
         try:
             while True:
@@ -87,7 +89,7 @@ class MultiConnectionServer(ABC):
             self.sel.close()
 
 
-class MultiConnectionClient(ABC):
+class MultiConnectionClient():
 
     def __init__(self, host, port):
         self.host = host
@@ -110,6 +112,7 @@ class MultiConnectionClient(ABC):
             'messages_sent': 0
         }
         self.message_buffer.append(message)
+        print("Sending message: {}".format(message))
         try:
             self.sel.register(self.sock, events, data=data)
         except KeyError:
@@ -181,55 +184,3 @@ class MultiConnectionClient(ABC):
             # self.send_message({'test':'message'})
             self._send_buffer()
             sleep(5)
-
-
-class Server(socketserver.BaseRequestHandler):
-
-    def handle(self):
-        data = self.request.recv(1024).strip()
-        data = data.decode('UTF-8')
-        print("{} wrote:\n{}".format(self.client_address[0], data))
-        self.request.sendall(data.upper().encode(ENCODING))
-
-    @staticmethod
-    def connect(host=HOST):
-        try:
-            server = socketserver.TCPServer((host, PORT), Server)
-            print('Monitor is running')
-            server.serve_forever()
-        except Exception as e:
-            print(e)
-
-
-class Client:
-    def __init__(self, host, port=PORT):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.host = host
-        self.port = port
-        self._connect()
-
-    def _connect(self):
-        try:
-            self.sock.connect((self.host, self.port))
-        except Exception as e:
-            print(e)
-
-    def send(self, message: dict):
-        message = json.dumps(message)
-        try:
-            self.sock.sendall(message.encode('UTF-8'))
-        except Exception as e:
-            print(e)
-
-    def close(self):
-        self.sock.close()
-
-
-if __name__ == '__main__':
-    Server.connect('localhost')
-
-if __name__ == '__main__':
-    MultiConnectionClient().run()
-
-if __name__ == '__main__':
-    MultiConnectionServer().run()
