@@ -5,6 +5,7 @@ from multiprocessing import Pool, Manager
 from time import sleep
 
 import boto3
+import boto3.session
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
