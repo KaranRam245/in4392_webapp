@@ -2,6 +2,7 @@
 Module for the Instance Manager.
 """
 from multiprocessing import Pool, Manager
+from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
 from ec2_metadata import ec2_metadata
@@ -166,13 +167,13 @@ class NodeScheduler:
         """
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
-    def run(self, lock):
+    def run(self):
         try:
             while True:
                 boto_response = BotoInstanceReader.read(self.instance_id)
-                with lock:
+                # with lock:
                 #    self.instances.update_all(boto_response=boto_response)
-                   print(self.instances)
+                print(self.instances)
                 # sleep(15)
                 print('hello')
         except KeyboardInterrupt:
@@ -195,23 +196,27 @@ def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    manager = Manager()
-    lock = manager.RLock()
+    # manager = Manager()
+    # lock = manager.RLock()
     scheduler = NodeScheduler()
 
     monitor = NodeMonitor(scheduler)
     print('Instance manager running..')
 
-    pool = Pool()
-    procs = [
-        pool.apply_async(monitor.run, args=(lock,)),
-        pool.apply_async(scheduler.run, args=(lock,))
-    ]
-    try:
-        for proc in procs:
-            proc.get()
-    except KeyboardInterrupt:
-        print("Manual program interruption initiated..")
+    # pool = Pool()
+    # procs = [
+    #     pool.apply_async(monitor.run, args=(lock,)),
+    #     pool.apply_async(scheduler.run, args=(lock,))
+    # ]
+    # try:
+    #     for proc in procs:
+    #         proc.get()
+    # except KeyboardInterrupt:
+    #     print("Manual program interruption initiated..")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(monitor.run), executor.submit(scheduler.run)]
+        for future in futures:
+            future.result()
 
 
 # Main function to start the InstanceManager
