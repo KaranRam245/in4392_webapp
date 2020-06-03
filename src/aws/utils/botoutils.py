@@ -4,6 +4,7 @@ import boto3
 class BotoInstanceReader:
 
     def __init__(self):
+        pass
         # sess = boto3.session.Session()
         # self.EC2 = sess.client('ec2')
     #
