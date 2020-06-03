@@ -29,7 +29,11 @@ class ResourceManagerCore:
         bucket_name = str(uuid.uuid4())
         print(bucket_name)
         bucket_response = self.S3.create_bucket(
-            Bucket=bucket_name)
+            Bucket=bucket_name
+            CreateBucketConfiguration={
+                'LocationConstraint': 'eu-central-1',
+            },
+        )
         print(bucket_name)
         return bucket_name, bucket_response
 
