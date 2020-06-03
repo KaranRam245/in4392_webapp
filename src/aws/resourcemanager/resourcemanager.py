@@ -16,18 +16,15 @@ class ResourceManagerCore:
     def __init__(self):
         self.S3 = boto3.client('s3')
         self.S3_resource = boto3.resource('s3')
+        self.S3_Session = boto3.session.Session()
 
     def run(self):
         dirname = os.path.dirname(__file__)
         print(dirname)
-        # filename = os.path.join(dirname, 'relative/path/to/file/you/want')
         try:
-            # bucket_name, bucket_response = self.create_bucket()
-            # self.delete_bucket(bucket_name)
             bucket_name = '6c45ca04-dfe7-45c0-839e-89c0b5fdc424'
             self.upload_file('src/aws/resourcemanager/textdocument.txt', bucket_name, 'text')
             self.download_file(bucket_name, 'text', 'src/aws/resourcemanager/textdocument2.txt')
-
         except ClientError:
             print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
         print(self.S3.list_buckets())
@@ -37,7 +34,7 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
-        current_region = 'eu-central-1'
+        current_region = self.S3_Session.refion_name
         bucket_response = self.S3.create_bucket(
             Bucket=bucket_name,
             CreateBucketConfiguration={
