@@ -45,7 +45,7 @@ class Buffer:
         packet['host'] = host  # TODO: May need a better way to distinguish hosts.
         self._items.put((packet['time'], packet))
 
-    def flush(self, lock):
+    def flush(self):
         buffer = self._items
         self._items = PriorityQueue()
         return buffer
