@@ -33,7 +33,7 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
-        current_region = self.S3_Session.refion_name
+        current_region = self.S3_Session.region_name
         bucket_response = self.S3.create_bucket(
             Bucket=bucket_name,
             CreateBucketConfiguration={
