@@ -1,17 +1,22 @@
+import boto3
 
 
 class BotoInstanceReader:
 
+    def __init__(self):
+        sess = boto3.session.Session()
+        self.EC2 = sess.client('ec2')
+
     @staticmethod
-    def read_ids(ec2, own_instance, filters=None):
+    def read_ids(own_instance, filters=None):
         output = BotoInstanceReader.read(own_instance, filters)
         return [inst.instance_id for inst in output]
 
     @staticmethod
-    def read(ec2, own_instance, filters=None):
+    def read(own_instance, filters=None):
         if filters is None:
             filters = []
-        boto_response = ec2.describe_instances()
+        boto_response = self.EC2.describe_instances()
         boto_instances = []
         for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]
