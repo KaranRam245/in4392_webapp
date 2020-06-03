@@ -7,7 +7,7 @@ from time import sleep
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
-# from aws.utils.botoutils import BotoInstanceReader
+from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.monitor import Buffer
 from aws.utils.state import InstanceState
 
@@ -169,9 +169,9 @@ class NodeScheduler:
     def run(self, lock):
         try:
             while True:
-                #boto_response = BotoInstanceReader.read(self.instance_id)
+                boto_response = BotoInstanceReader.read(self.instance_id)
                 with lock:
-                #    self.instances.update_all(boto_response=boto_response)
+                   self.instances.update_all(boto_response=boto_response)
                    print(self.instances)
                 # sleep(15)
                 print('hello')
