@@ -67,7 +67,8 @@ class ResourceManagerCore:
             try:
                 self.S3.upload_file(file_path, bucket_name, key)
             except DataNotFoundError:
-                print("There is no file with file_path " + file_path)
+                print("There is no file with file_path " +
+                sys.path + " + " + file_path)
 
 
 class ResourceMonitor(Listener):
