@@ -9,7 +9,7 @@ import boto3.session
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
-from aws.utils.botoutils import BotoInstanceReader
+from aws.utils.botoutils import BotoInstanceReader, BotoInstance
 from aws.utils.monitor import Buffer
 from aws.utils.state import InstanceState
 
@@ -173,7 +173,7 @@ class NodeScheduler:
         ec2 = session.client('ec2')
         try:
             while True:
-                boto_response = BotoInstanceReader.read(ec2, self.instance_id)
+                boto_response = self.read(ec2, self.instance_id)
                 with lock:
                 #    self.instances.update_all(boto_response=boto_response)
                    print(self.instances)
@@ -181,6 +181,21 @@ class NodeScheduler:
                 print('hello')
         except KeyboardInterrupt:
             pass
+
+    @staticmethod
+    def read(ec2, own_instance, filters=None):
+        if filters is None:
+            filters = []
+        boto_response = ec2.describe_instances()
+        boto_instances = []
+        for reserverations in boto_response['Reservations']:
+            json_instance = reserverations['Instances'][0]
+            boto_instance = BotoInstance.instance(json_instance)
+            # Remove the Instance Manager and if the filter_out option wants it.
+            if boto_instance.instance_id != own_instance and not BotoInstanceReader._filter_out(
+                    boto_instance, filters):
+                boto_instances.append(boto_instance)
+        return boto_instances
 
 
 class NodeMonitor(con.MultiConnectionServer):
