@@ -202,15 +202,13 @@ def start_instance():
     """
     manager = Manager()
     lock = manager.RLock()
-    print('Starting instance manager..')
     scheduler = NodeScheduler(lock)
 
     monitor = NodeMonitor(scheduler, lock)
     print('Instance manager running..')
 
     pool = Pool()
-    procs = [pool.apply_async(scheduler.run),
-             pool.apply_async(monitor.run)]
+    procs = [pool.apply_async(monitor.run), pool.apply_async(scheduler.run)]
     try:
         for proc in procs:
             proc.get()
