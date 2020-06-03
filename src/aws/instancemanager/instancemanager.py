@@ -7,6 +7,7 @@ from time import sleep
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
+from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.monitor import Buffer
 from aws.utils.state import InstanceState
 
@@ -77,16 +78,15 @@ class Instances:
 
 
 class NodeScheduler:
-    from aws.utils.botoutils import BotoInstanceReader
     """
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
     def __init__(self):
         self.instances = Instances()
-        self.instance_id = ec2_metadata.instance_id
-        self.ipv4 = ec2_metadata.public_ipv4
-        self.dns = ec2_metadata.public_hostname
+        self.instance_id = 'a'#ec2_metadata.instance_id
+        self.ipv4 = 'b' #ec2_metadata.public_ipv4
+        self.dns = 'c' #ec2_metadata.public_hostname
         super().__init__()
 
     def initialize_nodes(self):
