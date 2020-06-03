@@ -1,16 +1,14 @@
 """
 Module for the Node Manager.
 """
-from threading import Thread, RLock
-
-from aws.utils.monitor import Listener, Observable, RepeatingHeartBeat
-from aws.utils.packets import HeartBeatPacket
-from aws.utils.connection import MultiConnectionClient
+import time
+from threading import RLock
 
 import aws.utils.connection as con
+from aws.utils.connection import MultiConnectionClient
+from aws.utils.monitor import Listener, Observable, RepeatingHeartBeat
+from aws.utils.packets import HeartBeatPacket
 from aws.utils.state import InstanceState
-
-import time
 
 
 class TaskPool(Observable):

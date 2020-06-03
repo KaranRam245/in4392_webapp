@@ -1,10 +1,10 @@
 import json
-import socket, socketserver
 import selectors
-from abc import abstractmethod, ABC
+import socket
+from abc import abstractmethod
+from time import sleep
 
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket
-from time import sleep
 
 HOST = '0.0.0.0'
 PORT = 8080
