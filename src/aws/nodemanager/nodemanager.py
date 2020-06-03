@@ -29,10 +29,13 @@ class TaskPool(Observable):
         """
         Start function for the TaskPool.
         """
-        while True:
-            print('...')
-            self.generate_heartbeat()
-            time.sleep(15)
+        try:
+            while True:
+                print('...')
+                self.generate_heartbeat()
+                time.sleep(15)
+        except KeyboardInterrupt:
+            pass
 
     def add_task(self, task):
         """

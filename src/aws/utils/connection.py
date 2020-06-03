@@ -169,7 +169,7 @@ class MultiConnectionClient():
                 else:
                     break
         except KeyboardInterrupt:
-            print("Manual program interruption initiated..")
+            pass
         except OSError:
             print("Server appears to be down. Waiting for a retry.")
             sleep(5)

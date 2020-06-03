@@ -214,9 +214,7 @@ def start_instance():
             proc.start()
             proc.join()
     except KeyboardInterrupt:
-        for proc in procs:
-            if proc:
-                proc.terminate()
+        print("Manual program interruption initiated..")
 
 
 # Main function to start the InstanceManager

@@ -67,6 +67,9 @@ class RepeatingHeartBeat(Timer):
         """
         Run the Repeating Heartbeat timer.
         """
-        while not self.finished.is_set():
-            self.function(*self.args, **self.kwargs)
-            self.finished.wait(self.interval)
+        try:
+            while not self.finished.is_set():
+                self.function(*self.args, **self.kwargs)
+                self.finished.wait(self.interval)
+        except KeyboardInterrupt:
+            pass
