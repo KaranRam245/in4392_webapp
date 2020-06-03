@@ -7,7 +7,7 @@ from time import sleep
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
-# from aws.utils.botoutils import BotoInstanceReader
+from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.monitor import Buffer
 from aws.utils.state import InstanceState
 
