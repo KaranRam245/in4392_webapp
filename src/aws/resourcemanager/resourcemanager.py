@@ -15,7 +15,7 @@ class ResourceManagerCore:
         self.S3 = S3Connector()
 
     def run(self):
-        self.create_bucket()
+        #self.create_bucket()
         print(self.S3.get_bucket_list())
 
     def create_bucket(self):
