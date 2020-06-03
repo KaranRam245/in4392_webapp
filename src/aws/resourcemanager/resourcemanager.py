@@ -20,14 +20,23 @@ class ResourceManagerCore:
 
     def run(self):
         try:
+            # Check the bucket list
             bucket_list = self.S3.list_buckets()["Buckets"]
+            # If there are no buckets, create a new one
             if not bucket_list:
                 name,response = self.create_bucket()
                 bucket_list = self.S3.list_buckets()["Buckets"]
+            # Use the first bucket in the list
             bucket_name = bucket_list[0]["Name"]
+            """
+            Lines below is an example of what you can do with this code.
+            """
             key = 'text'
-            self.upload_file('src/aws/resourcemanager/upload.txt', bucket_name, key)
-            self.download_file(bucket_name, key, 'src/aws/resourcemanager/download.txt')
+            if os.path.exists('src/aws/resourcemanager/upload.txt'):
+                self.upload_file('src/aws/resourcemanager/upload.txt',
+                    bucket_name, key)
+                self.download_file(bucket_name, key,
+                    'src/aws/resourcemanager/download.txt')
         except ClientError:
             print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
         print(self.S3.list_buckets())
