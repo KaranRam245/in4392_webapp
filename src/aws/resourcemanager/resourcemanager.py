@@ -27,6 +27,7 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
+        print(bucket_name)
         bucket_response = self.S3.create_bucket(
             Bucket=bucket_name)
         print(bucket_name)
