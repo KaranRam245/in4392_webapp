@@ -84,9 +84,9 @@ class NodeScheduler:
 
     def __init__(self):
         self.instances = Instances()
-        self.instance_id = 'a'#ec2_metadata.instance_id
-        self.ipv4 = 'b' #ec2_metadata.public_ipv4
-        self.dns = 'c' #ec2_metadata.public_hostname
+        self.instance_id = ec2_metadata.instance_id
+        self.ipv4 = ec2_metadata.public_ipv4
+        self.dns = ec2_metadata.public_hostname
         super().__init__()
 
     def initialize_nodes(self):
