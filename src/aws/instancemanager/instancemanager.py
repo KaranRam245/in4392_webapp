@@ -188,6 +188,7 @@ class NodeScheduler:
                                stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
         print(stdout)
+        print(stderr)
 
 
 class NodeMonitor(con.MultiConnectionServer):
