@@ -207,7 +207,7 @@ def start_instance():
 
     pool = Pool()
     procs = [
-        pool.apply_async(monitor.run, args=(lock, ec2)),
+        pool.apply_async(monitor.run, args=(lock,)),
         pool.apply_async(scheduler.run, args=(lock,))
     ]
     try:
