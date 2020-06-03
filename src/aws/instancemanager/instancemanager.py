@@ -1,7 +1,7 @@
 """
 Module for the Instance Manager.
 """
-from multiprocessing import Lock, Pool, Manager
+from multiprocessing import Pool, Manager
 from time import sleep
 
 from ec2_metadata import ec2_metadata
@@ -201,7 +201,7 @@ def start_instance():
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
     manager = Manager()
-    lock = manager.Lock()
+    lock = manager.RLock()
     print('Starting instance manager..')
     scheduler = NodeScheduler(lock)
 
