@@ -1,7 +1,6 @@
 """
 Module for the Instance Manager.
 """
-from multiprocessing import Pool, Manager
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
@@ -178,7 +177,6 @@ class NodeScheduler:
                 #    self.instances.update_all(boto_response=boto_response)
                 print(self.instances)
                 sleep(15)
-                print('hello')
         except KeyboardInterrupt:
             pass
 
