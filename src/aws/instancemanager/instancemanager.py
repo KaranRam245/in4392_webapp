@@ -169,7 +169,7 @@ class NodeScheduler:
     def run(self, lock, ec2):
         import boto3
         session = boto3.session.Session()
-        ec2 = session.resource('ec2')
+        ec2 = session.client('ec2')
         try:
             while True:
                 # boto_response = self.read(ec2, self.instance_id)
