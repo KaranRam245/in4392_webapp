@@ -1,6 +1,9 @@
 """
 Module for the Resource Manager.
 """
+import sys
+sys.path.append('./src')
+
 from aws.utils.monitor import Listener
 from S3Connector import S3Connector
 import uuid
@@ -47,6 +50,4 @@ class ResourceMonitor(Listener):
                                   "method.")
 
 if __name__ == "__main__":
-    import sys
-    sys.path.append('./src')
     ResourceManagerCore().run()
