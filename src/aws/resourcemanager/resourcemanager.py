@@ -22,7 +22,7 @@ class ResourceManagerCore:
         try:
             bucket_list = self.S3.list_buckets()
             if not bucket_list:
-                create_bucket()
+                self.create_bucket()
                 bucket_list = self.S3.list_buckets()
             bucket_name = bucket_list["Buckets"][0]["Name"]
             key = 'text'
