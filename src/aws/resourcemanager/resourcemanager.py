@@ -20,7 +20,11 @@ class ResourceManagerCore:
 
     def run(self):
         try:
-            bucket_name = 'fb304576-dddf-4cba-822b-07de4945a92b'
+            bucket_list = self.S3.list_buckets()
+            if not bucket_list:
+                create_bucket()
+                bucket_list = self.S3.list_buckets()
+            bucket_name = bucket_list["Buckets"][0]["Name"]
             key = 'text'
             self.upload_file('src/aws/resourcemanager/upload.txt', bucket_name, key)
             self.download_file(bucket_name, key, 'src/aws/resourcemanager/download.txt')
