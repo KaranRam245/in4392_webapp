@@ -3,29 +3,33 @@ import boto3
 
 class BotoInstanceReader:
 
-    def __init__(self):
-        sess = boto3.session.Session()
-        self.EC2 = sess.client('ec2')
-
-    @staticmethod
-    def read_ids(own_instance, filters=None):
-        output = BotoInstanceReader.read(own_instance, filters)
-        return [inst.instance_id for inst in output]
+    # def __init__(self):
+    #     sess = boto3.session.Session()
+    #     self.EC2 = sess.client('ec2')
+    #
+    # @staticmethod
+    # def read_ids(own_instance, filters=None):
+    #     output = BotoInstanceReader.read(own_instance, filters)
+    #     return [inst.instance_id for inst in output]
+    #
+    # @staticmethod
+    # def read(own_instance, filters=None):
+    #     if filters is None:
+    #         filters = []
+    #     boto_response = self.EC2.describe_instances()
+    #     boto_instances = []
+    #     for reserverations in boto_response['Reservations']:
+    #         json_instance = reserverations['Instances'][0]
+    #         boto_instance = BotoInstance.instance(json_instance)
+    #         # Remove the Instance Manager and if the filter_out option wants it.
+    #         if boto_instance.instance_id != own_instance and not BotoInstanceReader._filter_out(
+    #                 boto_instance, filters):
+    #             boto_instances.append(boto_instance)
+    #     return boto_instances
 
     @staticmethod
     def read(own_instance, filters=None):
-        if filters is None:
-            filters = []
-        boto_response = self.EC2.describe_instances()
-        boto_instances = []
-        for reserverations in boto_response['Reservations']:
-            json_instance = reserverations['Instances'][0]
-            boto_instance = BotoInstance.instance(json_instance)
-            # Remove the Instance Manager and if the filter_out option wants it.
-            if boto_instance.instance_id != own_instance and not BotoInstanceReader._filter_out(
-                    boto_instance, filters):
-                boto_instances.append(boto_instance)
-        return boto_instances
+        return {}
 
     @staticmethod
     def _filter_out(instance, filters):
