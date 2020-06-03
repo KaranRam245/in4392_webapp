@@ -50,6 +50,8 @@ class ResourceManagerCore:
         if self.S3_resource.Bucket(bucket_name).creation_date is None:
             print("Bucket " + bucket_name + " does not exist")
         else:
+            bucket = self.S3_resource.Bucket(bucket_name)
+            bucket.object_versions.delete()
             self.S3.delete_bucket(Bucket=bucket_name)
 
     def upload_file(self, file_path, bucket_name, key):
