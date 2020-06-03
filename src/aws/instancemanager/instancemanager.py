@@ -1,17 +1,16 @@
 """
 Module for the Instance Manager.
 """
-from aws.utils.botoutils import BotoInstanceReader
-from ec2_metadata import ec2_metadata
 from multiprocessing import Process, Lock
+from time import sleep
+
+import boto3
+from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
-import boto3
-
+from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.monitor import Buffer
 from aws.utils.state import InstanceState
-
-from time import sleep
 
 
 class Instances:
@@ -66,13 +65,13 @@ class Instances:
     def update_state(self, instance_id, instance_type, boto_response):
         for boto_instance in boto_response:
             if boto_instance.instance_id == instance_id:
-                self.set_state(self, instance_id, instance_type,
-                               InstanceState(boto_instance.state))
+                self.set_state(instance_id=instance_id, instance_type=instance_type,
+                               state=InstanceState(boto_instance.state))
 
     def update_all(self, boto_response):
         for boto_instance in boto_response:
-            self.set_state(boto_instance.instance_id, boto_instance.name,
-                           InstanceState(boto_instance.state))
+            self.set_state(instance_id=boto_instance.instance_id, instance_type=boto_instance.name,
+                           state=InstanceState(boto_instance.state))
 
 
 class NodeScheduler:
@@ -168,7 +167,8 @@ class NodeScheduler:
 
     def run(self):
         while True:
-            self.instances.update_all()
+            boto_response = BotoInstanceReader.read(self.ec2, self.instance_id)
+            self.instances.update_all(boto_response=boto_response)
 
             print('All instances:\n{}'.format(self.instances))
             sleep(15)
