@@ -2,7 +2,6 @@
 Module for the Node Manager.
 """
 import time
-from threading import RLock
 
 import aws.utils.connection as con
 from aws.utils.connection import MultiConnectionClient
@@ -50,7 +49,6 @@ class TaskPool(Observable):
 class TaskPoolMonitor(Listener, MultiConnectionClient):
 
     def __init__(self, taskpool, host, port):
-        self._lock = RLock()
         self._tp = taskpool
         super().__init__(host, port)
 

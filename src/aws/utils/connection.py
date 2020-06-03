@@ -66,7 +66,7 @@ class MultiConnectionServer:
         print("Heartbeat: {}, from: {}".format(hb, source))
         # TODO: process heartbeat
 
-    def run(self):
+    def run(self, lock):
         print('Starting Server instance..')
         lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         lsock.bind((self.host, self.port))

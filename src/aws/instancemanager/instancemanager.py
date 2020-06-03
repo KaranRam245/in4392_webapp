@@ -15,32 +15,29 @@ from aws.utils.state import InstanceState
 class Instances:
     NAMES = ('node_managers', 'resource_managers', 'workers')
 
-    def __init__(self, lock):
+    def __init__(self):
         self._node_managers = {}
         self._resource_managers = {}
         self._workers = {}
-        self._lock = lock
 
     def get_all(self, instance_type, state=None):
-        with self._lock:
-            if instance_type == 'node_managers':
-                nodes = self._node_managers
-            elif instance_type == 'resource_managers':
-                nodes = self._resource_managers
-            else:
-                nodes = self._workers
-            if state:
-                nodes = [inst_id for inst_id in nodes.keys() if state in nodes.values()]
-            return nodes
+        if instance_type == 'node_managers':
+            nodes = self._node_managers
+        elif instance_type == 'resource_managers':
+            nodes = self._resource_managers
+        else:
+            nodes = self._workers
+        if state:
+            nodes = [inst_id for inst_id in nodes.keys() if state in nodes.values()]
+        return nodes
 
     def set_state(self, instance_id, instance_type, state: InstanceState):
-        with self._lock:
-            if instance_type == 'node_managers':
-                self._node_managers[instance_id] = state
-            elif instance_type == 'resource_managers':
-                self._resource_managers[instance_id] = state
-            else:
-                self._workers[instance_id] = state
+        if instance_type == 'node_managers':
+            self._node_managers[instance_id] = state
+        elif instance_type == 'resource_managers':
+            self._resource_managers[instance_id] = state
+        else:
+            self._workers[instance_id] = state
 
     def has(self, instance_type, state):
         """
@@ -73,12 +70,11 @@ class Instances:
                            state=InstanceState(boto_instance.state))
 
     def __str__(self):
-        with self._lock:
-            return "All instances:\n" \
-                   "  node_managers: {}" \
-                   "  resource_managers: {}" \
-                   "  workers: {}".format(str(self._node_managers), str(self._resource_managers),
-                                          str(self._workers))
+        return "All instances:\n" \
+               "  node_managers: {}" \
+               "  resource_managers: {}" \
+               "  workers: {}".format(str(self._node_managers), str(self._resource_managers),
+                                      str(self._workers))
 
 
 class NodeScheduler:
@@ -86,12 +82,11 @@ class NodeScheduler:
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
-    def __init__(self, lock):
-        self.instances = Instances(lock)
+    def __init__(self):
+        self.instances = Instances()
         self.instance_id = ec2_metadata.instance_id
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
-        self._lock = lock
         super().__init__()
 
     def initialize_nodes(self):
@@ -171,13 +166,13 @@ class NodeScheduler:
         """
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
-    def run(self):
+    def run(self, lock):
         try:
             while True:
                 boto_response = BotoInstanceReader.read(self.instance_id)
-                self.instances.update_all(boto_response=boto_response)
-
-                print(self.instances)
+                with lock:
+                    self.instances.update_all(boto_response=boto_response)
+                    print(self.instances)
                 sleep(15)
         except KeyboardInterrupt:
             pass
@@ -185,10 +180,9 @@ class NodeScheduler:
 
 class NodeMonitor(con.MultiConnectionServer):
 
-    def __init__(self, nodescheduler, lock, host=con.HOST, port=con.PORT):
+    def __init__(self, nodescheduler, host=con.HOST, port=con.PORT):
         self._buffer = Buffer()
         self._ns = nodescheduler
-        self._lock = lock
         super().__init__(host, port)
 
     def process_heartbeat(self, hb, source):
@@ -202,13 +196,16 @@ def start_instance():
     """
     manager = Manager()
     lock = manager.RLock()
-    scheduler = NodeScheduler(lock)
+    scheduler = NodeScheduler()
 
-    monitor = NodeMonitor(scheduler, lock)
+    monitor = NodeMonitor(scheduler)
     print('Instance manager running..')
 
     pool = Pool()
-    procs = [pool.apply_async(monitor.run), pool.apply_async(scheduler.run)]
+    procs = [
+        pool.apply_async(monitor.run, args=(lock,)),
+        pool.apply_async(scheduler.run, args=(lock,))
+    ]
     try:
         for proc in procs:
             proc.get()
