@@ -23,16 +23,9 @@ class ResourceManagerCore:
         Method called to create a bucket.
         """
         bucket_name = str(uuid.uuid4())
-        bucket_region = self.S3.aws_region
-        if bucket_region == 'us-east-1':
-            bucket_response = self.S3.create_bucket(
-                Bucket=bucket_name)
-        else:
-            bucket_response = self.S3.create_bucket(
-                Bucket=bucket_name,
-                BucketConfiguration={
-                    'LocationConstraint': bucket_region})
-        print(bucket_name, bucket_region)
+        bucket_response = self.S3.create_bucket(
+            bucket_name)
+        print(bucket_name)
         return bucket_name, bucket_response
 
 class ResourceMonitor(Listener):
