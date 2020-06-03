@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
 from time import sleep
 
+import boto3
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
@@ -168,20 +169,23 @@ class NodeScheduler:
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
     def run(self, lock):
-        print("Running NodeScheduler..")
-        with lock:
-            boto_reader = BotoInstanceReader()
-        print("Reader created..")
-        try:
-            while True:
-                with lock:
-                    boto_response = boto_reader.read(self.instance_id)
-                # with lock:
-                #    self.instances.update_all(boto_response=boto_response)
-                print(self.instances)
-                sleep(15)
-        except KeyboardInterrupt:
-            pass
+        # print("Running NodeScheduler..")
+        # with lock:
+        #     boto_reader = BotoInstanceReader()
+        # print("Reader created..")
+        # try:
+        #     while True:
+        #         with lock:
+        #             boto_response = boto_reader.read(self.instance_id)
+        #         # with lock:
+        #         #    self.instances.update_all(boto_response=boto_response)
+        #         print(self.instances)
+        #         sleep(15)
+        # except KeyboardInterrupt:
+        #     pass
+        sess = boto3.session.Session()
+        EC2 = sess.client('ec2')
+        EC2.describe_instances()
 
 
 class NodeMonitor(con.MultiConnectionServer):
