@@ -18,7 +18,7 @@ class ResourceManagerCore:
         self.S3_resource = boto3.resource('s3')
 
     def run(self):
-        if os.path.exists('/src/aws/resourcemanager/textdocument.txt'):
+        if os.path.exists('aws/resourcemanager/textdocument.txt'):
             print("So it DOES exist!")
         # try:
         # bucket_name, bucket_response = self.create_bucket()
