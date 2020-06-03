@@ -210,12 +210,11 @@ def start_instance():
     pool = Pool()
     procs = [pool.apply_async(scheduler.run),
              pool.apply_async(monitor.run)]
-    # try:
-    #     for proc in procs:
-    #         proc.start()
-    #         proc.join()
-    # except KeyboardInterrupt:
-    #     print("Manual program interruption initiated..")
+    try:
+        for proc in procs:
+            proc.get()
+    except KeyboardInterrupt:
+        print("Manual program interruption initiated..")
 
 
 # Main function to start the InstanceManager
