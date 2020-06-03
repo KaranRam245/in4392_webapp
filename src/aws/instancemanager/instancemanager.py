@@ -4,11 +4,10 @@ Module for the Instance Manager.
 from multiprocessing import Pool, Manager
 from time import sleep
 
-import boto3
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
-from aws.utils.botoutils import BotoInstanceReader, BotoInstance
+from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.monitor import Buffer
 from aws.utils.state import InstanceState
 
@@ -167,12 +166,10 @@ class NodeScheduler:
         """
         return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
 
-    def run(self, lock, ec2):
-        session = boto3.session.Session()
-        ec2 = session.client('ec2')
+    def run(self, lock):
         try:
             while True:
-                # boto_response = self.read(ec2, self.instance_id)
+                #boto_response = BotoInstanceReader.read(self.instance_id)
                 with lock:
                 #    self.instances.update_all(boto_response=boto_response)
                    print(self.instances)
