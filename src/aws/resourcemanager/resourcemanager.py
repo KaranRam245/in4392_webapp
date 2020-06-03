@@ -7,7 +7,7 @@ sys.path.append('./src')
 from aws.utils.monitor import Listener
 import uuid
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, DataNotFoundError
 
 
 class ResourceManagerCore:
@@ -19,7 +19,8 @@ class ResourceManagerCore:
     def run(self):
         # try:
         bucket_name, bucket_response = self.create_bucket()
-        self.delete_bucket("hallo")
+        # self.delete_bucket(bucket_name)
+        self.upload_file('./text_document.txt', bucket_name, 'text')
 
         # except ClientError:
         #     print("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess permission to the user")
@@ -60,7 +61,10 @@ class ResourceManagerCore:
         if self.S3_resource.Bucket(bucket_name).creation_date is None:
             print("Bucket " + bucket_name + " does not exist")
         else:
-            self.S3.upload_file(file_path, bucket_name, key)
+            try:
+                self.S3.upload_file(file_path, bucket_name, key)
+            except DataNotFoundError:
+                print("There is no file with file_path " + file_path)
 
 
 class ResourceMonitor(Listener):
