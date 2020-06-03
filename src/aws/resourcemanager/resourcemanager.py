@@ -18,7 +18,7 @@ class ResourceManagerCore:
         self.S3_resource = boto3.resource('s3')
 
     def run(self):
-        with open(str(sys.path) + '/aws/resourcemanager/textdocument.txt', 'r') as f:
+        with open('/home/ec2-user/in4392_webapp/src/aws/resourcemanager/textdocument.txt', 'r') as f:
             print(f.readlines())
         # try:
         # bucket_name, bucket_response = self.create_bucket()
