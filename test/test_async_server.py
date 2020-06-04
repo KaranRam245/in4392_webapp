@@ -8,7 +8,6 @@ class EchoServer:
         self.received_messages = []
 
     async def handle_echo(self, reader, writer):
-        counter = 0
         while self.keep_running:
             data = await reader.read(100)
             message = data.decode()

@@ -2,12 +2,15 @@ import asyncio
 
 
 class EchoClient:
-    def __init__(self):
+    def __init__(self, host, port):
         self.keep_running = True
         self.received_messages = []
+        self.host = host
+        self.port = port
 
     async def tcp_echo_client(self):
-        reader, writer = await asyncio.open_connection('18.157.155.126', 8080)
+        print('Attempting to connect to {}:{}'.format(self.host, self.port))
+        reader, writer = await asyncio.open_connection(self.host, self.port)
         counter = 0
         while self.keep_running:
             await asyncio.sleep(1)
@@ -41,7 +44,7 @@ class EchoClient:
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    echoclient = EchoClient()
+    echoclient = EchoClient('127.31.35.66', 8080)
     procs = asyncio.wait([echoclient.tcp_echo_client(), echoclient.keep_doing_stuff()])
     loop.run_until_complete(procs)
     loop.close()
