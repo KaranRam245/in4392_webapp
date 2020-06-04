@@ -45,6 +45,9 @@ class EchoClient:
 
 if __name__ == "__main__":
     args = list(sys.argv)
+    if len(args) < 2:
+        print(args)
+        args.append('127.0.0.1')
     loop = asyncio.get_event_loop()
     echoclient = EchoClient(args[1], 8080)
     procs = asyncio.wait([echoclient.tcp_echo_client(), echoclient.keep_doing_stuff()])
