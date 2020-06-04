@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 
 class EchoClient:
@@ -43,8 +44,9 @@ class EchoClient:
 
 
 if __name__ == "__main__":
+    args = list(sys.argv)
     loop = asyncio.get_event_loop()
-    echoclient = EchoClient('127.31.35.66', 8080)
+    echoclient = EchoClient(args[1], 8080)
     procs = asyncio.wait([echoclient.tcp_echo_client(), echoclient.keep_doing_stuff()])
     loop.run_until_complete(procs)
     loop.close()
