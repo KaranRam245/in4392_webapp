@@ -36,8 +36,7 @@ class ServerWorker:
 
             await asyncio.sleep(10)
 
-
-if __name__ == "__main__":
+def main():
     loop = asyncio.get_event_loop()
     echoserver = EchoServer()
     coro = asyncio.start_server(echoserver.handle_echo, '0.0.0.0', 8080, loop=loop)
@@ -48,6 +47,7 @@ if __name__ == "__main__":
     server = loop.run_until_complete(procs)
 
     # Serve requests until Ctrl+C is pressed
+    server_socket = None
     for task in server[0]:
         if task._result:
             server_socket = task._result.sockets[0]
@@ -62,3 +62,7 @@ if __name__ == "__main__":
     server.close()
     loop.run_until_complete(server.wait_closed())
     loop.close()
+
+
+if __name__ == "__main__":
+    main()
