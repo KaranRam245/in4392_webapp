@@ -25,6 +25,8 @@ class EchoServer:
         print("Close the client socket of {}".format(addr))
         writer.close()
 
+class ServerWorker:
+
     async def node_scheduling(self):
         sess = boto3.session.Session()
         ec2 = sess.client('ec2')
@@ -40,7 +42,8 @@ if __name__ == "__main__":
     echoserver = EchoServer()
     coro = asyncio.start_server(echoserver.handle_echo, '0.0.0.0', 8080, loop=loop)
 
-    procs = asyncio.wait([coro, echoserver.node_scheduling()])
+    server_worker = ServerWorker()
+    procs = asyncio.wait([coro, server_worker.node_scheduling()])
 
     server = loop.run_until_complete(procs)
 
