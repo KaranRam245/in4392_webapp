@@ -27,11 +27,12 @@ class EchoClient:
         counter = 0
         while self.keep_running:
             await asyncio.sleep(1.8)
-            message = self.received_messages.pop(0)
-            print(message.upper())
-            counter += 1
-            if counter == 10:
-                self.close_client()
+            if self.received_messages:
+                message = self.received_messages.pop(0)
+                print(message.upper())
+                counter += 1
+                if counter == 10:
+                    self.close_client()
         print("I've received enough")
 
     def close_client(self):
