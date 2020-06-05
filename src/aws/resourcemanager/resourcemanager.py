@@ -114,6 +114,3 @@ class ResourceMonitor(Listener):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
-
-if __name__ == "__main__":
-    ResourceManagerCore().run()
