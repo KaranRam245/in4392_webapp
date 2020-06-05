@@ -33,18 +33,3 @@ class Listener(ABC):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
-
-
-class Buffer:
-
-    def __init__(self):
-        self._items = PriorityQueue()
-
-    def put(self, packet: HeartBeatPacket, host):
-        packet['host'] = host  # TODO: May need a better way to distinguish hosts.
-        self._items.put((packet['time'], packet))
-
-    def flush(self):
-        buffer = self._items
-        self._items = PriorityQueue()
-        return buffer
