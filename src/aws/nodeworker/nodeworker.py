@@ -44,9 +44,9 @@ class WorkerMonitor(Listener, MultiConnectionClient):
             print('Received unknown command: {}'.format(command['command']))
 
 
-def start_instance():
+def start_instance(host, port=con.PORT):
     worker_core = WorkerCore()
-    monitor = WorkerMonitor(con.HOST, con.PORT)
+    monitor = WorkerMonitor(host, port)
     worker_core.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
