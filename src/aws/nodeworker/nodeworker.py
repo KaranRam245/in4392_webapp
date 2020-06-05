@@ -51,7 +51,10 @@ def start_instance(host, port=con.PORT):
 
     loop = asyncio.get_event_loop()
     procs = asyncio.wait([worker_core.run(), monitor.run()])
-    tasks = loop.run_until_complete(procs)
+    try:
+        tasks = loop.run_until_complete(procs)
+    except KeyboardInterrupt:
+        pass
 
     tasks.close()
     loop.run_until_complete(tasks.wait_close())
