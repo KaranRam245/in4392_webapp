@@ -78,8 +78,26 @@ def start_instance(host, port=con.PORT):
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
-    procs = asyncio.wait([taskpool.run(), monitor.client.run(), monitor.server.run()])
-    loop.run_until_complete(procs)
+    server_core = asyncio.start_server(taskpool_server.run, host, port, loop=loop)
+
+    procs = asyncio.wait([server_core, taskpool.run(), monitor.client.run()])
+    tasks = loop.run_until_complete(procs)
+
+    server_socket = None
+    for task in tasks:
+        if task._result:
+            server_socket = task._result.sockets[0]
+            break
+    if server_socket:
+        print('Serving on {}'.format(server_socket.getsockname()))
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+
+    # Close the server
+    tasks.close()
+    loop.run_until_complete(tasks.wait_closed())
     loop.close()
 
 
