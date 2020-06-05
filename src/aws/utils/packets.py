@@ -1,3 +1,4 @@
+import json
 import time as timepackage
 import psutil
 
@@ -43,7 +44,10 @@ class CommandPacket(Packet):
 class PacketTranslator:
 
     @staticmethod
-    def translate(packet: dict) -> Packet:
+    def translate(packet) -> Packet:
+        if isinstance(packet, str):
+            packet = json.loads(packet)
+
         if packet['packet_type'] == 'HeartBeat':
             return HeartBeatPacket(**packet)
         elif packet['packet_type'] == 'Command':

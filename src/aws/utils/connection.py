@@ -20,8 +20,6 @@ class MultiConnectionServer:
         self.port = port
 
     def process_packet(self, message, source) -> Packet:
-        if isinstance(message, str):
-            message = json.dumps(message)
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
             raise NotImplementedError()  # The server currently does not take commands.
@@ -85,8 +83,6 @@ class MultiConnectionClient:
 
         try:
             while self.running:
-                await asyncio.sleep(1)
-
                 while self.send_buffer:
                     message = self.send_buffer.pop(0)
 
@@ -98,7 +94,7 @@ class MultiConnectionClient:
                     self.received_messages.append(data)
                     # TODO: process the received messages.
 
-                await asyncio.sleep(5)  # Wait 5 seconds before sending another heartbeat.
+                await asyncio.sleep(1)
         except KeyboardInterrupt:
             pass
         finally:
