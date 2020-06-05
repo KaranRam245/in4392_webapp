@@ -1,6 +1,10 @@
 """
 Module for the Node Worker.
 """
+import asyncio
+import aws.utils.connection as con
+
+from aws.utils.connection import MultiConnectionClient
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket
 
@@ -10,17 +14,17 @@ class WorkerCore(Observable):
     The WorkerCore accepts the task from the Node Manager.
     """
 
-    def run(self):
+    async def run(self):
         """
         Start function for the WorkerCore.
         """
         raise NotImplementedError()
 
 
-class WorkerMonitor(Listener):
+class WorkerMonitor(Listener, MultiConnectionClient):
 
-    def __init__(self):
-        pass
+    def __init__(self, host, port):
+        super().__init__(host, port)
 
     def event(self, message):
         """
@@ -38,3 +42,17 @@ class WorkerMonitor(Listener):
             raise NotImplementedError("Client has not yet implemented process_command.")
         else:
             print('Received unknown command: {}'.format(command['command']))
+
+
+def start_instance():
+    worker_core = WorkerCore()
+    monitor = WorkerMonitor(con.HOST, con.PORT)
+    worker_core.add_listener(monitor)
+
+    loop = asyncio.get_event_loop()
+    procs = asyncio.wait([worker_core.run(), monitor.run()])
+    tasks = loop.run_until_complete(procs)
+
+    tasks.close()
+    loop.run_until_complete(tasks.wait_close())
+    loop.close()
