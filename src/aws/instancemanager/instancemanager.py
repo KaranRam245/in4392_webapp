@@ -1,18 +1,12 @@
 """
 Module for the Instance Manager.
 """
-import subprocess
-
-from concurrent.futures import ThreadPoolExecutor
-import multiprocessing
-from time import sleep
-
-import boto3
+import asyncio
 from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
 from aws.utils.botoutils import BotoInstanceReader
-from aws.utils.monitor import Buffer
+from aws.utils.packets import Packet
 from aws.utils.state import InstanceState
 
 
@@ -91,6 +85,7 @@ class NodeScheduler:
         self.instance_id = ec2_metadata.instance_id
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
+        self.boto = BotoInstanceReader()
         super().__init__()
 
     def initialize_nodes(self):
@@ -106,16 +101,15 @@ class NodeScheduler:
         #     self.start_worker()
 
     def _send_start_command(self, instance_type):
-        BotoInstanceReader.EC2.run_command(
+        self.boto.ec2.run_command(
             InstanceIds=self.instances.get_all(instance_type, state=InstanceState.RUNNING),
             DocumentName='AWS-RunShellScript',
             Parameters={'commands': 'python3 in4392_webapp/main.py {} {}'.format(
                 instance_type, self.ipv4)})
 
     def start_node_manager(self):
-        nodemanagers = BotoInstanceReader.read_ids(self.instance_id,
-                                                   filters=['is_node_manager',
-                                                            ('is_running', False)])
+        nodemanagers = self.boto.read_ids(self.instance_id, filters=['is_node_manager',
+                                                                     ('is_running', False)])
         to_start = nodemanagers[0]  # TODO: Smarter method to decide which to start.
         if not nodemanagers:
             print('No node manager instances found with the given filters.')
@@ -123,8 +117,7 @@ class NodeScheduler:
         self._init_instance(to_start, instance_type='node_managers', wait=True)
 
     def start_worker(self):
-        workers = BotoInstanceReader.read_ids(self.instance_id,
-                                              filters=['is_worker', ('is_running', False)])
+        workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
         if not workers:
             print('No worker instances found with the given filters.')
             return
@@ -132,9 +125,8 @@ class NodeScheduler:
         self._init_instance(to_start, instance_type='workers', wait=False)
 
     def start_resource_manager(self):
-        resourcemanagers = BotoInstanceReader.read_ids(self.instance_id,
-                                                       filters=['is_resource_manager',
-                                                                ('is_running', False)])
+        resourcemanagers = self.boto.read_ids(self.instance_id, filters=['is_resource_manager',
+                                                                         ('is_running', False)])
         if not resourcemanagers:
             print('No resource manager instances found with the given filters.')
             return
@@ -142,7 +134,7 @@ class NodeScheduler:
         self._init_instance(to_start, instance_type='resource_managers', wait=True)
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
-        instance = BotoInstanceReader.EC2.Instance(id=instance_id)
+        instance = self.boto.ec2.Instance(id=instance_id)
         if wait:
             instance.wait_until_running()
             self.instances.set_state(instance_id, instance_type,
@@ -153,7 +145,7 @@ class NodeScheduler:
                                      InstanceState(InstanceState.PENDING))
 
     def _kill_instance(self, instance_id, instance_type, wait=False):
-        instance = BotoInstanceReader.EC2.Instance(id=instance_id)
+        instance = self.boto.ec2.Instance(id=instance_id)
         if wait:
             instance.wait_until_stopped()
             self.instances.set_state(instance_id, instance_type,
@@ -168,68 +160,64 @@ class NodeScheduler:
         Get all running instances.
         :return: All instances that have a RUNNING state.
         """
-        return BotoInstanceReader.read_ids(self.instance_id, filters=['is_running'])
+        return self.boto.read_ids(self.instance_id, filters=['is_running'])
 
-    def run(self, lock):
-        # print("Running NodeScheduler..")
-        # with lock:
-        #     boto_reader = BotoInstanceReader()
-        # print("Reader created..")
-        # try:
-        #     while True:
-        #         with lock:
-        #             boto_response = boto_reader.read(self.instance_id)
-        #         # with lock:
-        #         #    self.instances.update_all(boto_response=boto_response)
-        #         print(self.instances)
-        #         sleep(15)
-        # except KeyboardInterrupt:
-        #     pass
-        print("Running describe-instances")
-        proc = subprocess.Popen(
-            ['aws ec2 describe-instances'],
-            stdout=subprocess.PIPE)
-        out, err = proc.communicate()
-        print(out.decode('utf-8'))
+    async def run(self):
+        print("Running NodeScheduler..")
+        try:
+            while True:
+                boto_response = self.boto.read(self.instance_id)
+
+                self.instances.update_all(boto_response=boto_response)
+
+                print(self.instances)
+                await asyncio.sleep(15)
+        except KeyboardInterrupt:
+            pass
 
 
 class NodeMonitor(con.MultiConnectionServer):
 
     def __init__(self, nodescheduler, host=con.HOST, port=con.PORT):
-        self._buffer = Buffer()
         self._ns = nodescheduler
+        self.keep_running = True
         super().__init__(host, port)
 
-    def process_heartbeat(self, hb, source):
+    def process_heartbeat(self, hb, source) -> Packet:
         print('Received Heartbeat: {}, from: {}'.format(hb, source))
-        self._buffer.put(hb, source)
+        return hb
+        # TODO different processing heartbeat. Action if needed.
 
 
 def start_instance():
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    manager = multiprocessing.Manager()
-    lock = manager.RLock()
     scheduler = NodeScheduler()
-
     monitor = NodeMonitor(scheduler)
-    print('Instance manager running..')
 
-    # pool = Pool()
-    # procs = [
-    #     pool.apply_async(monitor.run, args=(lock,)),
-    #     pool.apply_async(scheduler.run, args=(lock,))
-    # ]
-    # try:
-    #     for proc in procs:
-    #         proc.get()
-    # except KeyboardInterrupt:
-    #     print("Manual program interruption initiated..")
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(monitor.run), executor.submit(scheduler.run, lock)]
-        for future in futures:
-            future.result()
+    loop = asyncio.get_event_loop()
+    server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT, loop=loop)
+
+    procs = asyncio.wait([server_core, scheduler.run()])
+    tasks = loop.run_until_complete(procs)
+
+    server_socket = None
+    for task in tasks:
+        if task._result:
+            server_socket = task._result.sockets[0]
+            break
+    if server_socket:
+        print('Serving on {}'.format(server_socket.getsockname()))
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+
+    # Close the server
+    tasks.close()
+    loop.run_until_complete(tasks.wait_closed())
+    loop.close()
 
 
 # Main function to start the InstanceManager

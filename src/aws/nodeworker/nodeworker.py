@@ -2,6 +2,7 @@
 Module for the Node Worker.
 """
 from aws.utils.monitor import Observable, Listener
+from aws.utils.packets import CommandPacket
 
 
 class WorkerCore(Observable):
@@ -29,3 +30,11 @@ class WorkerMonitor(Listener):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
+
+    def process_command(self, command: CommandPacket):
+        if command['command'] == 'stop':
+            self.running = False
+        elif command['command'] == 'task':
+            raise NotImplementedError("Client has not yet implemented process_command.")
+        else:
+            print('Received unknown command: {}'.format(command['command']))

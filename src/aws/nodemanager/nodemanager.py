@@ -1,7 +1,7 @@
 """
 Module for the Node Manager.
 """
-import time
+import asyncio
 
 import aws.utils.connection as con
 from aws.utils.connection import MultiConnectionClient
@@ -23,15 +23,14 @@ class TaskPool(Observable):
         self.heart = RepeatingHeartBeat(interval=15, func=self.generate_heartbeat)
         self.heart.start()
 
-    def run(self):
+    async def run(self):
         """
         Start function for the TaskPool.
         """
         try:
             while True:
-                print('...')
                 self.generate_heartbeat()
-                time.sleep(15)
+                await asyncio.sleep(15)
         except KeyboardInterrupt:
             pass
 
@@ -55,7 +54,6 @@ class TaskPoolMonitor(Listener, MultiConnectionClient):
 
     def event(self, message):
         self.send_message(message)
-        self._send_buffer()
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
