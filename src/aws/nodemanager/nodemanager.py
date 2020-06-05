@@ -64,7 +64,10 @@ def start_instance(host, port=con.PORT):
     monitor = TaskPoolMonitor(taskpool, host, port)
     taskpool.add_listener(monitor)
 
-    taskpool.run()
+    loop = asyncio.get_event_loop()
+    procs = asyncio.wait([taskpool.run(), monitor.run()])
+    loop.run_until_complete(procs)
+    loop.close()
 
 
 if __name__ == "__main__":
