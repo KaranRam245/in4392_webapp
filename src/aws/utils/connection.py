@@ -59,7 +59,7 @@ class MultiConnectionServer:
                 print("Received {} from {}".format(packet_received, addr))
 
                 print("Sent: {}".format(packet_reponse))
-                data_response = decode_packet(packet_reponse)
+                data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
                 await asyncio.sleep(2)
