@@ -6,7 +6,6 @@ import asyncio
 import aws.utils.connection as con
 from aws.utils.connection import MultiConnectionClient
 from aws.utils.monitor import Listener, Observable
-from aws.utils.heartbeat import RepeatingHeartBeat
 from aws.utils.packets import HeartBeatPacket
 from aws.utils.state import InstanceState
 
@@ -20,8 +19,6 @@ class TaskPool(Observable):
         super().__init__()
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
-        self.heart = RepeatingHeartBeat(interval=15, func=self.generate_heartbeat)
-        self.heart.start()
 
     async def run(self):
         """
