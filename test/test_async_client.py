@@ -21,6 +21,9 @@ class EchoClient:
             writer.write(message.encode())
 
             data = await reader.read(100)
+            if data == b"":  # EOF passed.
+                print("Connection forcibly closed by host. EOF received.")
+                break
             print('Received: %r' % data.decode())
             self.received_messages.append(data)
 

@@ -20,13 +20,14 @@ class MultiConnectionServer:
         self.port = port
 
     def process_packet(self, message, source) -> Packet:
+        if isinstance(message, str):
+            message = json.dumps(message)
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
             raise NotImplementedError()  # The server currently does not take commands.
-        elif isinstance(packet, HeartBeatPacket):
+        if isinstance(packet, HeartBeatPacket):
             return self.process_heartbeat(packet, source)
-        else:
-            print("Unknown packet found: {}".format(packet['packet_type']))
+        print("Unknown packet found: {}".format(packet['packet_type']))
 
     @abstractmethod
     def process_heartbeat(self, hb, source) -> Packet:
