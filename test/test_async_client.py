@@ -39,6 +39,9 @@ class EchoClient:
                     self.close_client()
         print("I've received enough")
 
+    def close_client(self):
+        self.keep_running = False
+
 
 if __name__ == "__main__":
     args = list(sys.argv)
