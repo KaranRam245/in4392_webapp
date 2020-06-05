@@ -58,8 +58,9 @@ class MultiConnectionServer:
                 packet_reponse = self.process_packet(packet_received, addr)
                 print("Received {} from {}".format(packet_received, addr))
 
-                writer.write(packet_reponse)
                 print("Sent: {}".format(packet_reponse))
+                data_response = decode_packet(packet_reponse)
+                writer.write(data_response)
                 await writer.drain()
                 await asyncio.sleep(2)
         except ConnectionResetError:
