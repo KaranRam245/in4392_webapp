@@ -1,11 +1,14 @@
 import asyncio
 import sys
 
+from aws.utils.packets import HeartBeatPacket
+from aws.utils.connection import encode_packet, decode_packet
+
 
 class EchoClient:
     def __init__(self, host, port):
         self.keep_running = True
-        self.received_messages = []
+        self.received_packets = []
         self.host = host
         self.port = port
 
@@ -15,17 +18,18 @@ class EchoClient:
         counter = 0
         while self.keep_running:
             await asyncio.sleep(1)
-            message = 'Hello world ' + str(counter)
+            send_packet = HeartBeatPacket(1, instance_type='worker')
             counter += 1
-            print('Send: %r' % message)
-            writer.write(message.encode())
+            print('Send: {}'.format(send_packet))
+            writer.write(encode_packet(send_packet))
 
-            data = await reader.read(100)
+            data = await reader.read(1024)
             if data == b"":  # EOF passed.
                 print("Connection forcibly closed by host. EOF received.")
                 break
-            print('Received: %r' % data.decode())
-            self.received_messages.append(data)
+            received_packet = decode_packet(data)
+            print('Received: {}'.format(received_packet))
+            self.received_packets.append(received_packet)
 
         print('Close the socket')
         writer.close()
@@ -34,9 +38,9 @@ class EchoClient:
         counter = 0
         while self.keep_running:
             await asyncio.sleep(1.8)
-            if self.received_messages:
-                message = self.received_messages.pop(0)
-                print(message.upper())
+            if self.received_packets:
+                packet = self.received_packets.pop(0)
+                print('Doing stuff with: {}'.format(packet))
                 counter += 1
                 if counter == 10:
                     self.close_client()

@@ -1,5 +1,7 @@
 import asyncio
-import boto3
+
+from aws.utils.connection import decode_packet, encode_packet
+
 
 class EchoServer:
 
@@ -13,35 +15,39 @@ class EchoServer:
             data = await reader.read(1024)
             if data == b"":  # EOF passed.
                 break
-            message = data.decode()
-            self.received_messages.append(message)
-            print("Received {} from {}".format(message, addr))
+            packet = decode_packet(data)
+            self.received_messages.append(packet)
+            print("Received {} from {}".format(packet, addr))
 
-            print("Send: {}".format(message))
-            writer.write(data)
+            send_message = encode_packet(packet)
+            writer.write(send_message)
+            print("Sent: {}".format(packet))
             await writer.drain()
             await asyncio.sleep(2)
 
         print("Close the client socket of {}".format(addr))
         writer.close()
 
+
 class ServerWorker:
 
-    async def node_scheduling(self):
-        sess = boto3.session.Session()
-        ec2 = sess.client('ec2')
+    def __init__(self, server):
+        self.server = server
 
+    async def node_scheduling(self):
         while True:
-            print(ec2.describe_instances())
+            print('Doing some work. You have received {} packets so far.'.format(
+                len(self.server.received_messages)))
 
             await asyncio.sleep(10)
+
 
 def main():
     loop = asyncio.get_event_loop()
     echoserver = EchoServer()
     coro = asyncio.start_server(echoserver.handle_echo, '0.0.0.0', 8080, loop=loop)
 
-    server_worker = ServerWorker()
+    server_worker = ServerWorker(echoserver)
     procs = asyncio.wait([coro, server_worker.node_scheduling()])
 
     server = loop.run_until_complete(procs)
