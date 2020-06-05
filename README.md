@@ -43,13 +43,13 @@ We name all our instances for the system to know which role each instance might 
 1. First step is to create an AWS EC2 server. We choose a Linux system.
 2. Run `sudo apt-get update -y`.
 3. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
-4. We want to use Python3.6 (or higher). Check this with `python -v`.
-5. Run `sudo apt install python3-pip`.
+4. We want to use Python3.6 (or higher). Check this with `python -V`.
+5. Run `sudo apt install python3-pip`. When installed with Yum, you might want to issue `python -m pip install --upgrade pip`.
 6. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
 7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.
 8. Move into the folder with `cd in4392_webapp/`.
 9. (Optionally) Run `pip3 install --no-cache-dir tensorflow==2.2.0`. This step is required if your EC2 memory is too small to install TensorFlow with caching. Alternatively, you could run `pip3 install --no-cache-dir -r requirements.txt` instead of the below step.
-10. Run `pip3 install -r requirements.txt`. This installs are additional requirements. In case `psutil` does not install, run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`) first.
+10. Run `pip3 install -r requirements.txt`. This installs are additional requirements. In case `psutil` does not install, run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`) first. If it still does not work, try `yum search python3 | grep devel` followed by `sudo yum install pythonXX-devel` (depending on what is returned with the search) and try install `psutil` again.
 
 #### Side notes
 - Sometimes there may be some problems with the new instance. One of the problems we found was with the version of python being 2.7.
