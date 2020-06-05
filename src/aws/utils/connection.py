@@ -1,12 +1,27 @@
 import json
 import asyncio
 from abc import abstractmethod
+from typing import List
 
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
 
 HOST = '0.0.0.0'
 PORT = 8080
 ENCODING = 'UTF-8'
+
+
+def encode_packet(data):
+    if isinstance(data, str):
+        return data.encode(ENCODING)
+    if isinstance(data, Packet):
+        return json.dumps(data).encode(ENCODING)
+    raise TypeError("Unknown type found for encoding: {}".format(type(data)))
+
+
+def decode_packet(data) -> Packet:
+    value = data.decode(ENCODING)
+    packet_dict = json.loads(value)
+    return PacketTranslator.translate(packet_dict)
 
 
 class MultiConnectionServer:
@@ -25,7 +40,7 @@ class MultiConnectionServer:
             raise NotImplementedError()  # The server currently does not take commands.
         if isinstance(packet, HeartBeatPacket):
             return self.process_heartbeat(packet, source)
-        print("Unknown packet found: {}".format(packet['packet_type']))
+        raise TypeError("Unknown packet found: {}".format(packet['packet_type']))
 
     @abstractmethod
     def process_heartbeat(self, hb, source) -> Packet:
@@ -34,21 +49,24 @@ class MultiConnectionServer:
     async def run(self, reader, writer):
         addr = writer.get_extra_info('peername')
 
-        while True:
-            data = await reader.read(1024)
-            if data == b"":  # EOF passed.
-                break
-            message = data.decode(ENCODING)
-            packet_reponse = self.process_packet(message, addr)
-            print("Received {} from {}".format(message, addr))
+        try:
+            while True:
+                data = await reader.read(1024)
+                if data == b"":  # EOF passed.
+                    break
+                packet_received = decode_packet(data)
+                packet_reponse = self.process_packet(packet_received, addr)
+                print("Received {} from {}".format(packet_received, addr))
 
-            writer.write(packet_reponse)
-            print("Sent: {}".format(packet_reponse))
-            await writer.drain()
-            await asyncio.sleep(2)
-
-        print("Closed connection of client: {}".format(addr))
-        writer.close()
+                writer.write(packet_reponse)
+                print("Sent: {}".format(packet_reponse))
+                await writer.drain()
+                await asyncio.sleep(2)
+        except ConnectionResetError:
+            print("Client {} forcibly closed its connection.".format(addr))
+        finally:
+            print("Closed connection of client: {}".format(addr))
+            writer.close()
 
 
 class MultiConnectionClient:
@@ -56,11 +74,11 @@ class MultiConnectionClient:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.send_buffer = []
-        self.received_messages = []
+        self.send_buffer: List[Packet] = []
+        self.received_packets: List[Packet] = []
         self.running = True
 
-    def send_message(self, message):
+    def send_message(self, message: Packet):
         self.send_buffer.append(message)
         print("Message added to buffer: {}".format(message))
 
@@ -84,14 +102,15 @@ class MultiConnectionClient:
         try:
             while self.running:
                 while self.send_buffer:
-                    message = self.send_buffer.pop(0)
+                    packet_send: Packet = self.send_buffer.pop(0)
 
-                    print('Sent: {}'.format(message))
-                    writer.write(message.encode(ENCODING))
+                    print('Sent: {}'.format(packet_send))
+                    writer.write(encode_packet(packet_send))
 
-                    data = await reader.read(1024)
-                    print('Received: {}'.format(data.decode()))
-                    self.received_messages.append(data)
+                    data_received = await reader.read(1024)
+                    packet_received = decode_packet(data_received)
+                    print('Received: {}'.format(packet_received))
+                    self.received_packets.append(packet_received)
                     # TODO: process the received messages.
 
                 await asyncio.sleep(1)

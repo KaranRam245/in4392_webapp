@@ -44,10 +44,7 @@ class CommandPacket(Packet):
 class PacketTranslator:
 
     @staticmethod
-    def translate(packet) -> Packet:
-        if isinstance(packet, str):
-            packet = json.loads(packet)
-
+    def translate(packet: dict) -> Packet:
         if packet['packet_type'] == 'HeartBeat':
             return HeartBeatPacket(**packet)
         elif packet['packet_type'] == 'Command':
