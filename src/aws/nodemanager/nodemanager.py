@@ -1,8 +1,8 @@
 """
 Module for the Node Manager.
 """
-from aws.utils.monitor import Listener, Observable
-from aws.utils.state import TaskState
+from src.aws.utils.monitor import Listener, Observable
+from src.aws.utils.state import TaskState
 
 
 class TaskPool(Observable):
@@ -20,7 +20,7 @@ class TaskPool(Observable):
         """
         raise NotImplementedError()
 
-    def add_task(self,task:Task):
+    def add_task(self,task):
         """
         Add a new task to the TaskPool.
         """
