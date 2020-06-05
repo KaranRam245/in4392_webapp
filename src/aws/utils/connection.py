@@ -1,3 +1,6 @@
+"""
+Module for connections.
+"""
 import json
 import asyncio
 from abc import abstractmethod
@@ -11,6 +14,11 @@ ENCODING = 'UTF-8'
 
 
 def encode_packet(data):
+    """
+    Encode packet, either a string or packet, to bytes.
+    :param data: Data in terms of a string or packet.
+    :return: Encoded message with the default encoding.
+    """
     if isinstance(data, str):
         return data.encode(ENCODING)
     if isinstance(data, Packet):
@@ -19,6 +27,12 @@ def encode_packet(data):
 
 
 def decode_packet(data) -> Packet:
+    """
+    Decode bytes into a packet.
+
+    :param data: Bytes received that should represent a packet.
+    :return: Decoded packet.
+    """
     value = data.decode(ENCODING)
     packet_dict = json.loads(value)
     return PacketTranslator.translate(packet_dict)
@@ -35,6 +49,12 @@ class MultiConnectionServer:
         self.port = port
 
     def process_packet(self, message, source) -> Packet:
+        """
+        Process packet received and return a response packet to send to the client.
+        :param message: Message received from the client.
+        :param source: Client address.
+        :return: Packet to repond to the client.
+        """
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
             raise NotImplementedError()  # The server currently does not take commands.
