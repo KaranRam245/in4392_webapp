@@ -1,5 +1,5 @@
-import json
 import time as timepackage
+
 import psutil
 
 
@@ -47,7 +47,6 @@ class PacketTranslator:
     def translate(packet: dict) -> Packet:
         if packet['packet_type'] == 'HeartBeat':
             return HeartBeatPacket(**packet)
-        elif packet['packet_type'] == 'Command':
+        if packet['packet_type'] == 'Command':
             return CommandPacket(**packet)
-        else:
-            raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
+        raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
