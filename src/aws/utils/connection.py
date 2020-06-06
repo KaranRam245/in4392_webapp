@@ -85,6 +85,8 @@ class MultiConnectionServer:
                 await asyncio.sleep(2)
         except ConnectionResetError:
             print("Client {} forcibly closed its connection.".format(addr))
+        except TypeError as excep:
+            print(excep)
         finally:
             print("Closed connection of client: {}".format(addr))
             writer.close()

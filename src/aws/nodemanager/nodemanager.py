@@ -37,10 +37,12 @@ class TaskPool(Observable):
         """
         raise NotImplementedError()
 
-    def generate_heartbeat(self):
-        self.notify(
-            message=HeartBeatPacket(instance_state=self._instance_state,
-                                    instance_type='node_manager'))
+    def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
+        hb = HeartBeatPacket(instance_state=self._instance_state,
+                             instance_type='node_manager')
+        if notify:
+            self.notify(message=hb)
+        return hb
 
 
 class TaskPoolClientWrapper(con.MultiConnectionClient):

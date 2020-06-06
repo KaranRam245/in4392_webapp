@@ -47,10 +47,14 @@ class WorkerCore(Observable):
         except KeyboardInterrupt:
             pass
 
-    def generate_heartbeat(self):
-        self.notify(message=HeartBeatPacket(instance_state=self._instance_state,
-                                            instance_type='worker',
-                                            program_state=self._program_state))
+    def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
+        hb = HeartBeatPacket(instance_state=self._instance_state,
+                             instance_type='worker',
+                             program_state=self._program_state)
+        if notify:
+            self.notify(message=hb)
+        return hb
+        # TODO: more metrics on current task. Current task should be added to heartbeat.
 
 
 class WorkerMonitor(Listener, MultiConnectionClient):
