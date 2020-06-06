@@ -4,9 +4,8 @@ Module for the Node Manager.
 import asyncio
 
 import aws.utils.connection as con
-from aws.utils.connection import MultiConnectionClient
 from aws.utils.monitor import Listener, Observable
-from aws.utils.packets import HeartBeatPacket, CommandPacket
+from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
 
 
@@ -40,7 +39,8 @@ class TaskPool(Observable):
 
     def generate_heartbeat(self):
         self.notify(
-            message=HeartBeatPacket(state=self._instance_state, instance_type='node_manager'))
+            message=HeartBeatPacket(instance_state=self._instance_state,
+                                    instance_type='node_manager'))
 
 
 class TaskPoolClientWrapper(con.MultiConnectionClient):
@@ -51,6 +51,15 @@ class TaskPoolClientWrapper(con.MultiConnectionClient):
 
 class TaskPoolServerWrapper(con.MultiConnectionServer):
 
+    def __init__(self, host, port):
+        self.client = None
+        super().__init__(host, port)
+
+    def process_heartbeat(self, hb, source) -> Packet:
+        hb['source'] = source
+        self.client.send_message(hb)
+        return hb
+
     def process_command(self, command: CommandPacket):
         print("A client send me a command: {}".format(command))
 
@@ -60,6 +69,7 @@ class TaskPoolMonitor(Listener):
     def __init__(self, taskpool, client, server):
         self._tp = taskpool
         self.client = client
+        server.client = client
         self.server = server
         super().__init__()
 

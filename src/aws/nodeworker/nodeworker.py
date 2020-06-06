@@ -6,7 +6,8 @@ import aws.utils.connection as con
 
 from aws.utils.connection import MultiConnectionClient
 from aws.utils.monitor import Observable, Listener
-from aws.utils.packets import CommandPacket
+from aws.utils.packets import CommandPacket, HeartBeatPacket
+from aws.utils.state import ProgramState, InstanceState
 
 
 class WorkerCore(Observable):
@@ -14,11 +15,26 @@ class WorkerCore(Observable):
     The WorkerCore accepts the task from the Node Manager.
     """
 
+    def __init__(self):
+        super().__init__()
+        self._instance_state = InstanceState(InstanceState.RUNNING)
+        self._program_state = ProgramState(ProgramState.PENDING)
+
     async def run(self):
         """
         Start function for the WorkerCore.
         """
-        raise NotImplementedError()
+        try:
+            while True:
+                self.generate_heartbeat()
+                await asyncio.sleep(15)
+        except KeyboardInterrupt:
+            pass
+
+    def generate_heartbeat(self):
+        self.notify(message=HeartBeatPacket(instance_state=self._instance_state,
+                                            instance_type='worker',
+                                            program_state=self._program_state))
 
 
 class WorkerMonitor(Listener, MultiConnectionClient):
@@ -32,12 +48,11 @@ class WorkerMonitor(Listener, MultiConnectionClient):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
-        raise NotImplementedError("The class is a listener but has not implemented the event "
-                                  "method.")
+        self.send_message(message)
 
     def process_command(self, command: CommandPacket):
         if command['command'] == 'stop':
-            self.running = False
+            raise NotImplementedError("Client has not yet implemented process_command.")
         elif command['command'] == 'task':
             raise NotImplementedError("Client has not yet implemented process_command.")
         else:
@@ -53,9 +68,9 @@ def start_instance(host, port=con.PORT):
     procs = asyncio.wait([worker_core.run(), monitor.run()])
     try:
         tasks = loop.run_until_complete(procs)
+        tasks.close()
     except KeyboardInterrupt:
         pass
-
-    tasks.close()
-    loop.run_until_complete(tasks.wait_close())
-    loop.close()
+    finally:
+        loop.run_until_complete(tasks.wait_close())
+        loop.close()
