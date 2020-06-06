@@ -25,7 +25,7 @@ Create an AWS account and verify your account. After that we create an instance 
 1. Run `sudo apt install awscli`.<sup>*</sup>
 2. Go to `https://console.aws.amazon.com/iam` and create a new user.
 3. Assign to the user the permissions you need.
-4. Add the user to the group `AmazonEC2ContainerRegistryReadOnly`.
+4. Add the user to the group `AmazonEC2ContainerRegistryReadOnly`,`AmazonS3ReadOnlyAccess`, and `AmazonS3FullAccess`.
 5. Download the access keys or at least remember them.
 6. Run in the console `sudo aws configure`.<sup>*</sup>
 7. Fill in the data of the access keys from the CSV you downloaded in step 4 with the region name of your AWS instance. My region is, for example, `eu-central-1`. Then set default output format to `json`.<sup>*</sup>
