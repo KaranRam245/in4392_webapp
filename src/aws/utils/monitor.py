@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from queue import PriorityQueue
+
+from aws.utils.packets import HeartBeatPacket
 
 
 class Observable:
@@ -22,11 +25,11 @@ class Observable:
 class Listener(ABC):
 
     @abstractmethod
-    def event(self, message: dict):
+    def event(self, message):
         """
         Method called when the notify function is called in the Observable class. The Listener is
         notified through the event function with a dict message result.
-        :param message: Message of the event in dict format.
+        :param message: Message of the event in dict format or heartbeat format.
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")

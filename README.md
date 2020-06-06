@@ -42,8 +42,13 @@ We name all our instances for the system to know which role each instance might 
 ### Install essentials on instance
 1. First step is to create an AWS EC2 server. We choose a Linux system.
 2. Run `sudo apt-get update -y`.
+<<<<<<< HEAD
 3. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
 4. We want to use Python3.6 (or higher). Check this with `python -V`.
+=======
+3. We want to use Python3.6 (or higher). Check this with `python -V` or `python3 -V`. Otherwise install python 3.6+ with, for example, `sudo yum install -v python3`.
+4. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
+>>>>>>> master
 5. Run `sudo apt install python3-pip`. When installed with Yum, you might want to issue `python -m pip install --upgrade pip`.
 6. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
 7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.

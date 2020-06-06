@@ -1,3 +1,4 @@
+psutil==5.7.0
 absl-py==0.9.0
 altair==4.1.0
 astor==0.8.1
@@ -102,3 +103,5 @@ webencodings==0.5.1
 Werkzeug==1.0.1
 widgetsnbextension==3.5.1
 wrapt==1.12.1
+zipp==3.1.0
+ec2_metadata == 2.2.0
