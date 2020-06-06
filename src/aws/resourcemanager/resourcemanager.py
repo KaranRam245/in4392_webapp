@@ -1,9 +1,6 @@
 """
 Module for the Resource Manager.
 """
-import sys
-sys.path.append('./src')
-
 from aws.utils.monitor import Listener
 import uuid
 import boto3
@@ -114,3 +111,7 @@ class ResourceMonitor(Listener):
         """
         raise NotImplementedError("The class is a listener but has not implemented the event "
                                   "method.")
+
+
+if __name__ == "__main__":
+    ResourceManagerCore().run()
