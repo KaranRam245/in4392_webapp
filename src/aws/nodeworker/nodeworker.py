@@ -15,13 +15,13 @@ class WorkerCore(Observable):
     The WorkerCore accepts the task from the Node Manager.
     """
 
-    def __init__(self, task_queue):
+    def __init__(self, task_queue, storage_connector):
         super().__init__()
         self._task_queue = task_queue
         self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
-        self.storage_connector = ResourceManagerCore()
+        self.storage_connector = storage_connector
 
     async def heartbeat(self):
         """
@@ -46,7 +46,8 @@ class WorkerCore(Observable):
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
-                    await asyncio.sleep(2)  # TODO: replace with actual processing here!
+                    # TODO: Process the file! @Karan
+                    await asyncio.sleep(2)
                     self.current_task = None
                 await asyncio.sleep(1)
         except KeyboardInterrupt:
@@ -88,9 +89,11 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
 
 def start_instance(host, port=con.PORT):
     task_queue = []
-    worker_core = WorkerCore(task_queue)
+    storage_connector = ResourceManagerCore()
+    worker_core = WorkerCore(task_queue, storage_connector)
     monitor = WorkerMonitor(host, port, task_queue)
     worker_core.add_listener(monitor)
+    storage_connector.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
     procs = asyncio.wait([worker_core.run(), worker_core.heartbeat(), monitor.run()])

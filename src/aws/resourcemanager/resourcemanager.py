@@ -42,13 +42,12 @@ class ResourceManagerCore(Observable):
         """
         bucket_name = str(uuid.uuid4())
         current_region = self.s3_session.region_name
-        bucket_response = self.s3.create_bucket(
+        self.s3.create_bucket(
             Bucket=bucket_name,
             CreateBucketConfiguration={
                 'LocationConstraint': current_region,
             }
         )
-        return bucket_name, bucket_response
 
     def delete_bucket(self, bucket_name):
         """
@@ -62,7 +61,7 @@ class ResourceManagerCore(Observable):
             bucket.object_versions.delete()
             self.s3.delete_bucket(Bucket=bucket_name)
 
-    def upload_file(self, file_path, bucket_name, key):
+    def upload_file(self, file_path, key):
         """
         Method called to upload a file with path 'file_path' to the bucket with
         name 'bucket_name' and upload it to the storage with name 'key'.
@@ -70,11 +69,11 @@ class ResourceManagerCore(Observable):
         :param bucket_name: Name of the bucket to upload the file to.
         :param key: Name of the key to upload to.
         """
-        if self.s3_resource.Bucket(bucket_name).creation_date is None:
-            print("Bucket " + bucket_name + " does not exist")
+        if self.s3_resource.Bucket(self.bucket_name).creation_date is None:
+            print("Bucket " + self.bucket_name + " does not exist")
         else:
             try:
-                self.s3.upload_file(file_path, bucket_name, key)
+                self.s3.upload_file(file_path, self.bucket_name, key)
             except DataNotFoundError:
                 print("There is no file with file_path " + file_path)
 
@@ -96,15 +95,3 @@ class ResourceManagerCore(Observable):
                 self.s3.download_file(self.bucket_name, key, file_path)
             except DataNotFoundError:
                 print("There is no key " + key + " in bucket " + self.bucket_name)
-
-
-class ResourceMonitor(Listener):
-
-    def event(self, message):
-        """
-        Method called when the notify function is called in the Observable class. The Listener is
-        notified through the event function with a dict message result.
-        :param message: Message of the event in dict format.
-        """
-        raise NotImplementedError("The class is a listener but has not implemented the event "
-                                  "method.")
