@@ -18,7 +18,7 @@ class EchoClient:
         counter = 0
         while self.keep_running:
             await asyncio.sleep(1)
-            send_packet = HeartBeatPacket(1, instance_type='worker')
+            send_packet = HeartBeatPacket(1, instance_state=1, instance_type='worker')
             counter += 1
             print('Send: {}'.format(send_packet))
             writer.write(encode_packet(send_packet))

@@ -1,5 +1,5 @@
-import json
 import time as timepackage
+
 import psutil
 
 
@@ -12,13 +12,13 @@ class Packet(dict):
 
 class HeartBeatPacket(Packet):
 
-    def __init__(self, state, instance_type, packet_type='HeartBeat', time=None, cpu_usage=None,
-                 mem_usage=None, **kwargs):
+    def __init__(self, instance_state, instance_type, packet_type='HeartBeat', time=None,
+                 cpu_usage=None, mem_usage=None, **kwargs):
         cpu_usage = cpu_usage if cpu_usage else self.get_cpu_usage()
         mem_usage = mem_usage if mem_usage else self.get_mem_usage()
         super().__init__(packet_type=packet_type,
                          time=time,
-                         state=str(state),
+                         instance_state=str(instance_state),
                          instance_type=instance_type,
                          cpu_usage=cpu_usage,
                          mem_usage=mem_usage,
@@ -52,9 +52,9 @@ class PacketTranslator:
     def translate(packet: dict) -> Packet:
         if packet['packet_type'] == 'HeartBeat':
             return HeartBeatPacket(**packet)
-        elif packet['packet_type'] == 'Command':
+        if packet['packet_type'] == 'Command':
             return CommandPacket(**packet)
-        elif packet['packet_type'] == 'Metric':
+        if packet['packet_type'] == 'Metric':
             return MetricPacket(**packet)
-        else:
-            raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
+        raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
+
