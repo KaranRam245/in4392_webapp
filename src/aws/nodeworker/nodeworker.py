@@ -42,6 +42,10 @@ class WorkerCore(Observable):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
+                    file = self.storage_connector.download_file(
+                        file_path=self.current_task.file_path,
+                        key=self.current_task.key
+                    )
                     await asyncio.sleep(2)  # TODO: replace with actual processing here!
                     self.current_task = None
                 await asyncio.sleep(1)
