@@ -4,6 +4,7 @@ Module for the Node Manager.
 import asyncio
 
 import aws.utils.connection as con
+import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -14,10 +15,11 @@ class TaskPool(Observable):
     The TaskPool accepts the tasks from the user.
     """
 
-    def __init__(self):
+    def __init__(self, instance_id):
         super().__init__()
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
+        self._instance_id = instance_id
 
     async def run(self):
         """
@@ -26,7 +28,7 @@ class TaskPool(Observable):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(15)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
         except KeyboardInterrupt:
             pass
 
@@ -38,11 +40,12 @@ class TaskPool(Observable):
         raise NotImplementedError()
 
     def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
-        hb = HeartBeatPacket(instance_state=self._instance_state,
-                             instance_type='node_manager')
+        heartbeat = HeartBeatPacket(instance_id=self._instance_id,
+                                    instance_type='node_manager',
+                                    instance_state=self._instance_state)
         if notify:
-            self.notify(message=hb)
-        return hb
+            self.notify(message=heartbeat)
+        return heartbeat
 
 
 class TaskPoolClientWrapper(con.MultiConnectionClient):
@@ -79,11 +82,11 @@ class TaskPoolMonitor(Listener):
         self.client.send_message(message)
 
 
-def start_instance(host, port=con.PORT):
+def start_instance(instance_id, host, port=con.PORT):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    taskpool = TaskPool()
+    taskpool = TaskPool(instance_id=instance_id)
     taskpool_client = TaskPoolClientWrapper(host, port)
     taskpool_server = TaskPoolServerWrapper(host, port)
     monitor = TaskPoolMonitor(taskpool, taskpool_client, taskpool_server)

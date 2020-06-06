@@ -7,7 +7,6 @@ sys.path.append('./src')
 import aws.instancemanager.instancemanager as im
 import aws.nodemanager.nodemanager as nm
 import aws.nodeworker.nodeworker as nw
-import aws.resourcemanager.resourcemanager as rm
 
 
 def main():
@@ -16,23 +15,21 @@ def main():
     if len(args) < 2 or args[1] == 'instance_manager':
         print('[INFO] Initiating bootcall Instance Manager..')
         im.start_instance()
-    elif len(args) >= 3:
+    elif len(args) >= 4:
         if args[1] == 'node_manager':
             print('[INFO] Initiating bootcall Node Manager..')
-            nm.start_instance(host=args[2])
+            nm.start_instance(host=args[2], instance_id=args[3])
         elif args[1] == 'worker' or args[0] == 'node_worker':
             print('[INFO] Initiating bootcall Worker..')
-            nw.start_instance(host=args[2])  # TODO: create start_instance for node workers.
-        elif args[1] == 'resource_manager':
-            print('[INFO] Initiating bootcall Resource Manager..')
-            rm.start_instance(host=args[2])  # TODO: create start_instance for resource managers.
+            nw.start_instance(host=args[2], instance_id=args[3])
         else:
             print('[ERROR] Unknown argument passed to program {}\n'
-                  'Expected "instance_manager", "node_manager", "worker", or '
-                  '"resource_manager"'.format(args[1]))
+                  'Expected "instance_manager", "node_manager", or "worker"'.format(args[1]))
     else:
-        print('Not enough arguments provided. Expected "python src/main.py <node> [ip]".\n'
-              '[ip] is only optional if <node> is not "instance_manager".')
+        print(
+            'Not enough arguments provided. '
+            'Expected "python src/main.py <node> [ip] [instance_id]".\n'
+            '[ip] is only optional if <node> is not "instance_manager".')
     print('Program terminated..')
 
 

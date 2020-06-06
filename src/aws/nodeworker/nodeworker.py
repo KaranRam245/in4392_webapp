@@ -4,6 +4,7 @@ Module for the Node Worker.
 import asyncio
 
 import aws.utils.connection as con
+import aws.utils.config as config
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
@@ -15,8 +16,9 @@ class WorkerCore(Observable):
     The WorkerCore accepts the task from the Node Manager.
     """
 
-    def __init__(self, task_queue, storage_connector):
+    def __init__(self, instance_id, task_queue, storage_connector):
         super().__init__()
+        self._instance_id = instance_id
         self._task_queue = task_queue
         self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
@@ -30,7 +32,7 @@ class WorkerCore(Observable):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(15)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
         except KeyboardInterrupt:
             pass
 
@@ -54,12 +56,13 @@ class WorkerCore(Observable):
             pass
 
     def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
-        hb = HeartBeatPacket(instance_state=self._instance_state,
-                             instance_type='worker',
-                             program_state=self._program_state)
+        heartbeat = HeartBeatPacket(instance_id=self._instance_id,
+                                    instance_type='worker',
+                                    instance_state=self._instance_state,
+                                    program_state=self._program_state)
         if notify:
-            self.notify(message=hb)
-        return hb
+            self.notify(message=heartbeat)
+        return heartbeat
         # TODO: more metrics on current task. Current task should be added to heartbeat.
 
 
@@ -80,17 +83,19 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
     def process_command(self, command: CommandPacket):
         if command['command'] == 'stop':
             raise NotImplementedError("Client has not yet implemented [stop].")
-        if command['command'] == '`kill`':
+        if command['command'] == 'kill':
             raise NotImplementedError("Client has not yet implemented [kill].")
         if command['command'] == 'task':
             self._task_queue.put(command)
         print('Received unknown command: {}'.format(command['command']))
 
 
-def start_instance(host, port=con.PORT):
+def start_instance(instance_id, host, port=con.PORT):
     task_queue = []
     storage_connector = ResourceManagerCore()
-    worker_core = WorkerCore(task_queue, storage_connector)
+    worker_core = WorkerCore(instance_id=instance_id,
+                             task_queue=task_queue,
+                             storage_connector=storage_connector)
     monitor = WorkerMonitor(host, port, task_queue)
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
