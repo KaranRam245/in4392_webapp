@@ -4,7 +4,7 @@ Module for the Node Worker.
 import asyncio
 
 import aws.utils.connection as con
-from aws.utils.connection import MultiConnectionClient
+from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
@@ -21,6 +21,7 @@ class WorkerCore(Observable):
         self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
+        self.storage_connector = ResourceManagerCore()
 
     async def heartbeat(self):
         """
@@ -57,7 +58,7 @@ class WorkerCore(Observable):
         # TODO: more metrics on current task. Current task should be added to heartbeat.
 
 
-class WorkerMonitor(Listener, MultiConnectionClient):
+class WorkerMonitor(Listener, con.MultiConnectionClient):
 
     def __init__(self, host, port, task_queue):
         self._task_queue = task_queue
