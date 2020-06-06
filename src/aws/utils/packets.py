@@ -41,6 +41,11 @@ class CommandPacket(Packet):
         super().__init__(packet_type=packet_type, time=time, command=command, args=args, **kwargs)
 
 
+class MetricPacket(Packet):
+
+    def __init__(self, download_duration: float, upload_duration: float, packet_type='Metric', time=None, **kwargs):
+        super().__init__(packet_type=packet_type, time=time, download_duration=download_duration, upload_duration=upload_duration)
+
 class PacketTranslator:
 
     @staticmethod
@@ -49,5 +54,7 @@ class PacketTranslator:
             return HeartBeatPacket(**packet)
         elif packet['packet_type'] == 'Command':
             return CommandPacket(**packet)
+        elif packet['packet_type'] == 'Metric':
+            return MetricPacket(**packet)
         else:
             raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
