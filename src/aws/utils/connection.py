@@ -110,7 +110,7 @@ class MultiConnectionClient:
         if isinstance(packet, CommandPacket):
             self.process_command(packet['command'])
         elif isinstance(packet, HeartBeatPacket):
-            print("Someone send me a heartbeat. This should not happen.")
+            print("Acknowledge on my heartbeat. No additional action to take.")
         else:
             print("I do not know this packet type: {}".format(packet['packet_type']))
 
