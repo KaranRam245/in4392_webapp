@@ -54,7 +54,7 @@ We name all our instances for the system to know which role each instance might 
     - Run `sudo start amazon-ssm-agent`. It will probably tell you it was already running.
     - Verify the agent is running with `aws ssm describe-instance-information` and check if the instanceid is in the list.
 6. Run `sudo apt-get update -y`.
-7. We want to use Python3.6 (or higher). Check this with `python -V` or `python3 -V`. Otherwise install python 3.6+ with, for example, `sudo yum install -v python3`.
+7. We want to use Python3.6 (or higher). Check this with `python -V` or `python3 -V`. Otherwise install python 3.6+ with, for example, `sudo yum install python3`.
 8. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
 9. Run `sudo apt install python3-pip`. When installed with Yum, you might want to issue `python -m pip install --upgrade pip`.
 10. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
