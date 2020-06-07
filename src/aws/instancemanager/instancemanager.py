@@ -206,7 +206,10 @@ class NodeScheduler:
         Get all running instances.
         :return: All instances that have a RUNNING state.
         """
-        return self.boto.read_ids(self.instance_id, filters=['is_running'])
+        node_managers = self.instances.get_all(self.instance_id,
+                                               filter_state=[InstanceState.RUNNING])
+        workers = self.instances.get_all(self.instance_id, filter_state=[InstanceState.RUNNING])
+        return node_managers.keys() + workers.keys()
 
     def update_instances(self, check=True):
         states = [InstanceState.PENDING, InstanceState.STOPPING]
@@ -273,7 +276,7 @@ class NodeScheduler:
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
     def cancel_all(self):
-        print("Killing all instances..")
+        print("Killing all instances: {}".format(self.running_instances()))
         self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
 
         print("Cancelling all commands..")
