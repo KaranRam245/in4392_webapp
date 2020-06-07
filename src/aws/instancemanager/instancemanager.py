@@ -140,6 +140,7 @@ class NodeScheduler:
         """
         Initialize all required nodes.
         """
+        self.update_instances()
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
             print("No node manager running. Intializing startup protocol..")
@@ -195,6 +196,10 @@ class NodeScheduler:
         """
         return self.boto.read_ids(self.instance_id, filters=['is_running'])
 
+    def update_instances(self):
+        boto_response = self.boto.read(self.instance_id)
+        self.instances.update_instance_all(boto_response=boto_response)
+
     async def run(self):
         print("Running NodeScheduler..")
         sleep_time = 1
@@ -205,8 +210,7 @@ class NodeScheduler:
             while True:
                 # Update the Instance states.
                 if update_counter <= 0:
-                    boto_response = self.boto.read(self.instance_id)
-                    self.instances.update_instance_all(boto_response=boto_response)
+                    self.update_instances()
                     update_counter = config.BOTO_UPDATE_SEC
                     print(self.instances)
                 workers_on, workers_off = self.instances.get_worker_split()
