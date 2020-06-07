@@ -219,6 +219,7 @@ class NodeScheduler:
         print("Updated instance states from AWS state")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
+        print(self.instances)
 
     async def run(self):
         print("Running NodeScheduler..")
@@ -276,8 +277,10 @@ class NodeScheduler:
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
     def cancel_all(self):
-        print("Killing all instances: {}".format(self.running_instances()))
-        self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
+        running_instances = self.running_instances()
+        print("Killing all instances: {}".format(running_instances))
+        if running_instances:
+            self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
 
         print("Cancelling all commands..")
         for command in self.commands:
