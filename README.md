@@ -43,16 +43,16 @@ We name all our instances for the system to know which role each instance might 
 1. First step is to create an AWS EC2 server. We choose a Linux system. We strongly recommend to create an Elastic IP for each instance.
 2. Before starting the instance, go to `Actions > Instance Settings > Attach/Replace IAM Role`.
 3. Attach the `EC2-SSM` access role (if this role does not exist yet, do substeps below. Otherwise skip to next main step).
-  - Click `Create new IAM role` and then `Create Role`.
-  - Click `EC2` and `Next: Permissions`.
-  - Attach `AmazonEC2RoleforSSM`, click next, and give the name `EC2-SSM`.
-  - Go back to instance to attach the newly created role to the instance (i.e., go back to step 3). If the instance was running, restart.
+    - Click `Create new IAM role` and then `Create Role`.
+    - Click `EC2` and `Next: Permissions`.
+    - Attach `AmazonEC2RoleforSSM`, click next, and give the name `EC2-SSM`.
+    - Go back to instance to attach the newly created role to the instance (i.e., go back to step 3). If the instance was running, restart.
 4. Start the instance and SSH connect with the instance.
 5. Install the SSM agent:
-  - Run `cd /tmp`
-  - Run `sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm`
-  - Run `sudo start amazon-ssm-agent`. It will probably tell you it was already running.
-  - Verify the agent is running with `aws ssm describe-instance-information` and check if the instanceid is in the list.
+    - Run `cd /tmp`
+    - Run `sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm`
+    - Run `sudo start amazon-ssm-agent`. It will probably tell you it was already running.
+    - Verify the agent is running with `aws ssm describe-instance-information` and check if the instanceid is in the list.
 6. Run `sudo apt-get update -y`.
 7. We want to use Python3.6 (or higher). Check this with `python -V` or `python3 -V`. Otherwise install python 3.6+ with, for example, `sudo yum install -v python3`.
 8. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
