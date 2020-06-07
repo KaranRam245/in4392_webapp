@@ -109,12 +109,19 @@ class Instances:
     def set_last_hearbeat(self, instance_id, heart_beat_time):
         self._last_heartbeat[instance_id] = heart_beat_time
 
-    def start_signal_timedout(self, instance_id, timeout):
+    def heart_beat_timedout(self, instance_id):
+        heartbeat_time = self.get_last_heartbeat(instance_id)
+        if not heartbeat_time:
+            return True
         current_time_sec = round(time.time())
+        return (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
+
+    def start_signal_timedout(self, instance_id):
         signal_time = self._start_signal.get(instance_id, None)
         if not signal_time:
             return True
-        return (current_time_sec - signal_time) >= timeout
+        current_time_sec = round(time.time())
+        return (current_time_sec - signal_time) >= config.START_SIGNAL_TIMEOUT
 
     def set_last_start_signal(self, instance_id):
         self._start_signal[instance_id] = round(time.time())
@@ -214,10 +221,8 @@ class NodeScheduler:
                     self.update_instances()
                     update_counter = config.BOTO_UPDATE_SEC
                     print(self.instances)
-                workers_on, workers_off = self.instances.get_worker_split()
 
-                for worker in workers_on:
-                    self._check_script_running(worker)
+                self.check_all_living()
 
                 # TODO: Do other stuff like keeping track of heartbeats etc.
                 # TODO: Create workers when more needed
@@ -226,19 +231,34 @@ class NodeScheduler:
                 update_counter -= sleep_time
                 await asyncio.sleep(sleep_time)
         except KeyboardInterrupt:
+            print("Killing all instances..")
+            self.boto.ec2.stop_instances(id=[self.running_instances()])
+        except asyncio.CancelledError:
             pass
         except Exception as e:
             print(Exception, e)
             print(traceback.print_exc())
 
-    def _check_script_running(self, worker):
-        if self.instances.get_last_heartbeat(worker):
+    def check_all_living(self):
+        for instance_type in ('node_manager', 'worker'):
+            for instance in self.instances.get_all('node_manager'):
+                self._check_living(instance, instance_type)
+
+    def _check_living(self, instance, instance_type):
+        # Instances that are not running, should be started elsewhere.
+        if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
             return
-        if not self.instances.is_state(worker, 'worker', state=InstanceState.RUNNING):
-            return
-        if self.instances.start_signal_timedout(worker, timeout=config.START_SIGNAL_TIMEOUT):
-            print("Sent start command to worker {}".format(worker))
-            self._send_start_command('worker', worker)
+        send_start = False
+        # No start signal is sent, or it takes too long to start.
+        if self.instances.start_signal_timedout(instance):
+            print("No start signal sent to {}".format(instance))
+            send_start = True
+        # The IM has not received a heartbeat for too long.
+        if not send_start and self.instances.heart_beat_timedout(instance):
+            send_start = True
+        if send_start:  # Send a new start signal to the instance.
+            print("Sent start command to instance {}".format(instance))
+            self._send_start_command(instance_type=instance_type, instance_id=instance)
 
 
 class NodeMonitor(con.MultiConnectionServer):
