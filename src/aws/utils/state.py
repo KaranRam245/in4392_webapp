@@ -53,6 +53,15 @@ class InstanceState(State):
     SHUTTING_DOWN = 4  # Instance is shutting down/preparing to terminate.
     TERMINATED = 5  # Instance is terminated/permanently deleted.
 
+    MAPPING = {
+        PENDING: 'pending',
+        RUNNING: 'running',
+        STOPPING: 'stopping',
+        STOPPED: 'stopped',
+        SHUTTING_DOWN: 'shutting_down',
+        TERMINATED: 'terminated'
+    }
+
     def __init__(self, state):
         """
         Initialize a State object indicating the current state of an instance.
@@ -69,26 +78,30 @@ class InstanceState(State):
         :param state_to_map: State name or number according to EC2.
         :return: State id.
         """
-        mapping = {
-            self.PENDING: 'pending',
-            self.RUNNING: 'running',
-            self.STOPPING: 'stopping',
-            self.STOPPED: 'stopped',
-            self.SHUTTING_DOWN: 'shutting_down',
-            self.TERMINATED: 'terminated'
-        }
         if isinstance(state_to_map, str):
-            for key, value in mapping.items():
+            for key, value in self.MAPPING.items():
                 if value == state_to_map:
                     return key
-        elif isinstance(state_to_map, int):
-            return mapping[state_to_map]
+        return self._map_to_str(state_to_map)
+
+    @staticmethod
+    def _map_to_str(state_to_map):
+        if isinstance(state_to_map, str):
+            return state_to_map
+        return InstanceState.MAPPING[state_to_map]
+
+    @staticmethod
+    def _map_to_int(state_to_map):
+        if isinstance(state_to_map, int):
+            return state_to_map
+        for key, value in InstanceState.MAPPING.items():
+            if value == state_to_map:
+                return key
         raise Exception(
-            'Unknown instance detected. EC2 does not support the "{}" state with type "{}"'.format(
-                state_to_map, type(state_to_map)))
+            "This state does not seem to exist for InstanceState: {}".format(state_to_map))
 
     def __str__(self):
-        return self.map_to(self._state)
+        return self._map_to_str(self._state)
 
     def __repr__(self):
         return str(self)

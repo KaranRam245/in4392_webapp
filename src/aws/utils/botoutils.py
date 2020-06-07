@@ -1,5 +1,7 @@
 import boto3
 
+from aws.utils.state import InstanceState
+
 
 class BotoInstanceReader:
 
@@ -49,7 +51,7 @@ class BotoInstance:
     def __init__(self, InstanceId, PublicDnsName, State, Tags, **kwargs):
         self.instance_id = InstanceId
         self.dns = PublicDnsName
-        self.state = State['Name']
+        self.state = InstanceState(State['Name'])
         self.name = ''
         for tag in Tags:
             if tag['Key'] == 'Name':
