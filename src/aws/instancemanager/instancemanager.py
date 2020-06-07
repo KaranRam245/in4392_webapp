@@ -168,6 +168,7 @@ class NodeScheduler:
         self._init_instance(workers[0], instance_type='workers', wait=False)
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
+        print("Starting {} instance {}".format(instance_type, instance_id))
         instance = self.boto.ec2.Instance(id=instance_id)
         if wait:
             instance.wait_until_running()
@@ -195,6 +196,8 @@ class NodeScheduler:
         sleep_time = 1
         update_counter = config.BOTO_UPDATE_SEC
         try:
+            self.initialize_nodes()
+
             while True:
                 # Update the Instance states.
                 if update_counter <= 0:
@@ -251,17 +254,18 @@ def start_instance():
     server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT, loop=loop)
 
     procs = asyncio.wait([server_core, scheduler.run()])
-    tasks = loop.run_until_complete(procs)
 
     try:
+        tasks = loop.run_until_complete(procs)
+
         loop.run_forever()
     except KeyboardInterrupt:
         pass
-
-    # Close the server
-    tasks.close()
-    loop.run_until_complete(tasks.wait_closed())
-    loop.close()
+    finally:
+        # Close the server
+        tasks.close()
+        loop.run_until_complete(tasks.wait_closed())
+        loop.close()
 
 
 # Main function to start the InstanceManager
