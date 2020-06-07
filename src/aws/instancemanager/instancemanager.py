@@ -36,6 +36,7 @@ class Instances:
         if filter_state:
             if isinstance(filter_state, int):
                 filter_state = [filter_state]
+            print(nodes.values(), filter_state)
             nodes = [key for (key, value) in nodes.items() if value.is_any(filter_state)]
         return nodes
 
@@ -64,7 +65,7 @@ class Instances:
         :return: Boolean indicating if such an instance is found.
         """
         return len(
-            self.get_all(instance_type, filter_state=filter_state)) > 0
+            self.get_all(instance_type=instance_type, filter_state=filter_state)) > 0
 
     def has_instance_not_running(self, instance_type):
         """
@@ -72,9 +73,8 @@ class Instances:
         :param instance_type: Instance type to check.
         :return: Boolean indicating if there is an instance PENDING, STOPPING, or STOPPED.
         """
-        return self.has(instance_type, InstanceState.PENDING) or \
-               self.has(instance_type, InstanceState.STOPPING) or \
-               self.has(instance_type, InstanceState.STOPPED)
+        return self.has(instance_type,
+                        [InstanceState.PENDING, InstanceState.STOPPING, InstanceState.STOPPED])
 
     def update_instance_state(self, instance_id, instance_type, boto_response):
         for boto_instance in boto_response:

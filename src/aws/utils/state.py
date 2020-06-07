@@ -9,7 +9,7 @@ class State:
     Class for the indication of the current state of an instance.
     """
 
-    def __init__(self, state):
+    def __init__(self, state: int):
         self._state = state
 
     def get_state(self):
