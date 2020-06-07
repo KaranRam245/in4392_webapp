@@ -175,18 +175,18 @@ class NodeScheduler:
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
         print("Starting {} instance {}".format(instance_type, instance_id))
-        instance = self.boto.ec2.Instance(id=instance_id)
+        self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
-            instance.wait_until_running()
+            waiter = self.boto.ec2.get_waiter('instance_running')
+            waiter.wait(InstanceIds=[instance_id])
             self.instances.set_state(instance_id, instance_type,
                                      InstanceState(InstanceState.RUNNING))
         else:
-            instance.start()
             self.instances.set_state(instance_id, instance_type,
                                      InstanceState(InstanceState.PENDING))
 
     def _kill_instance(self, instance_id, instance_type):
-        self.boto.ec2.Instance(id=instance_id).stop()
+        self.boto.ec2.stop_instances(id=[instance_id])
         self.instances.set_state(instance_id, instance_type, InstanceState(InstanceState.STOPPING))
         self.instances.clear_time(instance_id)
 
