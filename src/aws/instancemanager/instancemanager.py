@@ -139,9 +139,9 @@ class NodeScheduler:
         """
         Initialize all required nodes.
         """
-        if not self.instances.has_instance_not_running(instance_type='node_manager'):
+        if self.instances.has_instance_not_running(instance_type='node_manager'):
             self.start_node_manager()  # Start the node manager if not already done.
-        if not self.instances.has_instance_not_running(instance_type='worker'):
+        if self.instances.has_instance_not_running(instance_type='worker'):
             self.start_worker()  # Require at least one worker.
 
     def _send_start_command(self, instance_type, instance_id):
