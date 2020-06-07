@@ -206,9 +206,9 @@ class NodeScheduler:
         Get all running instances.
         :return: All instances that have a RUNNING state.
         """
-        node_managers = self.instances.get_all(self.instance_id,
+        node_managers = self.instances.get_all('node_manager',
                                                filter_state=[InstanceState.RUNNING])
-        workers = self.instances.get_all(self.instance_id, filter_state=[InstanceState.RUNNING])
+        workers = self.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
         return node_managers + workers
 
     def update_instances(self, check=True):
