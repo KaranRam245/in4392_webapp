@@ -106,8 +106,8 @@ class Instances:
     def get_last_heartbeat(self, instance_id):
         return self._last_heartbeat.get(instance_id, None)
 
-    def set_last_hearbeat(self, instance_id, heart_beat_time):
-        self._last_heartbeat[instance_id] = heart_beat_time
+    def set_last_heartbeat(self, instance_id, heartbeat):
+        self._last_heartbeat[instance_id] = heartbeat['time']
 
     def heart_beat_timedout(self, instance_id):
         heartbeat_time = self.get_last_heartbeat(instance_id)
@@ -254,6 +254,7 @@ class NodeScheduler:
         if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
             return
         send_start = False
+        print(self.instances.get_last_heartbeat(instance))
         # No start signal is sent, or it takes too long to start.
         if self.instances.start_signal_timedout(instance):
             print("No start signal sent to {}".format(instance))
@@ -275,7 +276,7 @@ class NodeMonitor(con.MultiConnectionServer):
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
         print('Received Heartbeat: {}, from: {}'.format(heartbeat, source))
-        self._ns.instances.set_last_hearbeat(heartbeat)
+        self._ns.instances.set_last_heartbeat(source, heartbeat)
         return heartbeat
         # TODO different processing heartbeat. Action if needed.
 
