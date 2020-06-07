@@ -209,7 +209,7 @@ class NodeScheduler:
         node_managers = self.instances.get_all(self.instance_id,
                                                filter_state=[InstanceState.RUNNING])
         workers = self.instances.get_all(self.instance_id, filter_state=[InstanceState.RUNNING])
-        return node_managers.keys() + workers.keys()
+        return node_managers + workers
 
     def update_instances(self, check=True):
         states = [InstanceState.PENDING, InstanceState.STOPPING]
