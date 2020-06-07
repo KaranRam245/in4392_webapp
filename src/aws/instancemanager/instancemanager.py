@@ -48,10 +48,11 @@ class Instances:
         return self._workers
 
     def is_state(self, instance_id, instance_type: str, state: int):
-        instance = self.get_nodes(instance_type).get(instance_id, None)
+        instance: InstanceState = self.get_nodes(instance_type).get(instance_id, None)
+        print("State instance: {} --> {}".format(instance, state))
         if not instance:
             return False
-        return instance == state
+        return instance.is_state(state)
 
     def set_state(self, instance_id, instance_type, state):
         nodes = self.get_nodes(instance_type)
@@ -245,13 +246,12 @@ class NodeScheduler:
             print(traceback.print_exc())
 
     def check_all_living(self):
-        print("Checking the living nodes.")
         for instance_type in ('node_manager', 'worker'):
             for instance in self.instances.get_all('node_manager'):
-                print("Check living for {}".format(instance))
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
+        print("Check living for {}".format(instance))
         # Instances that are not running, should be started elsewhere.
         if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
             return
