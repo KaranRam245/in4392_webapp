@@ -245,8 +245,10 @@ class NodeScheduler:
             print(traceback.print_exc())
 
     def check_all_living(self):
+        print("Checking the living nodes.")
         for instance_type in ('node_manager', 'worker'):
             for instance in self.instances.get_all('node_manager'):
+                print("Check living for {}".format(instance))
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
