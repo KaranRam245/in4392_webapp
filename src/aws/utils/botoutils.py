@@ -5,16 +5,17 @@ class BotoInstanceReader:
 
     def __init__(self):
         sess = boto3.session.Session()
-        self.ec2 = sess.client('ec2')
+        self.ec2 = sess.client('ec2', region_name='eu-central-1')
 
-    def read_ids(self, own_instance, filters=None):
-        output = self.read(own_instance, filters)
+    def read_ids(self, own_instance, filters=None, boto_response: dict = None):
+        output = self.read(own_instance, filters, boto_response=boto_response)
         return [inst.instance_id for inst in output]
 
-    def read(self, own_instance, filters=None):
+    def read(self, own_instance, filters=None, boto_response: dict = None):
         if filters is None:
             filters = []
-        boto_response = self.ec2.describe_instances()
+        if not boto_response:
+            boto_response = self.ec2.describe_instances()
         boto_instances = []
         for reserverations in boto_response['Reservations']:
             json_instance = reserverations['Instances'][0]
@@ -69,13 +70,10 @@ class BotoInstance:
         return self.state == 'running'
 
     def is_worker(self) -> bool:
-        return self.name == 'Worker'
+        return self.name == 'worker'
 
     def is_instance_manger(self) -> bool:
-        return self.name == 'Instance Manager'
+        return self.name == 'instance manager'
 
     def is_node_manager(self) -> bool:
-        return self.name == 'Node Manager'
-
-    def is_resource_manager(self) -> bool:
-        return self.name == 'Resource Manager'
+        return self.name == 'node manager'
