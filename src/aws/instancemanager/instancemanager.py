@@ -256,18 +256,18 @@ def start_instance():
     server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT, loop=loop)
 
     procs = asyncio.wait([server_core, scheduler.run()])
+    tasks = loop.run_until_complete(procs)
 
     try:
-        tasks = loop.run_until_complete(procs)
 
         loop.run_forever()
     except KeyboardInterrupt:
         pass
-    finally:
-        # Close the server
-        tasks.close()
-        loop.run_until_complete(tasks.wait_closed())
-        loop.close()
+
+    # Close the server
+    tasks.close()
+    loop.run_until_complete(tasks.wait_closed())
+    loop.close()
 
 
 # Main function to start the InstanceManager
