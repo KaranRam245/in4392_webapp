@@ -3,9 +3,12 @@ import boto3
 
 class BotoInstanceReader:
 
-    def __init__(self):
+    def __init__(self, region_name=None):
         sess = boto3.session.Session()
-        self.ec2 = sess.client('ec2', region_name='eu-central-1')
+        if region_name:
+            self.ec2 = sess.client('ec2', region_name=region_name)
+        else:
+            self.ec2 = sess.client('ec2')
 
     def read_ids(self, own_instance, filters=None, boto_response: dict = None):
         output = self.read(own_instance, filters, boto_response=boto_response)
