@@ -47,6 +47,7 @@ class MultiConnectionServer:
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        print("Serving on {}:{}..".format(self.host, self.port))
 
     def process_packet(self, message, source) -> Packet:
         """

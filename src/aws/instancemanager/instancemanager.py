@@ -253,13 +253,6 @@ def start_instance():
     procs = asyncio.wait([server_core, scheduler.run()])
     tasks = loop.run_until_complete(procs)
 
-    server_socket = None
-    for task in tasks:
-        if task._result:
-            server_socket = task._result.sockets[0]
-            break
-    if server_socket:
-        print('Serving on {}'.format(server_socket.getsockname()))
     try:
         loop.run_forever()
     except KeyboardInterrupt:
