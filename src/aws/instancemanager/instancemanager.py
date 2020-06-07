@@ -3,6 +3,7 @@ Module for the Instance Manager.
 """
 import asyncio
 import time
+from contextlib import suppress
 
 from ec2_metadata import ec2_metadata
 
@@ -271,7 +272,8 @@ def start_instance():
                  asyncio.Task.current_task()]
         for task in tasks:
             task.cancel()
-            loop.run_until_complete(task)
+            with suppress(asyncio.CancelledError):
+                loop.run_until_complete(task)
         loop.close()
 
 
