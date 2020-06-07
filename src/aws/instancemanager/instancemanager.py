@@ -139,6 +139,7 @@ class NodeScheduler:
         """
         Initialize all required nodes.
         """
+        print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
             print("No node manager running. Intializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
@@ -266,8 +267,8 @@ def start_instance():
     except KeyboardInterrupt:
         pass
     finally:
-        tasks = [t for t in asyncio.all_tasks() if t is not
-                 asyncio.current_task()]
+        tasks = [t for t in asyncio.Task.all_tasks() if t is not
+                 asyncio.Task.current_task()]
         for task in tasks:
             task.cancel()
         loop.close()
