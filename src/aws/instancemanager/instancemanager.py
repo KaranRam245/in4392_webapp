@@ -142,6 +142,8 @@ class NodeScheduler:
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
         self.boto = BotoInstanceReader()
+        self.commands = []
+        self.cleaned_up = False
         super().__init__()
 
     def initialize_nodes(self):
@@ -158,12 +160,13 @@ class NodeScheduler:
             self.start_worker()  # Require at least one worker.
 
     def _send_start_command(self, instance_type, instance_id):
-        self.boto.ssm.send_command(
+        response = self.boto.ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName='AWS-RunShellScript',
             Parameters={'commands': [
                 'cd /tmp/in4392_webapp/ ; python3 src/main.py {} {} {}'.format(
                     instance_type, self.ipv4, instance_id)]})
+        self.commands.append(response['Command']['CommandId'])
         self.instances.set_last_start_signal(instance_id)
 
     def start_node_manager(self):
@@ -237,8 +240,7 @@ class NodeScheduler:
                 update_counter -= sleep_time
                 await asyncio.sleep(sleep_time)
         except KeyboardInterrupt:
-            print("Killing all instances..")
-            self.boto.ec2.stop_instances(id=[self.running_instances()])
+            self.cancel_all()
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -269,6 +271,15 @@ class NodeScheduler:
         if send_start:  # Send a new start signal to the instance.
             print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
+
+    def cancel_all(self):
+        print("Killing all instances..")
+        self.boto.ec2.stop_instances(id=[self.running_instances()])
+
+        print("Cancelling all commands..")
+        for command in self.commands:
+            self.boto.ssm.cancel_command(CommandId=command)
+        self.cleaned_up = True
 
 
 class NodeMonitor(con.MultiConnectionServer):
@@ -304,6 +315,8 @@ def start_instance():
     except KeyboardInterrupt:
         pass
     finally:
+        if not scheduler.cleaned_up:
+            scheduler.cancel_all()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
         for task in tasks:
