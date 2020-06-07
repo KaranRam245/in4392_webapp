@@ -3,6 +3,7 @@ Module for the Instance Manager.
 """
 import asyncio
 import time
+import traceback
 from contextlib import suppress
 
 from ec2_metadata import ec2_metadata
@@ -227,7 +228,8 @@ class NodeScheduler:
         except KeyboardInterrupt:
             pass
         except Exception as e:
-            print(e)
+            print(Exception, e)
+            print(traceback.print_exc())
 
     def _check_script_running(self, worker):
         if self.instances.get_last_heartbeat(worker):
