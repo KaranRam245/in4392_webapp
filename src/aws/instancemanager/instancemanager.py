@@ -271,6 +271,7 @@ def start_instance():
                  asyncio.Task.current_task()]
         for task in tasks:
             task.cancel()
+            loop.run_until_complete(task)
         loop.close()
 
 
