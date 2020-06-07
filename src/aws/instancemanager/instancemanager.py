@@ -280,7 +280,7 @@ class NodeMonitor(con.MultiConnectionServer):
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
         print('Received Heartbeat: {}, from: {}'.format(heartbeat, source))
-        self._ns.instances.set_last_heartbeat(source, heartbeat)
+        self._ns.instances.set_last_heartbeat(instance_id=source, heartbeat=heartbeat)
         return heartbeat
         # TODO different processing heartbeat. Action if needed.
 

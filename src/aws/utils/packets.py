@@ -7,7 +7,7 @@ class Packet(dict):
 
     def __init__(self, packet_type, time, **kwargs):
         time = time if time else timepackage.time()
-        super().__init__(packet_type=packet_type, **kwargs)
+        super().__init__(packet_type=packet_type, time=time, **kwargs)
 
 
 class HeartBeatPacket(Packet):
