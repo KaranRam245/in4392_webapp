@@ -161,8 +161,8 @@ class NodeScheduler:
         self.boto.ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName='AWS-RunShellScript',
-            Parameters={'commands': 'python3 in4392_webapp/main.py {} {} {}'.format(
-                instance_type, self.ipv4, instance_id)})
+            Parameters={'commands': ['python3 in4392_webapp/main.py {} {} {}'.format(
+                instance_type, self.ipv4, instance_id)]})
         self.instances.set_last_start_signal(instance_id)
 
     def start_node_manager(self):
