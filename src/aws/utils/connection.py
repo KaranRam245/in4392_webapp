@@ -34,7 +34,12 @@ def decode_packet(data) -> Packet:
     :return: Decoded packet.
     """
     value = data.decode(ENCODING)
-    packet_dict = json.loads(value)
+    try:
+        packet_dict = json.loads(value)
+    except json.JSONDecodeError as e:
+        print("JsonDecodeError on: {}".format(value))
+        print(e)
+        raise e
     return PacketTranslator.translate(packet_dict)
 
 
