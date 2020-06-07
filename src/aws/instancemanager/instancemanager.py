@@ -220,6 +220,8 @@ class NodeScheduler:
                 await asyncio.sleep(sleep_time)
         except KeyboardInterrupt:
             pass
+        except Exception as e:
+            print(e)
 
     def _check_script_running(self, worker):
         if self.instances.get_last_heartbeat(worker):
@@ -258,12 +260,16 @@ def start_instance():
     procs = asyncio.wait([server_core, scheduler.run()])
 
     try:
-        tasks = loop.run_until_complete(procs)
+        loop.run_until_complete(procs)
 
         loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        tasks = [t for t in asyncio.all_tasks() if t is not
+                 asyncio.current_task()]
+        for task in tasks:
+            task.cancel()
         loop.close()
 
 
