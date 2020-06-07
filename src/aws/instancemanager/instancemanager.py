@@ -259,7 +259,8 @@ class NodeScheduler:
             print("No start signal sent to {}".format(instance))
             send_start = True
         # The IM has not received a heartbeat for too long.
-        if not send_start and self.instances.heart_beat_timedout(instance):
+        if not send_start and self.instances.start_signal_timedout(
+                instance) and self.instances.heart_beat_timedout(instance):
             print("No/timedout heartbeat recorded "
                   "for instance {}: {}".format(instance,
                                                self.instances.get_last_heartbeat(instance)))
