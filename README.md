@@ -64,6 +64,7 @@ We name all our instances for the system to know which role each instance might 
 14. Run `pip3 install -r requirements.txt`. This installs are additional requirements. In case `psutil` does not install, run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`) first. If it still does not work, try `yum search python3 | grep devel` followed by `sudo yum install pythonXX-devel` (depending on what is returned with the search) and try install `psutil` again.
 
 #### Side notes
+- `pip` still missing? You may try `sudo easy_install pip`.
 - Sometimes there may be some problems with the new instance. One of the problems we found was with the version of python being 2.7.
 The below command shows how to change the alternative version to `Python 3.6` if the alias did not do the trick earlier.
   - `sudo alternatives --set python /usr/bin/python3.6`.
