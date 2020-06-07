@@ -1,6 +1,7 @@
 """
 Shared methods for state indication.
 """
+from typing import Iterable
 
 
 class State:
@@ -19,6 +20,9 @@ class State:
 
     def is_state(self, state) -> bool:
         return self._state == state
+
+    def is_any(self, states: Iterable[int]) -> bool:
+        return self._state in states
 
 
 class ProgramState(State):

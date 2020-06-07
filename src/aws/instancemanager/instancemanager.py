@@ -36,7 +36,7 @@ class Instances:
         if filter_state:
             if isinstance(filter_state, int):
                 filter_state = [filter_state]
-            nodes = [node for node in nodes if node.state in filter_state]
+            nodes = [key for (key, value) in nodes.items() if value.is_any(filter_state)]
         return nodes
 
     def get_nodes(self, instance_type):
