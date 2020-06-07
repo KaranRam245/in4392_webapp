@@ -25,7 +25,7 @@ Create an AWS account and verify your account. After that we create an instance 
 1. Run `sudo apt install awscli`.<sup>*</sup>
 2. Go to `https://console.aws.amazon.com/iam` and create a new user.
 3. Assign to the user the permissions you need.
-4. Add the user to the group `AmazonEC2ContainerRegistryReadOnly`,`AmazonS3ReadOnlyAccess`, and `AmazonS3FullAccess`.
+  - E.g: `AmazonEC2ContainerRegistryReadOnly`,`AmazonEc2FullAccess`, `AmazonSSMFullAccess`, and `AmazonS3FullAccess`.
 5. Download the access keys or at least remember them.
 6. Run in the console `sudo aws configure`.<sup>*</sup>
 7. Fill in the data of the access keys from the CSV you downloaded in step 4 with the region name of your AWS instance. My region is, for example, `eu-central-1`. Then set default output format to `json`.<sup>*</sup>
@@ -40,16 +40,28 @@ We name all our instances for the system to know which role each instance might 
 - For the resource managers we give the name `Resource Manager`.
 
 ### Install essentials on instance
-1. First step is to create an AWS EC2 server. We choose a Linux system.
-2. Run `sudo apt-get update -y`.
-3. We want to use Python3.6 (or higher). Check this with `python -V` or `python3 -V`. Otherwise install python 3.6+ with, for example, `sudo yum install -v python3`.
-4. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
-5. Run `sudo apt install python3-pip`. When installed with Yum, you might want to issue `python -m pip install --upgrade pip`.
-6. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
-7. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.
-8. Move into the folder with `cd in4392_webapp/`.
-9. (Optionally) Run `pip3 install --no-cache-dir tensorflow==2.2.0`. This step is required if your EC2 memory is too small to install TensorFlow with caching. Alternatively, you could run `pip3 install --no-cache-dir -r requirements.txt` instead of the below step.
-10. Run `pip3 install -r requirements.txt`. This installs are additional requirements. In case `psutil` does not install, run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`) first. If it still does not work, try `yum search python3 | grep devel` followed by `sudo yum install pythonXX-devel` (depending on what is returned with the search) and try install `psutil` again.
+1. First step is to create an AWS EC2 server. We choose a Linux system. We strongly recommend to create an Elastic IP for each instance.
+2. Before starting the instance, go to `Actions > Instance Settings > Attach/Replace IAM Role`.
+3. Attach the `EC2-SSM` access role (if this role does not exist yet, do substeps below. Otherwise skip to next main step).
+  - Click `Create new IAM role` and then `Create Role`.
+  - Click `EC2` and `Next: Permissions`.
+  - Attach `AmazonEC2RoleforSSM`, click next, and give the name `EC2-SSM`.
+  - Go back to instance to attach the newly created role to the instance (i.e., go back to step 3). If the instance was running, restart.
+4. Start the instance and SSH connect with the instance.
+5. Install the SSM agent:
+  - Run `cd /tmp`
+  - Run `sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm`
+  - Run `sudo start amazon-ssm-agent`. It will probably tell you it was already running.
+  - Verify the agent is running with `aws ssm describe-instance-information` and check if the instanceid is in the list.
+6. Run `sudo apt-get update -y`.
+7. We want to use Python3.6 (or higher). Check this with `python -V` or `python3 -V`. Otherwise install python 3.6+ with, for example, `sudo yum install -v python3`.
+8. Run `alias python=python3`. Set the alias of `python` to the newer version so you do not use 2.7 anymore.
+9. Run `sudo apt install python3-pip`. When installed with Yum, you might want to issue `python -m pip install --upgrade pip`.
+10. Check with `git --version` if you have git installed. If not, run `sudo yum install git` if you have yum installed or `sudo apt-get install git`.
+11. Run `sudo git clone https://github.com/KaranRam245/in4392_webapp.git` to clone the repository.
+12. Move into the folder with `cd in4392_webapp/`.
+13. (Optionally) Run `pip3 install --no-cache-dir tensorflow==2.2.0`. This step is required if your EC2 memory is too small to install TensorFlow with caching. Alternatively, you could run `pip3 install --no-cache-dir -r requirements.txt` instead of the below step.
+14. Run `pip3 install -r requirements.txt`. This installs are additional requirements. In case `psutil` does not install, run `sudo apt-get install -y gcc` (or `sudo yum -y install gcc`) first. If it still does not work, try `yum search python3 | grep devel` followed by `sudo yum install pythonXX-devel` (depending on what is returned with the search) and try install `psutil` again.
 
 #### Side notes
 - Sometimes there may be some problems with the new instance. One of the problems we found was with the version of python being 2.7.
