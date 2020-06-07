@@ -222,6 +222,7 @@ class NodeScheduler:
         if not self.instances.is_state(worker, 'worker', state=InstanceState.RUNNING):
             return
         if self.instances.start_signal_timedout(worker, timeout=config.START_SIGNAL_TIMEOUT):
+            print("Sent start command to worker {}".format(worker))
             self._send_start_command('worker', worker)
 
 
