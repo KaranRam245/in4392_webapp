@@ -140,8 +140,10 @@ class NodeScheduler:
         Initialize all required nodes.
         """
         if self.instances.has_instance_not_running(instance_type='node_manager'):
+            print("No node manager running. Intializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
         if self.instances.has_instance_not_running(instance_type='worker'):
+            print("No single worker running. Intializing startup protocol..")
             self.start_worker()  # Require at least one worker.
 
     def _send_start_command(self, instance_type, instance_id):
