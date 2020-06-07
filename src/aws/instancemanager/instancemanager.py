@@ -254,7 +254,7 @@ class NodeScheduler:
         if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
             return
         send_start = False
-        print(self.instances.get_last_heartbeat(instance))
+        print("Last heartbeat {}: {}".format(instance, self.instances.get_last_heartbeat(instance)))
         # No start signal is sent, or it takes too long to start.
         if self.instances.start_signal_timedout(instance):
             print("No start signal sent to {}".format(instance))
