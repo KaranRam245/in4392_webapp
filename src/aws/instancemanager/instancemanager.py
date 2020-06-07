@@ -49,7 +49,6 @@ class Instances:
 
     def is_state(self, instance_id, instance_type: str, state: int):
         instance: InstanceState = self.get_nodes(instance_type).get(instance_id, None)
-        print("State instance: {} --> {}".format(instance, state))
         if not instance:
             return False
         return instance.is_state(state)
@@ -251,18 +250,19 @@ class NodeScheduler:
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
-        print("Check living for {}".format(instance))
         # Instances that are not running, should be started elsewhere.
         if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
             return
         send_start = False
-        print("Last heartbeat {}: {}".format(instance, self.instances.get_last_heartbeat(instance)))
         # No start signal is sent, or it takes too long to start.
         if self.instances.start_signal_timedout(instance):
             print("No start signal sent to {}".format(instance))
             send_start = True
         # The IM has not received a heartbeat for too long.
         if not send_start and self.instances.heart_beat_timedout(instance):
+            print("No/timedout heartbeat recorded "
+                  "for instance {}: {}".format(instance,
+                                               self.instances.get_last_heartbeat(instance)))
             send_start = True
         if send_start:  # Send a new start signal to the instance.
             print("Sent start command to instance {}".format(instance))
