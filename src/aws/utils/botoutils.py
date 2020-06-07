@@ -50,24 +50,23 @@ class BotoInstance:
         self.instance_id = InstanceId
         self.dns = PublicDnsName
         self.state = State['Name']
-        self.tags = Tags
         self.name = ''
-        for tag in self.tags:
+        for tag in Tags:
             if tag['Key'] == 'Name':
                 self.name = self.map_name(tag['Value'])
                 break
 
     def __str__(self) -> str:
         name = self.name if self.name != '' else 'BotoInstance'
-        return "{}[instance_id: {}, dns: {}, state: {}, tags: {}]".format(
-            name, self.instance_id, self.dns, self.state, self.tags)
+        return "{}[instance_id: {}, dns: {}, state: {}]".format(
+            name, self.instance_id, self.dns, self.state)
 
     def __repr__(self):
         return self.__str__()
 
     @staticmethod
     def map_name(name: str):
-        return name.lower().replace('_', ' ')
+        return name.lower().replace(' ', '_')
 
     def is_running(self) -> bool:
         return self.state == 'running'
@@ -76,7 +75,7 @@ class BotoInstance:
         return self.name == 'worker'
 
     def is_instance_manger(self) -> bool:
-        return self.name == 'instance manager'
+        return self.name == 'instance_manager'
 
     def is_node_manager(self) -> bool:
-        return self.name == 'node manager'
+        return self.name == 'node_manager'
