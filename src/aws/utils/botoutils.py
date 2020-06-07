@@ -9,8 +9,10 @@ class BotoInstanceReader:
         sess = boto3.session.Session()
         if region_name:
             self.ec2 = sess.client('ec2', region_name=region_name)
+            self.ssm = sess.client('ssm', region_name=region_name)
         else:
             self.ec2 = sess.client('ec2')
+            self.ssm = sess.client('ssm')
 
     def read_ids(self, own_instance, filters=None, boto_response: dict = None):
         output = self.read(own_instance, filters, boto_response=boto_response)

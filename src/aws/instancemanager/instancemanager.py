@@ -151,7 +151,7 @@ class NodeScheduler:
             self.start_worker()  # Require at least one worker.
 
     def _send_start_command(self, instance_type, instance_id):
-        self.boto.ec2.run_command(
+        self.boto.ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName='AWS-RunShellScript',
             Parameters={'commands': 'python3 in4392_webapp/main.py {} {} {}'.format(
