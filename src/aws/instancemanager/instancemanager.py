@@ -298,7 +298,7 @@ class NodeScheduler:
         send_start = False
         # No start signal is sent, or it takes too long to start.
         if self.instances.start_signal_timedout(instance):
-            if not self.instances.start_retry[instance]:
+            if instance not in self.instances.start_retry:
                 print("No start signal sent to {}".format(instance))
                 send_start = True
             else:
