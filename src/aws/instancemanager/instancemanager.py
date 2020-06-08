@@ -123,7 +123,7 @@ class Instances:
         print("Last heartbeats: {}".format(self._last_heartbeat))
 
     def heart_beat_timedout(self, instance_id):
-        heartbeat_time = self.get_last_heartbeat(instance_id)
+        heartbeat_time = round(self.get_last_heartbeat(instance_id))
         if not heartbeat_time:
             return True
         current_time_sec = round(time.time())
@@ -291,7 +291,7 @@ class NodeScheduler:
 
     def check_all_living(self):
         for instance_type in ('node_manager', 'worker'):
-            for instance in self.instances.get_all(instance_type):
+            for instance in self.instances.get_nodes(instance_type):
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
