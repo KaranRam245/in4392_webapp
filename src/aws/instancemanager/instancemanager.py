@@ -123,9 +123,10 @@ class Instances:
         print("Last heartbeats: {}".format(self._last_heartbeat))
 
     def heart_beat_timedout(self, instance_id):
-        heartbeat_time = round(self.get_last_heartbeat(instance_id))
+        heartbeat_time = self.get_last_heartbeat(instance_id)
         if not heartbeat_time:
             return True
+        heartbeat_time = round(heartbeat_time)
         current_time_sec = round(time.time())
         print("HB timeout: current - hb = {} - {} = {} --> {}".format(current_time_sec, heartbeat_time, (current_time_sec - heartbeat_time), (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT))
         return (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
@@ -313,7 +314,7 @@ class NodeScheduler:
                     self.instances.start_retry[instance] -= 1
                 else:
                     del self.instances.start_retry[instance]
-        if not send_start and heartbeat and heartbeat_timedout:
+        elif not send_start and heartbeat and heartbeat_timedout:
             # The IM has not received a heartbeat for too long.
             print("No/timedout heartbeat recorded "
                   "for instance {}: {}".format(instance,
