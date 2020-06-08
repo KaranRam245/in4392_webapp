@@ -327,7 +327,7 @@ class NodeScheduler:
             running_instances = self.running_instances()
         if running_instances:
             print("Killing all instances: {}".format(running_instances))
-            self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
+            self.boto.ec2.stop_instances(InstanceIds=running_instances)
 
         print("Cancelling all commands..")
         for command in self.commands:
