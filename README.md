@@ -23,7 +23,7 @@ Create an AWS account and verify your account. After that we create an instance 
 
 ### Setup user permissions
 1. Run `sudo apt install awscli`.<sup>*</sup>
-2. Go to `https://console.aws.amazon.com/iam` and create a new user.
+2. Go to `https://console.aws.amazon.com/iam` and create a new user. Add the checkmarks at the bottom to give the permissions to the user.
 3. Assign to the user the permissions you need.
     - E.g: `AmazonEC2ContainerRegistryReadOnly`,`AmazonEc2FullAccess`, `AmazonSSMFullAccess`, and `AmazonS3FullAccess`.
 5. Download the access keys or at least remember them.
