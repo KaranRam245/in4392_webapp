@@ -13,8 +13,11 @@ def main():
     args = list(sys.argv)
 
     if len(args) < 2 or args[1] == 'instance_manager':
+        debug = False
+        if len(args) >= 3 and args[2] == 'debug':
+            debug = True
         print('[INFO] Initiating bootcall Instance Manager..')
-        im.start_instance()
+        im.start_instance(debug=debug)
     elif len(args) >= 4:
         if args[1] == 'node_manager':
             # Example: python src/main.py worker [IM ip] [node_manager_id]

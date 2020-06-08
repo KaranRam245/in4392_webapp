@@ -146,7 +146,7 @@ class NodeScheduler:
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
-    def __init__(self):
+    def __init__(self, debug):
         self.instances = Instances()
         self.instance_id = ec2_metadata.instance_id
         self.ipv4 = ec2_metadata.public_ipv4
@@ -154,7 +154,7 @@ class NodeScheduler:
         self.boto = BotoInstanceReader()
         self.commands = []
         self.cleaned_up = False
-        self.node_manager_ipv4 = None  # This should be replaced to allow multiple node managers!
+        self.debug = debug
         super().__init__()
 
     def initialize_nodes(self):
@@ -162,6 +162,9 @@ class NodeScheduler:
         Initialize all required nodes.
         """
         self.update_instances(check=False)
+        if self.debug and self.instances.has_instance_not_running(instance_type='node_manager'):
+            print("Debugging waiting for node manager to start running.")
+            return False
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
             print("No node manager running. Intializing startup protocol..")
@@ -169,6 +172,7 @@ class NodeScheduler:
         if self.instances.has_instance_not_running(instance_type='worker'):
             print("No single worker running. Intializing startup protocol..")
             self.start_worker()  # Require at least one worker.
+        return True
 
     def _send_start_command(self, instance_type, instance_id):
         try:
@@ -191,12 +195,14 @@ class NodeScheduler:
             self.instances.start_retry[instance_id] = config.INSTANCE_START_CONFIGURE_TIMEOUT
 
     def start_node_manager(self):
-        nodemanagers = self.boto.read_ids(self.instance_id, filters=['is_node_manager',
-                                                                     ('is_running', False)])
-        if not nodemanagers:
-            raise ConnectionError('No node manager instances found with the given filters.')
-        self._init_instance(nodemanagers[0], instance_type='node_manager', wait=True)
-        self._send_start_command('node_manager', nodemanagers[0])
+        if not self.instances.has('node_manager', [InstanceState.RUNNING, InstanceState.PENDING]):
+            nodemanagers = self.instances.get_all(instance_type='node_manager',
+                                                  filter_state=[InstanceState.STOPPED])
+            if not nodemanagers:
+                raise ConnectionError('No node manager instances available to start.')
+            to_start = nodemanagers[0]
+            self._init_instance(to_start, instance_type='node_manager', wait=True)
+            self._send_start_command('node_manager', to_start)
 
     def start_worker(self):
         workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
@@ -247,7 +253,12 @@ class NodeScheduler:
         sleep_time = 1
         update_counter = config.BOTO_UPDATE_SEC
         try:
-            self.initialize_nodes()
+            initialized = self.initialize_nodes()
+            while self.debug and not initialized:
+                print("Debug enabled and no node manager started yet."
+                      "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
+                asyncio.sleep(config.DEBUG_INIT_RETRY)
+                initialized = self.initialize_nodes()
 
             while True:
                 # Update the Instance states.
@@ -273,7 +284,7 @@ class NodeScheduler:
 
     def check_all_living(self):
         for instance_type in ('node_manager', 'worker'):
-            for instance in self.instances.get_all('node_manager'):
+            for instance in self.instances.get_all(instance_type):
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
@@ -291,7 +302,7 @@ class NodeScheduler:
                 if value > 0:
                     self.instances.start_retry[instance] = value - 1
                 else:
-                    del self.instances[instance]
+                    del self.instances.start_retry[instance]
         # The IM has not received a heartbeat for too long.
         if not send_start and self.instances.start_signal_timedout(
                 instance) and self.instances.heart_beat_timedout(instance):
@@ -329,11 +340,11 @@ class NodeMonitor(con.MultiConnectionServer):
         # TODO different processing heartbeat. Action if needed.
 
 
-def start_instance():
+def start_instance(debug=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    scheduler = NodeScheduler()
+    scheduler = NodeScheduler(debug=debug)
     monitor = NodeMonitor(scheduler)
 
     loop = asyncio.get_event_loop()
