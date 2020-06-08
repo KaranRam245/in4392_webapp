@@ -27,6 +27,7 @@ class Instances:
         self._last_heartbeat = {}
         self._start_signal = {}
         self.ip_addresses = {}
+        self.start_retry = {}
 
     def get_all(self, instance_type, filter_state=None):
         """
@@ -49,8 +50,11 @@ class Instances:
 
     def is_state(self, instance_id, instance_type: str, state: int):
         instance: InstanceState = self.get_nodes(instance_type).get(instance_id, None)
+        print(instance)
         if not instance:
             return False
+        print('{} is {} == {} with {}'.format(instance, state, instance.is_state(state),
+                                              instance._state))
         return instance.is_state(state)
 
     def set_state(self, instance_id, instance_type, state):
@@ -184,6 +188,7 @@ class NodeScheduler:
             self.instances.set_last_start_signal(instance_id)
         except Exception as e:
             print(Exception, e, "Retry later")
+            self.instances.start_retry[instance_id] = config.INSTANCE_START_CONFIGURE_TIMEOUT
 
     def start_node_manager(self):
         nodemanagers = self.boto.read_ids(self.instance_id, filters=['is_node_manager',
@@ -278,8 +283,15 @@ class NodeScheduler:
         send_start = False
         # No start signal is sent, or it takes too long to start.
         if self.instances.start_signal_timedout(instance):
-            print("No start signal sent to {}".format(instance))
-            send_start = True
+            if not self.instances.start_retry[instance]:
+                print("No start signal sent to {}".format(instance))
+                send_start = True
+            else:
+                value = self.instances.start_retry[instance]
+                if value > 0:
+                    self.instances.start_retry[instance] = value - 1
+                else:
+                    del self.instances[instance]
         # The IM has not received a heartbeat for too long.
         if not send_start and self.instances.start_signal_timedout(
                 instance) and self.instances.heart_beat_timedout(instance):
