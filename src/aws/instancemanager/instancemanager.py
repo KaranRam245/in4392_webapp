@@ -158,11 +158,12 @@ class NodeScheduler:
         self.node_manager_running = False
         super().__init__()
 
-    def initialize_nodes(self):
+    def initialize_nodes(self, retry=False):
         """
         Initialize all required nodes.
         """
-        self.update_instances(check=False)
+        if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
+            self.update_instances(check=False)
         if self.debug and self.instances.has_instance_not_running(instance_type='node_manager')\
                 and not self.node_manager_running:
             print("Debugging waiting for node manager to start running.")
@@ -261,7 +262,7 @@ class NodeScheduler:
                 print("Debug enabled and no node manager started yet."
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 asyncio.sleep(config.DEBUG_INIT_RETRY)
-                initialized = self.initialize_nodes()
+                initialized = self.initialize_nodes(retry=True)
 
             while True:
                 # Update the Instance states.
