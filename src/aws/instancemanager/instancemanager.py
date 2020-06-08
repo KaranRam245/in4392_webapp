@@ -160,7 +160,7 @@ class NodeScheduler:
         self.commands = []
         self.cleaned_up = False
         self.debug = debug  # Boolean indicating if the debug mode is enabled.
-        self.git_pull = git_pull  # Boolean indicating if workers should first git pull.
+        self.git_pull = git_pull  # String indicating if workers should first git pull and checkout.
         self.node_manager_running = False
         super().__init__()
 
@@ -193,6 +193,7 @@ class NodeScheduler:
                 command[1] += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
                 if self.git_pull:
                     command.insert(1, 'git pull')
+                    command.insert(2, 'git checkout {}'.format(self.git_pull))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],

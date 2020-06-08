@@ -17,11 +17,17 @@ def main():
         if 'debug' in args:
             print("Enabling debug mode")
             debug = True
-        if 'git-pull' in args:
-            print("Enabling git-pull mode for workers")
-            update = True
+        branch = None
+        for arg in args[2:]:
+            git_pull_split = str(arg).split('=')
+            if git_pull_split[0] == 'git-pull':
+                if len(git_pull_split) > 1:
+                    branch = git_pull_split[1]
+                    print("Enabling git-pull (branch: {}) mode for workers".format(branch))
+                else:
+                    print("git-pull requires a branch. E.g., git-pull=master")
         print('[INFO] Initiating bootcall Instance Manager..')
-        im.start_instance(debug=debug, git_pull=update)
+        im.start_instance(debug=debug, git_pull=branch)
     elif len(args) >= 4:
         if args[1] == 'node_manager':
             # Example: python src/main.py worker [IM ip] [node_manager_id]
