@@ -19,6 +19,14 @@ class BotoInstanceReader:
         return [inst.instance_id for inst in output]
 
     def read(self, own_instance, filters=None, boto_response: dict = None):
+        """
+        Read the boto response of ec2 describe-instance and convert to a list of
+        BotoInstances.
+        :param own_instance: The instance_id of the instance manager.
+        :param filters: Any filters if wanted. E.g., `is-running`.
+        :param boto_response: A dict containing the boto3 describe-instances response.
+        :return: List of BotoInstances.
+        """
         if filters is None:
             filters = []
         if not boto_response:
@@ -50,9 +58,10 @@ class BotoInstance:
     def instance(content):
         return BotoInstance(**content)
 
-    def __init__(self, InstanceId, PublicDnsName, State, Tags, **kwargs):
+    def __init__(self, InstanceId, PublicDnsName, PublicIpAddress, State, Tags, **kwargs):
         self.instance_id = InstanceId
         self.dns = PublicDnsName
+        self.public_ip = PublicIpAddress
         self.state = InstanceState(State['Name'])
         self.name = ''
         for tag in Tags:
