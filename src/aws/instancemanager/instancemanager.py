@@ -155,6 +155,7 @@ class NodeScheduler:
         self.commands = []
         self.cleaned_up = False
         self.debug = debug
+        self.node_manager_running = False
         super().__init__()
 
     def initialize_nodes(self):
@@ -162,13 +163,15 @@ class NodeScheduler:
         Initialize all required nodes.
         """
         self.update_instances(check=False)
-        if self.debug and self.instances.has_instance_not_running(instance_type='node_manager'):
+        if self.debug and self.instances.has_instance_not_running(instance_type='node_manager')\
+                and not self.node_manager_running:
             print("Debugging waiting for node manager to start running.")
             return False
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
             print("No node manager running. Intializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
+            self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
             print("No single worker running. Intializing startup protocol..")
             self.start_worker()  # Require at least one worker.
@@ -335,9 +338,11 @@ class NodeMonitor(con.MultiConnectionServer):
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
         print('Received Heartbeat: {}, from: {}'.format(heartbeat, source))
+        if heartbeat['instance_type'] == 'node_manager':
+            self._ns.node_manager_running = True
         self._ns.instances.set_last_heartbeat(instance_id=source, heartbeat=heartbeat)
         return heartbeat
-        # TODO different processing heartbeat. Action if needed.
+        # TODO load-balancing on heartbeats. Action if needed.
 
 
 def start_instance(debug=False):
