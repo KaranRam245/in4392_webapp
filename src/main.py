@@ -15,6 +15,7 @@ def main():
     if len(args) < 2 or args[1] == 'instance_manager':
         debug = False
         if len(args) >= 3 and args[2] == 'debug':
+            print("Enabling debug mode")
             debug = True
         print('[INFO] Initiating bootcall Instance Manager..')
         im.start_instance(debug=debug)
