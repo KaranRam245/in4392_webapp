@@ -67,6 +67,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                                     instance_type='worker',
                                     instance_state=self._instance_state,
                                     program_state=self._program_state)
+        # self.send_message(message=heartbeat)
         if notify:
             self.notify(message=heartbeat)
         return heartbeat
