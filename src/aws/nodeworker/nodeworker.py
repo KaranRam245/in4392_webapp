@@ -11,19 +11,25 @@ from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
 
 
-class WorkerCore(Observable):
+class WorkerCore(Observable, con.MultiConnectionClient):
     """
     The WorkerCore accepts the task from the Node Manager.
     """
 
-    def __init__(self, instance_id, task_queue, storage_connector):
-        super().__init__()
+    def __init__(self, host, port, instance_id, task_queue, storage_connector):
+        super().__init__(host=host, port=port)
         self._instance_id = instance_id
         self._task_queue = task_queue
         self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector = storage_connector
+
+    def process_command(self, command: CommandPacket):
+        # Enqueue for worker here!
+        if command['command'] == 'task':
+            self._task_queue.put(command)
+        # TODO: process more commands.
 
     async def heartbeat(self):
         """
@@ -36,7 +42,7 @@ class WorkerCore(Observable):
         except KeyboardInterrupt:
             pass
 
-    async def run(self):
+    async def process(self):
         """
         Start function for the WorkerCore.
         """
@@ -85,23 +91,24 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
             raise NotImplementedError("Client has not yet implemented [stop].")
         if command['command'] == 'kill':
             raise NotImplementedError("Client has not yet implemented [kill].")
-        if command['command'] == 'task':
-            self._task_queue.put(command)
         print('Received unknown command: {}'.format(command['command']))
 
 
-def start_instance(instance_id, host, port=con.PORT):
+def start_instance(instance_id, host_im, host_nm, port_im=con.PORT, port_nm=con.PORT):
     task_queue = []
     storage_connector = ResourceManagerCore()
-    worker_core = WorkerCore(instance_id=instance_id,
+    worker_core = WorkerCore(host=host_nm,
+                             port=port_nm,
+                             instance_id=instance_id,
                              task_queue=task_queue,
                              storage_connector=storage_connector)
-    monitor = WorkerMonitor(host, port, task_queue)
+    monitor = WorkerMonitor(host_im, port_im, task_queue)
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
-    procs = asyncio.wait([worker_core.run(), worker_core.heartbeat(), monitor.run()])
+    procs = asyncio.wait(
+        [worker_core.run(), worker_core.heartbeat(), worker_core.process(), monitor.run()])
     try:
         tasks = loop.run_until_complete(procs)
         tasks.close()

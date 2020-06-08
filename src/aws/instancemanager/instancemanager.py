@@ -26,6 +26,7 @@ class Instances:
         self._workers = {}
         self._last_heartbeat = {}
         self._start_signal = {}
+        self.ip_addresses = {}
 
     def get_all(self, instance_type, filter_state=None):
         """
@@ -58,6 +59,12 @@ class Instances:
         if instance_id not in nodes:
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
         nodes[instance_id] = state
+
+    def set_ip(self, instance_id, ip_address):
+        self.ip_addresses[instance_id] = ip_address
+
+    def get_ip(self, instance_id):
+        return self.ip_addresses.get(instance_id)
 
     def has(self, instance_type, filter_state):
         """
@@ -144,6 +151,7 @@ class NodeScheduler:
         self.boto = BotoInstanceReader()
         self.commands = []
         self.cleaned_up = False
+        self.node_manager_ipv4 = None  # This should be replaced to allow multiple node managers!
         super().__init__()
 
     def initialize_nodes(self):
@@ -155,17 +163,22 @@ class NodeScheduler:
         if self.instances.has_instance_not_running(instance_type='node_manager'):
             print("No node manager running. Intializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
-        # if self.instances.has_instance_not_running(instance_type='worker'):
-        #     print("No single worker running. Intializing startup protocol..")
-        #     self.start_worker()  # Require at least one worker.
+        if self.instances.has_instance_not_running(instance_type='worker'):
+            print("No single worker running. Intializing startup protocol..")
+            self.start_worker()  # Require at least one worker.
 
     def _send_start_command(self, instance_type, instance_id):
+        command = 'cd /tmp/in4392_webapp/ ; python3 src/main.py {} {} {}'.format(
+            instance_type, self.ipv4, instance_id)
+        if instance_type == 'worker':
+            node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
+            # If there are more node managers, one could use a smarter method to divide workers.
+            command += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
         response = self.boto.ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName='AWS-RunShellScript',
-            Parameters={'commands': [
-                'cd /tmp/in4392_webapp/ ; python3 src/main.py {} {} {}'.format(
-                    instance_type, self.ipv4, instance_id)]})
+            Parameters={'commands': [command]}
+        )
         self.commands.append(response['Command']['CommandId'])
         self.instances.set_last_start_signal(instance_id)
 

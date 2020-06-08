@@ -21,7 +21,11 @@ def main():
             nm.start_instance(host=args[2], instance_id=args[3])
         elif args[1] == 'worker' or args[0] == 'node_worker':
             print('[INFO] Initiating bootcall Worker..')
-            nw.start_instance(host=args[2], instance_id=args[3])
+            if len(args) < 5:
+                print("[ERROR] workers need an host adddress of the Node Manager.\n"
+                      "python src/main.py worker [IM ip] [worker_instance_id] [NM ip]")
+                return
+            nw.start_instance(host_im=args[2], host_nm=args[4], instance_id=args[3])
         else:
             print('[ERROR] Unknown argument passed to program {}\n'
                   'Expected "instance_manager", "node_manager", or "worker"'.format(args[1]))
