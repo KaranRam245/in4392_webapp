@@ -95,6 +95,7 @@ class Instances:
         for boto_instance in boto_response:
             self.set_state(instance_id=boto_instance.instance_id, instance_type=boto_instance.name,
                            state=boto_instance.state)
+            self.set_ip(instance_id=boto_instance.instance_id, ip_address=boto_instance.public_ip)
 
     def get_worker_split(self):
         """
@@ -128,7 +129,6 @@ class Instances:
             return True
         heartbeat_time = round(heartbeat_time)
         current_time_sec = round(time.time())
-        print("HB timeout: current - hb = {} - {} = {} --> {}".format(current_time_sec, heartbeat_time, (current_time_sec - heartbeat_time), (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT))
         return (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
 
     def start_signal_timedout(self, instance_id):
