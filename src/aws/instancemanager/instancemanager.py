@@ -108,6 +108,10 @@ class Instances:
         workers_off = self.get_all('worker', [InstanceState.STOPPING, InstanceState.STOPPED])
         return workers_on, workers_off
 
+    def is_type(self, instance_id, instance_type):
+        nodes = self.get_nodes(instance_type)
+        return instance_id in nodes
+
     def __str__(self):
         return "All instances:\n" \
                "  node_managers: {}" \
@@ -164,7 +168,7 @@ class NodeScheduler:
         """
         if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
             self.update_instances(check=False)
-        if self.debug and self.instances.has_instance_not_running(instance_type='node_manager')\
+        if self.debug and self.instances.has_instance_not_running(instance_type='node_manager') \
                 and not self.node_manager_running:
             print("Debugging waiting for node manager to start running.")
             return False
@@ -319,11 +323,15 @@ class NodeScheduler:
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
     def cancel_all(self):
-        if not self.debug:
+        if self.debug:
             running_instances = self.running_instances()
-            if running_instances:
-                print("Killing all instances: {}".format(running_instances))
-                self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
+            running_instances = [kill for kill in running_instances if
+                                 self.instances.is_type(kill, 'worker')]
+        else:
+            running_instances = self.running_instances()
+        if running_instances:
+            print("Killing all instances: {}".format(running_instances))
+            self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
 
         print("Cancelling all commands..")
         for command in self.commands:
