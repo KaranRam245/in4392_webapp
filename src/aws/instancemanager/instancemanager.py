@@ -151,7 +151,7 @@ class NodeScheduler:
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
-    def __init__(self, debug):
+    def __init__(self, debug, git_pull):
         self.instances = Instances()
         self.instance_id = ec2_metadata.instance_id
         self.ipv4 = ec2_metadata.public_ipv4
@@ -159,7 +159,8 @@ class NodeScheduler:
         self.boto = BotoInstanceReader()
         self.commands = []
         self.cleaned_up = False
-        self.debug = debug
+        self.debug = debug  # Boolean indicating if the debug mode is enabled.
+        self.git_pull = git_pull  # Boolean indicating if workers should first git pull.
         self.node_manager_running = False
         super().__init__()
 
@@ -184,17 +185,19 @@ class NodeScheduler:
 
     def _send_start_command(self, instance_type, instance_id):
         try:
-            command = 'cd /tmp/in4392_webapp/ ; python3 src/main.py {} {} {}'.format(
-                instance_type, self.ipv4, instance_id)
+            command = [config.DEFAULT_DIRECTORY,
+                       config.DEFAULT_MAIN_CALL.format(instance_type, self.ipv4, instance_id)]
             if instance_type == 'worker':
                 node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
                 # If there are more node managers, one could use a smarter method to divide workers.
-                command += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
+                command[1] += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
+                if self.git_pull:
+                    command.insert(1, 'git pull')
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
                 DocumentName='AWS-RunShellScript',
-                Parameters={'commands': [command]}
+                Parameters={'commands': [' ; '.join(command)]}
             )
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
@@ -356,11 +359,11 @@ class NodeMonitor(con.MultiConnectionServer):
         # TODO load-balancing on heartbeats. Action if needed.
 
 
-def start_instance(debug=False):
+def start_instance(debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    scheduler = NodeScheduler(debug=debug)
+    scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
 
     loop = asyncio.get_event_loop()

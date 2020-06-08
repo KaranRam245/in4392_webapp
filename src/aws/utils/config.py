@@ -18,3 +18,7 @@ HEART_BEAT_TIMEOUT = 30
 
 # Seconds until a retry is made for initialize when in debugging mode.
 DEBUG_INIT_RETRY = 5
+
+# Default parts of the commands.
+DEFAULT_DIRECTORY = 'cd /tmp/in4392_webapp/'
+DEFAULT_MAIN_CALL = 'python3 src/main.py {} {} {}'
