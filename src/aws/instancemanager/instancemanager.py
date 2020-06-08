@@ -319,10 +319,11 @@ class NodeScheduler:
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
     def cancel_all(self):
-        running_instances = self.running_instances()
-        print("Killing all instances: {}".format(running_instances))
-        if running_instances:
-            self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
+        if not self.debug:
+            running_instances = self.running_instances()
+            if running_instances:
+                print("Killing all instances: {}".format(running_instances))
+                self.boto.ec2.stop_instances(InstanceIds=self.running_instances())
 
         print("Cancelling all commands..")
         for command in self.commands:
