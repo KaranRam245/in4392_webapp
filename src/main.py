@@ -17,8 +17,9 @@ def main():
         im.start_instance()
     elif len(args) >= 4:
         if args[1] == 'node_manager':
+            # Example: python src/main.py worker [IM ip] [node_manager_id]
             print('[INFO] Initiating bootcall Node Manager..')
-            nm.start_instance(host=args[2], instance_id=args[3])
+            nm.start_instance(im_host=args[2], instance_id=args[3])
         elif args[1] == 'worker' or args[0] == 'node_worker':
             print('[INFO] Initiating bootcall Worker..')
             if len(args) < 5:

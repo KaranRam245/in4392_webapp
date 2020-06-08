@@ -49,21 +49,27 @@ class TaskPool(Observable):
 
 
 class TaskPoolClientWrapper(con.MultiConnectionClient):
+    """
+    This class is used as a wrapper for the client which connects to the IM.
+    """
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
 
 
 class TaskPoolServerWrapper(con.MultiConnectionServer):
+    """
+    This class is the server for which workers can connect to.
+    """
 
-    def __init__(self, host, port):
-        self.client = None
+    def __init__(self, host, port, client):
+        self.client = client
         super().__init__(host, port)
 
     def process_heartbeat(self, hb, source) -> Packet:
-        hb['source'] = source
-        self.client.send_message(hb)
-        return hb
+        hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
+        self.client.send_message(hb)  # Forward the heartbeat to IM.
+        return hb  # This value is returned to the worker client.
 
     def process_command(self, command: CommandPacket):
         print("A client send me a command: {}".format(command))
@@ -74,26 +80,25 @@ class TaskPoolMonitor(Listener):
     def __init__(self, taskpool, client, server):
         self._tp = taskpool
         self.client = client
-        server.client = client
         self.server = server
         super().__init__()
 
     def event(self, message):
-        self.client.send_message(message)
+        self.client.send_message(message)  # Send message to IM.
 
 
-def start_instance(instance_id, host, port=con.PORT):
+def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT, nm_port=con.PORT):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
     taskpool = TaskPool(instance_id=instance_id)
-    taskpool_client = TaskPoolClientWrapper(host, port)
-    taskpool_server = TaskPoolServerWrapper(host, port)
+    taskpool_client = TaskPoolClientWrapper(im_host, im_port)
+    taskpool_server = TaskPoolServerWrapper(nm_host, nm_port, taskpool_client)
     monitor = TaskPoolMonitor(taskpool, taskpool_client, taskpool_server)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
-    server_core = asyncio.start_server(taskpool_server.run, host, port, loop=loop)
+    server_core = asyncio.start_server(taskpool_server.run, nm_host, nm_port, loop=loop)
 
     procs = asyncio.wait([server_core, taskpool.run(), monitor.client.run()])
     tasks = loop.run_until_complete(procs)
