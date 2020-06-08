@@ -120,12 +120,14 @@ class Instances:
     def set_last_heartbeat(self, heartbeat):
         instance_id = heartbeat['instance_id']
         self._last_heartbeat[instance_id] = heartbeat['time']
+        print("Last heartbeats: {}".format(self._last_heartbeat))
 
     def heart_beat_timedout(self, instance_id):
         heartbeat_time = self.get_last_heartbeat(instance_id)
         if not heartbeat_time:
             return True
         current_time_sec = round(time.time())
+        print("HB timeout: current - hb = {} - {} = {} --> {}".format(current_time_sec, heartbeat_time, (current_time_sec - heartbeat_time), (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT))
         return (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
 
     def start_signal_timedout(self, instance_id):
