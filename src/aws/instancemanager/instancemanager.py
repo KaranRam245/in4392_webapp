@@ -167,20 +167,23 @@ class NodeScheduler:
             self.start_worker()  # Require at least one worker.
 
     def _send_start_command(self, instance_type, instance_id):
-        command = 'cd /tmp/in4392_webapp/ ; python3 src/main.py {} {} {}'.format(
-            instance_type, self.ipv4, instance_id)
-        if instance_type == 'worker':
-            node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
-            # If there are more node managers, one could use a smarter method to divide workers.
-            command += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
-        print("Sending start command: [{}]: {}".format(instance_id, command))
-        response = self.boto.ssm.send_command(
-            InstanceIds=[instance_id],
-            DocumentName='AWS-RunShellScript',
-            Parameters={'commands': [command]}
-        )
-        self.commands.append(response['Command']['CommandId'])
-        self.instances.set_last_start_signal(instance_id)
+        try:
+            command = 'cd /tmp/in4392_webapp/ ; python3 src/main.py {} {} {}'.format(
+                instance_type, self.ipv4, instance_id)
+            if instance_type == 'worker':
+                node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
+                # If there are more node managers, one could use a smarter method to divide workers.
+                command += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
+            print("Sending start command: [{}]: {}".format(instance_id, command))
+            response = self.boto.ssm.send_command(
+                InstanceIds=[instance_id],
+                DocumentName='AWS-RunShellScript',
+                Parameters={'commands': [command]}
+            )
+            self.commands.append(response['Command']['CommandId'])
+            self.instances.set_last_start_signal(instance_id)
+        except Exception as e:
+            print(Exception, e, "Retry later")
 
     def start_node_manager(self):
         nodemanagers = self.boto.read_ids(self.instance_id, filters=['is_node_manager',
