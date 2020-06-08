@@ -55,7 +55,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                         key=self.current_task.key
                     )
                     # TODO: Process the file! @Karan
-                    await asyncio.sleep(2)
+
+                    # self.send_message(message)
                     self.current_task = None
                 await asyncio.sleep(1)
         except KeyboardInterrupt:

@@ -250,7 +250,6 @@ class NodeScheduler:
 
                 self.check_all_living()
 
-                # TODO: Do other stuff like keeping track of heartbeats etc.
                 # TODO: Create workers when more needed
                 # TODO: Kill workers if not needed anymore.
 
