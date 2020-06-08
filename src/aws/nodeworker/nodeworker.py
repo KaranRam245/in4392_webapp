@@ -17,8 +17,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
     """
 
     def __init__(self, host, port, instance_id, task_queue, storage_connector):
-        super(Observable, self).__init__()
-        super(con.MultiConnectionClient, self).__init__(host=host, port=port)
+        Observable.__init__(self)
+        con.MultiConnectionClient.__init__(self, host=host, port=port)
         self._instance_id = instance_id
         self._task_queue = task_queue
         self.current_task = None
