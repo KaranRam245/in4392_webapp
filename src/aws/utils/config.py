@@ -11,7 +11,7 @@ INSTANCE_START_CONFIGURE_TIMEOUT = 5
 START_SIGNAL_TIMEOUT = 30
 
 # How many seconds should be between heartbeats?
-HEART_BEAT_INTERVAL = 1
+HEART_BEAT_INTERVAL = 3
 
 # How many seconds until a program is deemed dead? Max wait time until heartbeats?
 HEART_BEAT_TIMEOUT = 30
