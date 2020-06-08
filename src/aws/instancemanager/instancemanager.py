@@ -173,6 +173,7 @@ class NodeScheduler:
             node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
             # If there are more node managers, one could use a smarter method to divide workers.
             command += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
+        print("Sending start command: [{}]: {}".format(instance_id, command))
         response = self.boto.ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName='AWS-RunShellScript',
