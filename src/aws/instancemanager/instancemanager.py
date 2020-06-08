@@ -168,8 +168,7 @@ class NodeScheduler:
         """
         if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
             self.update_instances(check=False)
-        if self.debug and self.instances.has_instance_not_running(instance_type='node_manager') \
-                and not self.node_manager_running:
+        if self.debug and not self.node_manager_running:
             print("Debugging waiting for node manager to start running.")
             return False
         print("Initializing nodes..")
