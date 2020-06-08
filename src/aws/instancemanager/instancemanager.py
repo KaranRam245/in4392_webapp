@@ -292,24 +292,26 @@ class NodeScheduler:
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
-        # Instances that are not running, should be started elsewhere.
         if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
-            return
+            return  # Instances that are not running, should be started elsewhere.
+        heartbeat = self.instances.get_last_heartbeat(instance)
+        heartbeat_timedout = self.instances.heart_beat_timedout(instance)
+        if heartbeat and not heartbeat_timedout:
+            return  # The instance is perfectly fine.
         send_start = False
-        # No start signal is sent, or it takes too long to start.
         if self.instances.start_signal_timedout(instance):
+            # No start signal is sent, or it takes too long to start.
             if instance not in self.instances.start_retry:
-                print("No start signal sent to {}".format(instance))
+                print("No start/timedout signal sent to {}".format(instance))
                 send_start = True
             else:
                 value = self.instances.start_retry[instance]
                 if value > 0:
-                    self.instances.start_retry[instance] = value - 1
+                    self.instances.start_retry[instance] -= 1
                 else:
                     del self.instances.start_retry[instance]
-        # The IM has not received a heartbeat for too long.
-        if not send_start and self.instances.start_signal_timedout(
-                instance) and self.instances.heart_beat_timedout(instance):
+        if not send_start and heartbeat and heartbeat_timedout:
+            # The IM has not received a heartbeat for too long.
             print("No/timedout heartbeat recorded "
                   "for instance {}: {}".format(instance,
                                                self.instances.get_last_heartbeat(instance)))
