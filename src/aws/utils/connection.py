@@ -9,7 +9,8 @@ from typing import List
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
 
 HOST = '0.0.0.0'
-PORT = 8080
+PORT_IM = 8080
+PORT_NM = 8081
 ENCODING = 'UTF-8'
 
 

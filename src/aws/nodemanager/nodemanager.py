@@ -87,7 +87,8 @@ class TaskPoolMonitor(Listener):
         self.client.send_message(message)  # Send message to IM.
 
 
-def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT, nm_port=con.PORT):
+def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
+                   nm_port=con.PORT_NM):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """

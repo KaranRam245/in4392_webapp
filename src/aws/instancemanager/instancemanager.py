@@ -259,7 +259,7 @@ class NodeScheduler:
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                print("Debug enabled and no node manager started yet."
+                print("Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 await asyncio.sleep(config.DEBUG_INIT_RETRY)
                 initialized = self.initialize_nodes(retry=True)
@@ -354,7 +354,7 @@ def start_instance(debug=False):
     monitor = NodeMonitor(scheduler)
 
     loop = asyncio.get_event_loop()
-    server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT, loop=loop)
+    server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT_IM, loop=loop)
 
     procs = asyncio.wait([server_core, scheduler.run()])
 

@@ -95,7 +95,7 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         print('Received unknown command: {}'.format(command['command']))
 
 
-def start_instance(instance_id, host_im, host_nm, port_im=con.PORT, port_nm=con.PORT):
+def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=con.PORT_NM):
     task_queue = []
     storage_connector = ResourceManagerCore()
     worker_core = WorkerCore(host=host_nm,
