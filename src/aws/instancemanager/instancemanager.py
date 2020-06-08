@@ -340,7 +340,7 @@ class NodeScheduler:
 
 class NodeMonitor(con.MultiConnectionServer):
 
-    def __init__(self, nodescheduler, host=con.HOST, port=con.PORT):
+    def __init__(self, nodescheduler, host=con.HOST, port=con.PORT_IM):
         self._ns = nodescheduler
         self.keep_running = True
         super().__init__(host, port)
