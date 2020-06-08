@@ -50,11 +50,8 @@ class Instances:
 
     def is_state(self, instance_id, instance_type: str, state: int):
         instance: InstanceState = self.get_nodes(instance_type).get(instance_id, None)
-        print(instance)
         if not instance:
             return False
-        print('{} is {} == {} with {}'.format(instance, state, instance.is_state(state),
-                                              instance._state))
         return instance.is_state(state)
 
     def set_state(self, instance_id, instance_type, state):
@@ -346,7 +343,6 @@ class NodeMonitor(con.MultiConnectionServer):
         super().__init__(host, port)
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
-        print('Received Heartbeat: {}, from: {}'.format(heartbeat, source))
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
         self._ns.instances.set_last_heartbeat(instance_id=source, heartbeat=heartbeat)
