@@ -5,11 +5,11 @@ Sentiment analysis on kaggle toxic comments dataset using 1D convnets &amp; LSTM
 Create an AWS account and verify your account. After that we create an instance and connect using SSH. Do not forget to set your permissions to ensure a connection to the server.
 
 ### Connect to an AWS instance
-1. Create a security group with the following inboud rules
+1. Create a security group with the following inboud rules. The distinction `Anywhere/Your IP` should in this development phase be `Your IP`.
 
 | HTTP       | TCP | 80   | Source           | HTTP anywhere |
 |------------|-----|------|------------------|---------------|
-| HTTP       | TCP | 80   | Anywhere         | HTTP anywhere |
+| HTTP       | TCP | 80   | Anywhere/Your IP         | HTTP anywhere |
 | Custom TCP | TCP | 8501/8502 | Anywhere/Your IP | Streamlit TCP |
 | Custom TCP | TCP | 8501/8502 | Anywhere/Your IP | Streamlit TCP |
 | Custom TCP | TCP | 8080 | Public IPv4 of each instance | Connection to IM |
