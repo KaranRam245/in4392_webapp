@@ -117,7 +117,8 @@ class Instances:
     def get_last_heartbeat(self, instance_id):
         return self._last_heartbeat.get(instance_id, None)
 
-    def set_last_heartbeat(self, instance_id, heartbeat):
+    def set_last_heartbeat(self, heartbeat):
+        instance_id = heartbeat['instance_id']
         self._last_heartbeat[instance_id] = heartbeat['time']
 
     def heart_beat_timedout(self, instance_id):
@@ -347,7 +348,7 @@ class NodeMonitor(con.MultiConnectionServer):
     def process_heartbeat(self, heartbeat, source) -> Packet:
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
-        self._ns.instances.set_last_heartbeat(instance_id=source, heartbeat=heartbeat)
+        self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
         return heartbeat
         # TODO load-balancing on heartbeats. Action if needed.
 

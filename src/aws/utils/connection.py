@@ -83,9 +83,9 @@ class MultiConnectionServer:
                     break
                 packet_received = decode_packet(data)
                 packet_reponse = self.process_packet(packet_received, addr)
-                print("Received {} from {}".format(packet_received, addr))
+                print("+ Received {} from {}".format(packet_received, addr))
 
-                print("Sent: {}".format(packet_reponse))
+                print("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
@@ -134,12 +134,12 @@ class MultiConnectionClient:
                 while self.send_buffer:
                     packet_send: Packet = self.send_buffer.pop(0)
 
-                    print('Sent: {}'.format(packet_send))
+                    print('- Sent: {}'.format(packet_send))
                     writer.write(encode_packet(packet_send))
 
                     data_received = await reader.read(1024)
                     packet_received = decode_packet(data_received)
-                    print('Received: {}'.format(packet_received))
+                    print('+ Received: {}'.format(packet_received))
                     self.received_packets.append(packet_received)
                     # TODO: process the received messages.
 

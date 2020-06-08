@@ -17,4 +17,4 @@ HEART_BEAT_INTERVAL = 1
 HEART_BEAT_TIMEOUT = 8
 
 # Seconds until a retry is made for initialize when in debugging mode.
-DEBUG_INIT_RETRY = 10
+DEBUG_INIT_RETRY = 5
