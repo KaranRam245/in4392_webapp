@@ -100,7 +100,7 @@ class InstanceState(State):
             for key, value in self.MAPPING.items():
                 if value == state_to_map:
                     return key
-        return self._map_to_str(state_to_map)
+        return self.map_to_str(state_to_map)
 
     def map_to_str(self, state_to_map):
         if isinstance(state_to_map, str):
@@ -117,7 +117,7 @@ class InstanceState(State):
             "This state does not seem to exist for InstanceState: {}".format(state_to_map))
 
     def __str__(self):
-        return self._map_to_str(self._state)
+        return self.map_to_str(self._state)
 
     def __repr__(self):
         return str(self)
