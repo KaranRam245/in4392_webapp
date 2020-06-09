@@ -83,8 +83,8 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    taskpool = TaskPool(instance_id=instance_id, nm_host, nm_port)
-    monitor = TaskPoolMonitor(taskpool, im_host, im_port)
+    taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
+    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
