@@ -2,6 +2,7 @@
 Module for the Node Worker.
 """
 import asyncio
+from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
@@ -113,10 +114,14 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     procs = asyncio.wait(
         [worker_core.run(), worker_core.heartbeat(), worker_core.process(), monitor.run()])
     try:
-        tasks = loop.run_until_complete(procs)
-        tasks.close()
+        loop.run_until_complete(procs)
     except KeyboardInterrupt:
         pass
     finally:
-        loop.run_until_complete(tasks.wait_close())
+        tasks = [t for t in asyncio.Task.all_tasks() if t is not
+                 asyncio.Task.current_task()]
+        for task in tasks:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                loop.run_until_complete(task)
         loop.close()
