@@ -1,10 +1,11 @@
 """
 Shared methods for state indication.
 """
+from abc import ABC, abstractmethod
 from typing import Iterable
 
 
-class State:
+class State(ABC):
     """
     Class for the indication of the current state of an instance.
     """
@@ -24,6 +25,11 @@ class State:
     def is_any(self, states: Iterable[int]) -> bool:
         return self._state in states
 
+    @abstractmethod
+    def map_to_str(self, state_to_map):
+        raise NotImplementedError(
+            "Map to string method is not implemented yet for {}".format(type(self)))
+
 
 class ProgramState(State):
     # States of the program based on the Amazon Elastic Compute Cloud.
@@ -33,6 +39,13 @@ class ProgramState(State):
     STOPPING = 2  # When the stop comment has been received.
     ERROR = 3  # When an error has occured.
 
+    MAPPING = {
+        PENDING: 'pending',
+        RUNNING: 'running',
+        STOPPING: 'stopping',
+        ERROR: 'error'
+    }
+
     def __init__(self, state):
         """
         Initialize a State object indicating the current state of a program.
@@ -40,6 +53,11 @@ class ProgramState(State):
         """
         assert 0 <= state <= 4
         super().__init__(state)
+
+    def map_to_str(self, state_to_map):
+        if isinstance(state_to_map, str):
+            return state_to_map
+        return self.MAPPING[state_to_map]
 
 
 class InstanceState(State):
@@ -84,17 +102,15 @@ class InstanceState(State):
                     return key
         return self._map_to_str(state_to_map)
 
-    @staticmethod
-    def _map_to_str(state_to_map):
+    def map_to_str(self, state_to_map):
         if isinstance(state_to_map, str):
             return state_to_map
-        return InstanceState.MAPPING[state_to_map]
+        return self.MAPPING[state_to_map]
 
-    @staticmethod
-    def _map_to_int(state_to_map):
+    def _map_to_int(self, state_to_map):
         if isinstance(state_to_map, int):
             return state_to_map
-        for key, value in InstanceState.MAPPING.items():
+        for key, value in self.MAPPING.items():
             if value == state_to_map:
                 return key
         raise Exception(
