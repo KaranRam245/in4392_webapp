@@ -110,7 +110,7 @@ class MultiConnectionClient:
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
-        print("Message added to buffer: {}".format(message))
+        print("Added to buffer for [{}:{}]: {}".format(self.host, self.port, message))
 
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
