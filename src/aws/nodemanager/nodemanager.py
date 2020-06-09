@@ -72,7 +72,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp = taskpool
 
     def event(self, message):
-        self.client.send_message(message)  # Send message to IM.
+        self.send_message(message)  # Send message to IM.
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
@@ -91,7 +91,7 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     server_core = asyncio.start_server(taskpool.run, nm_host, nm_port, loop=loop)
 
     procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run()])
-    tasks = loop.run_until_complete(procs)
+    loop.run_until_complete(procs)
 
     try:
         loop.run_forever()
