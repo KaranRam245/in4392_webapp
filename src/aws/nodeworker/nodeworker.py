@@ -118,6 +118,7 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     except KeyboardInterrupt:
         pass
     finally:
+        print("Manually shutting down worker.")
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
         for task in tasks:
