@@ -3,6 +3,7 @@ Module for the Node Worker.
 """
 import asyncio
 
+import logging
 import aws.utils.connection as con
 import aws.utils.config as config
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
@@ -51,10 +52,12 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
+                    logging.info("Downloading File " + self.current_task.file_path + ".")
                     file = self.storage_connector.download_file(
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
+                    logging.info("Downloaded file " + self.current_task.file_path + ".")
                     # TODO: Process the file! @Karan
 
                     # self.send_message(message)
@@ -87,25 +90,31 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
+        logging.info("Sending message: " + message + ".")
         self.send_message(message)
 
     def process_command(self, command: CommandPacket):
         if command['command'] == 'stop':
+            logging.error("Command 'stop' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [stop].")
         if command['command'] == 'kill':
+            logging.error("Command 'kill' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [kill].")
+        logging.error("Received unknown command: {}.".format(command['command']))
         print('Received unknown command: {}'.format(command['command']))
 
 
 def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=con.PORT_NM):
     task_queue = []
     storage_connector = ResourceManagerCore()
+    logging.info("Starting WorkerCore with instance id:" + instance_id + ".")
     worker_core = WorkerCore(host=host_nm,
                              port=port_nm,
                              instance_id=instance_id,
                              task_queue=task_queue,
                              storage_connector=storage_connector)
     monitor = WorkerMonitor(host_im, port_im, task_queue)
+    logging.info("Starting WorkerMonitor...")
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
 
