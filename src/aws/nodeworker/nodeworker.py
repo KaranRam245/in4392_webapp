@@ -70,9 +70,9 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                                     instance_state=self._instance_state,
                                     program_state=self._program_state)
         # self.send_message(message=heartbeat)
-        if notify:
+        if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)
-        return heartbeat
+        self.send_message(heartbeat)  # Send heartbeat to NodeManagerCore.
         # TODO: more metrics on current task. Current task should be added to heartbeat.
 
 
