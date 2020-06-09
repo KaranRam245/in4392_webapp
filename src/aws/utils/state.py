@@ -33,6 +33,9 @@ class State(ABC):
     def __str__(self):
         return self.map_to_str(self._state)
 
+    def __repr__(self):
+        return str(self)
+
 
 class ProgramState(State):
     # States of the program based on the Amazon Elastic Compute Cloud.
@@ -118,6 +121,3 @@ class InstanceState(State):
                 return key
         raise Exception(
             "This state does not seem to exist for InstanceState: {}".format(state_to_map))
-
-    def __repr__(self):
-        return str(self)
