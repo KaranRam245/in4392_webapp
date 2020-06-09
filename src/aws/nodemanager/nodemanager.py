@@ -4,6 +4,7 @@ Module for the Node Manager.
 import asyncio
 
 import logging
+from aws_logging_handlers.S3 import S3Handler
 import aws.utils.connection as con
 import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
@@ -82,10 +83,13 @@ class TaskPoolMonitor(Listener):
         self._tp = taskpool
         self.client = client
         self.server = server
+        self.logger = logging.getLogger('root')
+        s3_handler = S3Handler("test_log", bucket, workers=3)
+        self.logger.addHandler(s3_handler)
         super().__init__()
 
     def event(self, message):
-        logging.info("Message sent to Instance Manager: " + message + ".")
+        self.logger.info("Message sent to Instance Manager: " + message + ".")
         self.client.send_message(message)  # Send message to IM.
 
 
@@ -94,11 +98,14 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
-    logging.info("Starting TaskPool with ID: " + instance_id + ".")
+    self.logger = logging.getLogger('root')
+    s3_handler = S3Handler("test_log", bucket, workers=3)
+    self.logger.addHandler(s3_handler)
+    self.logger.info("Starting TaskPool with ID: " + instance_id + ".")
     taskpool = TaskPool(instance_id=instance_id)
     taskpool_client = TaskPoolClientWrapper(im_host, im_port)
     taskpool_server = TaskPoolServerWrapper(nm_host, nm_port, taskpool_client)
-    logging.info("Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
+    self.logger.info("Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
     monitor = TaskPoolMonitor(taskpool, taskpool_client, taskpool_server)
     taskpool.add_listener(monitor)
 
