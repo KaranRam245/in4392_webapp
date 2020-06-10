@@ -72,7 +72,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp = taskpool
 
     def event(self, message):
-        self.send_message(message)  # Send message to IM.
+        self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
