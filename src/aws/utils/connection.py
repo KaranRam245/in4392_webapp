@@ -70,7 +70,7 @@ class MultiConnectionServer:
         raise TypeError("Unknown packet found: {}".format(packet['packet_type']))
 
     @abstractmethod
-    def process_heartbeat(self, hb, source) -> Packet:
+    def process_heartbeat(self, heartbeat, source) -> Packet:
         raise NotImplementedError("Server process_heartbeat not implemented yet.")
 
     async def run(self, reader, writer):

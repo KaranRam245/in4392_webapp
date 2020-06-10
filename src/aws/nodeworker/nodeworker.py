@@ -64,7 +64,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         except KeyboardInterrupt:
             pass
 
-    def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
+    def generate_heartbeat(self, notify=True):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='worker',
                                     instance_state=self._instance_state,
