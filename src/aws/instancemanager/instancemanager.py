@@ -393,6 +393,8 @@ class NodeMonitor(con.MultiConnectionServer):
         # TODO load-balancing on heartbeats. Action if needed.
 
 
+instance_starting_time = datetime.now().strftime(%Y%m%d%H%M%S)
+
 def start_instance(debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
@@ -403,6 +405,7 @@ def start_instance(debug=False, git_pull=False):
     self.logger.info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
+    print(instance_starting_time)
 
     loop = asyncio.get_event_loop()
     server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT_IM, loop=loop)
