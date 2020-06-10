@@ -393,7 +393,7 @@ class NodeMonitor(con.MultiConnectionServer):
         # TODO load-balancing on heartbeats. Action if needed.
 
 
-instance_starting_time = datetime.now().strftime(%Y%m%d%H%M%S)
+instance_starting_time = datetime.now().strftime("%Y%m%d%H%M%S")
 
 def start_instance(debug=False, git_pull=False):
     """
