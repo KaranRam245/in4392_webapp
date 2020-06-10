@@ -396,14 +396,14 @@ class NodeMonitor(con.MultiConnectionServer):
 
 instance_starting_time = (datetime.now(timezone.utc)).strftime("%Y%m%d%H%M%S")
 
-def start_instance(self, debug=False, git_pull=False):
+def start_instance(debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    self.logger = logging.getLogger('root')
+    logger = logging.getLogger('root')
     s3_handler = S3Handler("test_log", bucket, workers=3)
-    self.logger.addHandler(s3_handler)
-    self.logger.info("Starting Node Scheduler..")
+    logger.addHandler(s3_handler)
+    logger.info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
     print(instance_starting_time)
