@@ -3,7 +3,7 @@ Module for the Instance Manager.
 """
 import asyncio
 import time
-import datetime
+from datetime import datetime
 import traceback
 from contextlib import suppress
 import logging
