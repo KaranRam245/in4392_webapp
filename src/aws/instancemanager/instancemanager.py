@@ -3,11 +3,8 @@ Module for the Instance Manager.
 """
 import asyncio
 import time
-from datetime import datetime, timezone
 import traceback
 from contextlib import suppress
-import logging
-from aws_logging_handlers.S3 import S3Handler
 
 from ec2_metadata import ec2_metadata
 
@@ -16,6 +13,7 @@ from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.packets import Packet
 from aws.utils.state import InstanceState
 import aws.utils.config as config
+import aws.utils.logger as logger
 
 
 class Instances:
@@ -31,9 +29,6 @@ class Instances:
         self._start_signal = {}
         self.ip_addresses = {}
         self.start_retry = {}
-        self.logger = logging.getLogger('root')
-        s3_handler = S3Handler("test_log", bucket, workers=3)
-        self.logger.addHandler(s3_handler)
 
     def get_all(self, instance_type, filter_state=None):
         """
@@ -63,13 +58,13 @@ class Instances:
     def set_state(self, instance_id, instance_type, state):
         nodes = self.get_nodes(instance_type)
         if instance_id not in nodes:
-            self.logger.info("State of instance " + instance_id + " set to PENDING.")
+            logger.log_info("instancemanager_" + instance_id, "State of instance " + instance_id + " set to PENDING.")
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
-        self.logger.info("State of instance " + instance_id + " set to " + state + ".")
+        logger.info("instancemanager_" + instance_id, "State of instance " + instance_id + " set to " + state + ".")
         nodes[instance_id] = state
 
     def set_ip(self, instance_id, ip_address):
-        self.logger.info("IP address of " + instance_id + " set to " + ip_address + ".")
+        logger.log_info("instancemanager_" + instance_id, "IP address of " + instance_id + " set to " + ip_address + ".")
         self.ip_addresses[instance_id] = ip_address
 
     def get_ip(self, instance_id):
@@ -171,9 +166,6 @@ class NodeScheduler:
         self.debug = debug  # Boolean indicating if the debug mode is enabled.
         self.git_pull = git_pull  # String indicating if workers should first git pull and checkout.
         self.node_manager_running = False
-        self.logger = logging.getLogger('root')
-        s3_handler = S3Handler("test_log", bucket, workers=3)
-        self.logger.addHandler(s3_handler)
         super().__init__()
 
     def initialize_nodes(self, retry=False):
@@ -183,18 +175,18 @@ class NodeScheduler:
         if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
             self.update_instances(check=False)
         if self.debug and not self.node_manager_running:
-            self.logger.info("Debugging waiting for node manager to start running.")
+            logger.log_info("nodescheduler_" + self.instance_id, "Debugging waiting for node manager to start running.")
             print("Debugging waiting for node manager to start running.")
             return False
-        self.logger.info("Initializing nodes..")
+        logger.log_info("nodescheduler_" + self.instance_id, "Initializing nodes..")
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
-            self.logger.info("No node manager running. Intializing startup protocol..")
+            logger.log_info("nodescheduler_" + self.instance_id, "No node manager running. Intializing startup protocol..")
             print("No node manager running. Intializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
-            self.logger.info("No single worker running. Intializing startup protocol..")
+            logger.log_info("nodescheduler_" + self.instance_id, "No single worker running. Intializing startup protocol..")
             print("No single worker running. Intializing startup protocol..")
             self.start_worker()  # Require at least one worker.
         return True
@@ -210,7 +202,7 @@ class NodeScheduler:
                 if self.git_pull:
                     command.insert(1, 'git pull')
                     command.insert(2, 'git checkout {}'.format(self.git_pull))
-            self.logger.info("Sending start command: [{}]: {}.".format(instance_id, command))
+            logger.log_info("nodescheduler_" + instance_id, "Sending start command: [{}]: {}.".format(instance_id, command))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
@@ -233,21 +225,21 @@ class NodeScheduler:
                 self.logger.error("No node manager instances available to start.")
                 raise ConnectionError('No node manager instances available to start.')
             to_start = nodemanagers[0]
-            self.logger.info("Initializing node manager.")
+            logger.log_info("nodescheduler_" + self.instance_id, "Initializing node manager.")
             self._init_instance(to_start, instance_type='node_manager', wait=True)
             self._send_start_command('node_manager', to_start)
 
     def start_worker(self):
         workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
         if not workers:
-            self.logger.info("No more worker instances can be started.")
+            logger.log_info("nodescheduler_" + self.instance_id, "No more worker instances can be started.")
             print('No more worker instances can be started.')
             return
-        self.logger.info("Initializing worker.")
+        logger.log_info("nodescheduler_" + self.instance_id, "Initializing worker.")
         self._init_instance(workers[0], instance_type='workers', wait=False)
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
-        self.logger.info("Starting {} instance {}".format(instance_type, instance_id))
+        logger.log_info("nodescheduler_" + instance_id, "Starting {} instance {}".format(instance_type, instance_id))
         print("Starting {} instance {}".format(instance_type, instance_id))
         self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
@@ -279,21 +271,21 @@ class NodeScheduler:
         if check and not (
                 self.instances.has('worker', states) or self.instances.has('node_manager', states)):
             return
-        self.logger.info("Updated instance states from AWS state.")
+        logger.log_info("nodescheduler_" + self.instance_id, "Updated instance states from AWS state.")
         print("Updated instance states from AWS state")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
         print(self.instances)
 
     async def run(self):
-        self.logger.info("Running NodeScheduler..")
+        logger.log_info("nodescheduler_" + self.instance_id, "Running NodeScheduler..")
         print("Running NodeScheduler..")
         sleep_time = 1
         update_counter = config.BOTO_UPDATE_SEC
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                self.logger.warning("Debug enabled and no node manager started yet. "
+                logger.warning("Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
@@ -356,7 +348,7 @@ class NodeScheduler:
                                                self.instances.get_last_heartbeat(instance)))
             send_start = True
         if send_start:  # Send a new start signal to the instance.
-            self.logger.info("Sent start command to instance {}".format(instance))
+            logger.log_info("nodescheduler_" + self.instance_id, "Sent start command to instance {}".format(instance))
             print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
@@ -368,11 +360,11 @@ class NodeScheduler:
         else:
             running_instances = self.running_instances()
         if running_instances:
-            self.logger.info("Killing all instances: {}".format(running_instances))
+            logger.log_info("nodescheduler_" + self.instance_id, "Killing all instances: {}".format(running_instances))
             print("Killing all instances: {}".format(running_instances))
             self.boto.ec2.stop_instances(InstanceIds=running_instances)
 
-        self.logger.info("Cancelling all commands..")
+        logger.log_info("nodescheduler_" + self.instance_id, "Cancelling all commands..")
         print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
@@ -394,19 +386,13 @@ class NodeMonitor(con.MultiConnectionServer):
         # TODO load-balancing on heartbeats. Action if needed.
 
 
-instance_starting_time = (datetime.now(timezone.utc)).strftime("%Y%m%d%H%M%S")
-
 def start_instance(debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    logger = logging.getLogger('root')
-    s3_handler = S3Handler("test_log", bucket, workers=3)
-    logger.addHandler(s3_handler)
-    logger.info("Starting Node Scheduler..")
+    logger.log_info("nodescheduler", "Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
-    print(instance_starting_time)
 
     loop = asyncio.get_event_loop()
     server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT_IM, loop=loop)

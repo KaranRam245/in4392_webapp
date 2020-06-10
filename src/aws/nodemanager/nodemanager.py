@@ -10,6 +10,7 @@ import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
+import aws.utils.logger as logger
 
 
 class TaskPool(Observable):
@@ -83,13 +84,10 @@ class TaskPoolMonitor(Listener):
         self._tp = taskpool
         self.client = client
         self.server = server
-        self.logger = logging.getLogger('root')
-        s3_handler = S3Handler("test_log", bucket, workers=3)
-        self.logger.addHandler(s3_handler)
         super().__init__()
 
     def event(self, message):
-        self.logger.info("Message sent to Instance Manager: " + message + ".")
+        logger.log_info("taskpoolmonitor", "Message sent to Instance Manager: " + message + ".")
         self.client.send_message(message)  # Send message to IM.
 
 
@@ -98,14 +96,11 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
-    self.logger = logging.getLogger('root')
-    s3_handler = S3Handler("test_log", bucket, workers=3)
-    self.logger.addHandler(s3_handler)
-    self.logger.info("Starting TaskPool with ID: " + instance_id + ".")
+    logger.log_info("nodemanager_" + instance_id, "Starting TaskPool with ID: " + instance_id + ".")
     taskpool = TaskPool(instance_id=instance_id)
     taskpool_client = TaskPoolClientWrapper(im_host, im_port)
     taskpool_server = TaskPoolServerWrapper(nm_host, nm_port, taskpool_client)
-    self.logger.info("Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
+    logger.log_info("nodemanager_" + instance_id, "Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
     monitor = TaskPoolMonitor(taskpool, taskpool_client, taskpool_server)
     taskpool.add_listener(monitor)
 
