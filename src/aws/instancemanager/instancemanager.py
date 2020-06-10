@@ -396,7 +396,7 @@ class NodeMonitor(con.MultiConnectionServer):
 
 instance_starting_time = (datetime.now(timezone.utc)).strftime("%Y%m%d%H%M%S")
 
-def start_instance(debug=False, git_pull=False):
+def start_instance(self, debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
