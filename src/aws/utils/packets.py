@@ -7,6 +7,9 @@ class Packet(dict):
 
     def __init__(self, packet_type, time, **kwargs):
         time = time if time else timepackage.time()
+        for key, value in kwargs.items():  # Convert all non built-ins to strings.
+            if value.__class__.__module__ != 'builtins':
+                kwargs[key] = str(value)
         super().__init__(packet_type=packet_type, time=time, **kwargs)
 
 
@@ -19,7 +22,7 @@ class HeartBeatPacket(Packet):
         super().__init__(packet_type=packet_type,
                          instance_id=instance_id,
                          time=time,
-                         instance_state=str(instance_state),
+                         instance_state=instance_state,
                          instance_type=instance_type,
                          cpu_usage=cpu_usage,
                          mem_usage=mem_usage,

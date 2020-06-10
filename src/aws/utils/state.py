@@ -92,28 +92,21 @@ class InstanceState(State):
         :param state: Initiger indicating the current state.
         """
         if isinstance(state, str):
-            state = self.map_to(state)
+            state = self.map_to_int(state)
         assert 0 <= state <= 4
         super().__init__(state)
-
-    def map_to(self, state_to_map):
-        """
-        Map a string response of EC2 to a state id.
-        :param state_to_map: State name or number according to EC2.
-        :return: State id.
-        """
-        if isinstance(state_to_map, str):
-            for key, value in self.MAPPING.items():
-                if value == state_to_map:
-                    return key
-        return self.map_to_str(state_to_map)
 
     def map_to_str(self, state_to_map):
         if isinstance(state_to_map, str):
             return state_to_map
         return self.MAPPING[state_to_map]
 
-    def _map_to_int(self, state_to_map):
+    def map_to_int(self, state_to_map):
+        """
+        Map a string response of EC2 to a state id.
+        :param state_to_map: State name or number according to EC2.
+        :return: State id.
+        """
         if isinstance(state_to_map, int):
             return state_to_map
         for key, value in self.MAPPING.items():
