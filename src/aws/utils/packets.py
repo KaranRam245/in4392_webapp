@@ -1,5 +1,5 @@
-import json
 import time as timepackage
+
 import psutil
 
 
@@ -7,18 +7,22 @@ class Packet(dict):
 
     def __init__(self, packet_type, time, **kwargs):
         time = time if time else timepackage.time()
-        super().__init__(packet_type=packet_type, **kwargs)
+        for key, value in kwargs.items():  # Convert all non built-ins to strings.
+            if value.__class__.__module__ != 'builtins':
+                kwargs[key] = str(value)
+        super().__init__(packet_type=packet_type, time=time, **kwargs)
 
 
 class HeartBeatPacket(Packet):
 
-    def __init__(self, state, instance_type, packet_type='HeartBeat', time=None, cpu_usage=None,
-                 mem_usage=None, **kwargs):
+    def __init__(self, instance_id, instance_state, instance_type, packet_type='HeartBeat',
+                 time=None, cpu_usage=None, mem_usage=None, **kwargs):
         cpu_usage = cpu_usage if cpu_usage else self.get_cpu_usage()
         mem_usage = mem_usage if mem_usage else self.get_mem_usage()
         super().__init__(packet_type=packet_type,
+                         instance_id=instance_id,
                          time=time,
-                         state=str(state),
+                         instance_state=instance_state,
                          instance_type=instance_type,
                          cpu_usage=cpu_usage,
                          mem_usage=mem_usage,
@@ -47,7 +51,6 @@ class PacketTranslator:
     def translate(packet: dict) -> Packet:
         if packet['packet_type'] == 'HeartBeat':
             return HeartBeatPacket(**packet)
-        elif packet['packet_type'] == 'Command':
+        if packet['packet_type'] == 'Command':
             return CommandPacket(**packet)
-        else:
-            raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
+        raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))

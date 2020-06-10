@@ -6,14 +6,14 @@
                     "Monitoring": {
                         "State": "disabled"
                     },
-                    "PublicDnsName": "ec2-18-157-146-255.eu-central-1.compute.amazonaws.com",
+                    "PublicDnsName": "ec2-18-157-68-11.eu-central-1.compute.amazonaws.com",
                     "State": {
                         "Code": 16,
                         "Name": "running"
                     },
                     "EbsOptimized": false,
-                    "LaunchTime": "2020-05-31T12:10:44.000Z",
-                    "PublicIpAddress": "18.157.146.255",
+                    "LaunchTime": "2020-06-07T09:42:34.000Z",
+                    "PublicIpAddress": "18.157.68.11",
                     "PrivateIpAddress": "172.31.35.66",
                     "ProductCodes": [],
                     "VpcId": "vpc-4e01dc24",
@@ -53,8 +53,8 @@
                                     "PrivateIpAddress": "172.31.35.66",
                                     "Primary": true,
                                     "Association": {
-                                        "PublicIp": "18.157.146.255",
-                                        "PublicDnsName": "ec2-18-157-146-255.eu-central-1.compute.amazonaws.com",
+                                        "PublicIp": "18.157.68.11",
+                                        "PublicDnsName": "ec2-18-157-68-11.eu-central-1.compute.amazonaws.com",
                                         "IpOwnerId": "688183572067"
                                     }
                                 }
@@ -79,8 +79,8 @@
                             "PrivateIpAddress": "172.31.35.66",
                             "SubnetId": "subnet-b68b78ca",
                             "Association": {
-                                "PublicIp": "18.157.146.255",
-                                "PublicDnsName": "ec2-18-157-146-255.eu-central-1.compute.amazonaws.com",
+                                "PublicIp": "18.157.68.11",
+                                "PublicDnsName": "ec2-18-157-68-11.eu-central-1.compute.amazonaws.com",
                                 "IpOwnerId": "688183572067"
                             }
                         }
@@ -135,7 +135,7 @@
                     "Monitoring": {
                         "State": "disabled"
                     },
-                    "PublicDnsName": "",
+                    "PublicDnsName": "ec2-18-157-155-126.eu-central-1.compute.amazonaws.com",
                     "StateReason": {
                         "Message": "Client.UserInitiatedShutdown: User initiated shutdown",
                         "Code": "Client.UserInitiatedShutdown"
@@ -145,7 +145,8 @@
                         "Name": "stopped"
                     },
                     "EbsOptimized": false,
-                    "LaunchTime": "2020-05-30T13:11:05.000Z",
+                    "LaunchTime": "2020-06-05T14:08:27.000Z",
+                    "PublicIpAddress": "18.157.155.126",
                     "PrivateIpAddress": "172.31.32.252",
                     "ProductCodes": [],
                     "VpcId": "vpc-4e01dc24",
@@ -153,7 +154,7 @@
                         "CoreCount": 1,
                         "ThreadsPerCore": 1
                     },
-                    "StateTransitionReason": "User initiated (2020-05-30 14:00:07 GMT)",
+                    "StateTransitionReason": "User initiated (2020-06-05 17:03:58 GMT)",
                     "InstanceId": "i-02279ee85141da9e1",
                     "EnaSupport": true,
                     "ImageId": "ami-0a9e2b8a093c02922",
@@ -161,8 +162,8 @@
                     "KeyName": "frankfurtkey",
                     "SecurityGroups": [
                         {
-                            "GroupName": "launch-wizard-2",
-                            "GroupId": "sg-0c83ce1dbe947f8e1"
+                            "GroupName": "launch-wizard-1",
+                            "GroupId": "sg-07632db4b15944b7c"
                         }
                     ],
                     "ClientToken": "",
@@ -182,8 +183,13 @@
                             "PrivateIpAddresses": [
                                 {
                                     "PrivateDnsName": "ip-172-31-32-252.eu-central-1.compute.internal",
+                                    "PrivateIpAddress": "172.31.32.252",
                                     "Primary": true,
-                                    "PrivateIpAddress": "172.31.32.252"
+                                    "Association": {
+                                        "PublicIp": "18.157.155.126",
+                                        "PublicDnsName": "ec2-18-157-155-126.eu-central-1.compute.amazonaws.com",
+                                        "IpOwnerId": "688183572067"
+                                    }
                                 }
                             ],
                             "PrivateDnsName": "ip-172-31-32-252.eu-central-1.compute.internal",
@@ -197,14 +203,19 @@
                             },
                             "Groups": [
                                 {
-                                    "GroupName": "launch-wizard-2",
-                                    "GroupId": "sg-0c83ce1dbe947f8e1"
+                                    "GroupName": "launch-wizard-1",
+                                    "GroupId": "sg-07632db4b15944b7c"
                                 }
                             ],
                             "Ipv6Addresses": [],
                             "OwnerId": "688183572067",
+                            "PrivateIpAddress": "172.31.32.252",
                             "SubnetId": "subnet-b68b78ca",
-                            "PrivateIpAddress": "172.31.32.252"
+                            "Association": {
+                                "PublicIp": "18.157.155.126",
+                                "PublicDnsName": "ec2-18-157-155-126.eu-central-1.compute.amazonaws.com",
+                                "IpOwnerId": "688183572067"
+                            }
                         }
                     ],
                     "SourceDestCheck": true,
@@ -248,6 +259,272 @@
                 }
             ],
             "ReservationId": "r-08236c65b0686058b",
+            "Groups": [],
+            "OwnerId": "688183572067"
+        },
+        {
+            "Instances": [
+                {
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "PublicDnsName": "ec2-18-157-146-255.eu-central-1.compute.amazonaws.com",
+                    "StateReason": {
+                        "Message": "Client.UserInitiatedShutdown: User initiated shutdown",
+                        "Code": "Client.UserInitiatedShutdown"
+                    },
+                    "State": {
+                        "Code": 80,
+                        "Name": "stopped"
+                    },
+                    "EbsOptimized": false,
+                    "LaunchTime": "2020-06-02T14:28:57.000Z",
+                    "PublicIpAddress": "18.157.146.255",
+                    "PrivateIpAddress": "172.31.39.93",
+                    "ProductCodes": [],
+                    "VpcId": "vpc-4e01dc24",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 1
+                    },
+                    "StateTransitionReason": "User initiated (2020-06-02 15:03:21 GMT)",
+                    "InstanceId": "i-0c01758ecb213b9c9",
+                    "EnaSupport": true,
+                    "ImageId": "ami-0a9e2b8a093c02922",
+                    "PrivateDnsName": "ip-172-31-39-93.eu-central-1.compute.internal",
+                    "KeyName": "frankfurtkey",
+                    "SecurityGroups": [
+                        {
+                            "GroupName": "launch-wizard-1",
+                            "GroupId": "sg-07632db4b15944b7c"
+                        }
+                    ],
+                    "ClientToken": "",
+                    "SubnetId": "subnet-b68b78ca",
+                    "InstanceType": "t2.micro",
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "NetworkInterfaces": [
+                        {
+                            "Status": "in-use",
+                            "MacAddress": "06:90:03:0f:c3:ae",
+                            "SourceDestCheck": true,
+                            "VpcId": "vpc-4e01dc24",
+                            "Description": "",
+                            "NetworkInterfaceId": "eni-07cc47f1fe72ce26f",
+                            "PrivateIpAddresses": [
+                                {
+                                    "PrivateDnsName": "ip-172-31-39-93.eu-central-1.compute.internal",
+                                    "PrivateIpAddress": "172.31.39.93",
+                                    "Primary": true,
+                                    "Association": {
+                                        "PublicIp": "18.157.146.255",
+                                        "PublicDnsName": "ec2-18-157-146-255.eu-central-1.compute.amazonaws.com",
+                                        "IpOwnerId": "688183572067"
+                                    }
+                                }
+                            ],
+                            "PrivateDnsName": "ip-172-31-39-93.eu-central-1.compute.internal",
+                            "InterfaceType": "interface",
+                            "Attachment": {
+                                "Status": "attached",
+                                "DeviceIndex": 0,
+                                "DeleteOnTermination": true,
+                                "AttachmentId": "eni-attach-06caf784b6228e2cd",
+                                "AttachTime": "2020-06-02T14:13:21.000Z"
+                            },
+                            "Groups": [
+                                {
+                                    "GroupName": "launch-wizard-1",
+                                    "GroupId": "sg-07632db4b15944b7c"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "OwnerId": "688183572067",
+                            "PrivateIpAddress": "172.31.39.93",
+                            "SubnetId": "subnet-b68b78ca",
+                            "Association": {
+                                "PublicIp": "18.157.146.255",
+                                "PublicDnsName": "ec2-18-157-146-255.eu-central-1.compute.amazonaws.com",
+                                "IpOwnerId": "688183572067"
+                            }
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Placement": {
+                        "Tenancy": "default",
+                        "GroupName": "",
+                        "AvailabilityZone": "eu-central-1b"
+                    },
+                    "Hypervisor": "xen",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/xvda",
+                            "Ebs": {
+                                "Status": "attached",
+                                "DeleteOnTermination": true,
+                                "VolumeId": "vol-0d5bb36a4a15a1266",
+                                "AttachTime": "2020-06-02T14:13:22.000Z"
+                            }
+                        }
+                    ],
+                    "Architecture": "x86_64",
+                    "RootDeviceType": "ebs",
+                    "RootDeviceName": "/dev/xvda",
+                    "VirtualizationType": "hvm",
+                    "Tags": [
+                        {
+                            "Value": "Worker",
+                            "Key": "Name"
+                        }
+                    ],
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpEndpoint": "enabled",
+                        "HttpTokens": "optional",
+                        "HttpPutResponseHopLimit": 1
+                    },
+                    "AmiLaunchIndex": 0
+                }
+            ],
+            "ReservationId": "r-02e8c4fd1f8706f15",
+            "Groups": [],
+            "OwnerId": "688183572067"
+        },
+        {
+            "Instances": [
+                {
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "PublicDnsName": "ec2-3-127-41-233.eu-central-1.compute.amazonaws.com",
+                    "StateReason": {
+                        "Message": "Client.UserInitiatedShutdown: User initiated shutdown",
+                        "Code": "Client.UserInitiatedShutdown"
+                    },
+                    "State": {
+                        "Code": 80,
+                        "Name": "stopped"
+                    },
+                    "EbsOptimized": false,
+                    "LaunchTime": "2020-06-05T18:28:47.000Z",
+                    "PublicIpAddress": "3.127.41.233",
+                    "PrivateIpAddress": "172.31.37.141",
+                    "ProductCodes": [],
+                    "VpcId": "vpc-4e01dc24",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 1
+                    },
+                    "StateTransitionReason": "User initiated (2020-06-05 19:03:19 GMT)",
+                    "InstanceId": "i-09d1ab3c48f56b475",
+                    "EnaSupport": true,
+                    "ImageId": "ami-0a02ee601d742e89f",
+                    "PrivateDnsName": "ip-172-31-37-141.eu-central-1.compute.internal",
+                    "KeyName": "frankfurtkey",
+                    "SecurityGroups": [
+                        {
+                            "GroupName": "launch-wizard-1",
+                            "GroupId": "sg-07632db4b15944b7c"
+                        }
+                    ],
+                    "ClientToken": "",
+                    "SubnetId": "subnet-b68b78ca",
+                    "InstanceType": "t2.micro",
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "NetworkInterfaces": [
+                        {
+                            "Status": "in-use",
+                            "MacAddress": "06:12:92:a2:d1:76",
+                            "SourceDestCheck": true,
+                            "VpcId": "vpc-4e01dc24",
+                            "Description": "",
+                            "NetworkInterfaceId": "eni-0834f331dd78d6322",
+                            "PrivateIpAddresses": [
+                                {
+                                    "PrivateDnsName": "ip-172-31-37-141.eu-central-1.compute.internal",
+                                    "PrivateIpAddress": "172.31.37.141",
+                                    "Primary": true,
+                                    "Association": {
+                                        "PublicIp": "3.127.41.233",
+                                        "PublicDnsName": "ec2-3-127-41-233.eu-central-1.compute.amazonaws.com",
+                                        "IpOwnerId": "688183572067"
+                                    }
+                                }
+                            ],
+                            "PrivateDnsName": "ip-172-31-37-141.eu-central-1.compute.internal",
+                            "InterfaceType": "interface",
+                            "Attachment": {
+                                "Status": "attached",
+                                "DeviceIndex": 0,
+                                "DeleteOnTermination": true,
+                                "AttachmentId": "eni-attach-0f98dca63284687e8",
+                                "AttachTime": "2020-06-05T17:06:05.000Z"
+                            },
+                            "Groups": [
+                                {
+                                    "GroupName": "launch-wizard-1",
+                                    "GroupId": "sg-07632db4b15944b7c"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "OwnerId": "688183572067",
+                            "PrivateIpAddress": "172.31.37.141",
+                            "SubnetId": "subnet-b68b78ca",
+                            "Association": {
+                                "PublicIp": "3.127.41.233",
+                                "PublicDnsName": "ec2-3-127-41-233.eu-central-1.compute.amazonaws.com",
+                                "IpOwnerId": "688183572067"
+                            }
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Placement": {
+                        "Tenancy": "default",
+                        "GroupName": "",
+                        "AvailabilityZone": "eu-central-1b"
+                    },
+                    "Hypervisor": "xen",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/xvda",
+                            "Ebs": {
+                                "Status": "attached",
+                                "DeleteOnTermination": true,
+                                "VolumeId": "vol-00fa1481da58fb65f",
+                                "AttachTime": "2020-06-05T17:06:06.000Z"
+                            }
+                        }
+                    ],
+                    "Architecture": "x86_64",
+                    "RootDeviceType": "ebs",
+                    "RootDeviceName": "/dev/xvda",
+                    "VirtualizationType": "hvm",
+                    "Tags": [
+                        {
+                            "Value": "Worker",
+                            "Key": "Name"
+                        }
+                    ],
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpEndpoint": "enabled",
+                        "HttpTokens": "optional",
+                        "HttpPutResponseHopLimit": 1
+                    },
+                    "AmiLaunchIndex": 0
+                }
+            ],
+            "ReservationId": "r-04130a208daedcebd",
             "Groups": [],
             "OwnerId": "688183572067"
         }

@@ -7,32 +7,47 @@ sys.path.append('./src')
 import aws.instancemanager.instancemanager as im
 import aws.nodemanager.nodemanager as nm
 import aws.nodeworker.nodeworker as nw
-import aws.resourcemanager.resourcemanager as rm
 
 
 def main():
     args = list(sys.argv)
 
     if len(args) < 2 or args[1] == 'instance_manager':
+        debug = False
+        if 'debug' in args:
+            print("Enabling debug mode")
+            debug = True
+        branch = None
+        for arg in args[2:]:
+            git_pull_split = str(arg).split('=')
+            if git_pull_split[0] == 'git-pull':
+                if len(git_pull_split) > 1:
+                    branch = git_pull_split[1]
+                    print("Enabling git-pull (branch: {}) mode for workers".format(branch))
+                else:
+                    print("git-pull requires a branch. E.g., git-pull=master")
         print('[INFO] Initiating bootcall Instance Manager..')
-        im.start_instance()
-    elif len(args) >= 3:
+        im.start_instance(debug=debug, git_pull=branch)
+    elif len(args) >= 4:
         if args[1] == 'node_manager':
+            # Example: python src/main.py worker [IM ip] [node_manager_id]
             print('[INFO] Initiating bootcall Node Manager..')
-            nm.start_instance(host=args[2])
+            nm.start_instance(im_host=args[2], instance_id=args[3])
         elif args[1] == 'worker' or args[0] == 'node_worker':
             print('[INFO] Initiating bootcall Worker..')
-            nw.start_instance(host=args[2])  # TODO: create start_instance for node workers.
-        elif args[1] == 'resource_manager':
-            print('[INFO] Initiating bootcall Resource Manager..')
-            rm.start_instance(host=args[2])  # TODO: create start_instance for resource managers.
+            if len(args) < 5:
+                print("[ERROR] workers need an host adddress of the Node Manager.\n"
+                      "python src/main.py worker [IM ip] [worker_instance_id] [NM ip]")
+                return
+            nw.start_instance(host_im=args[2], host_nm=args[4], instance_id=args[3])
         else:
             print('[ERROR] Unknown argument passed to program {}\n'
-                  'Expected "instance_manager", "node_manager", "worker", or '
-                  '"resource_manager"'.format(args[1]))
+                  'Expected "instance_manager", "node_manager", or "worker"'.format(args[1]))
     else:
-        print('Not enough arguments provided. Expected "python src/main.py <node> [ip]".\n'
-              '[ip] is only optional if <node> is not "instance_manager".')
+        print(
+            'Not enough arguments provided. '
+            'Expected "python src/main.py <node> [ip] [instance_id]".\n'
+            '[ip] is only optional if <node> is not "instance_manager".')
     print('Program terminated..')
 
 
