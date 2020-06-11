@@ -144,17 +144,17 @@ class Logger(metaclass=Singleton):
 
     def log_info(self, instance_id: str, message: str):
         self.logger.info(message)
-        if not self._instance:
+        if not self._instance_id:
             self.add_handler(instance_id)
 
     def log_error(self, instance_id: str, message: str):
         self.logger.error(message)
-        if not self._instance:
+        if not self._instance_id:
             self.add_handler(instance_id)
 
     def log_exception(self, instance_id: str, message: str):
         self.logger.exception(message)
-        if not self._instance:
+        if not self._instance_id:
             self.add_handler(instance_id)
 
     def add_handler(self, instance_id: str):
