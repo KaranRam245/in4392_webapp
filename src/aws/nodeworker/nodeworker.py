@@ -130,5 +130,6 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     except KeyboardInterrupt:
         pass
     finally:
+        logger.shutdown()
         loop.run_until_complete(tasks.wait_close())
         loop.close()

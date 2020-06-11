@@ -124,6 +124,7 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
 
     # Close the server
     tasks.close()
+    logger.shutdown()
     loop.run_until_complete(tasks.wait_closed())
     loop.close()
 

@@ -410,6 +410,7 @@ def start_instance(debug=False, git_pull=False):
     except KeyboardInterrupt:
         pass
     finally:
+        logger.shutdown()
         if not scheduler.cleaned_up:
             scheduler.cancel_all()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
