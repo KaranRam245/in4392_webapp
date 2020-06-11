@@ -163,7 +163,7 @@ class Logger(metaclass=Singleton):
         """
         if self.s3_resource.Bucket(bucket_name).creation_date is None:
             current_region = self.s3_session.region_name
-            self.logger.log_info("logger", "Creating bucket with bucket_name: " + bucket_name + ".")
+            self.log_info("logger", "Creating bucket with bucket_name: " + bucket_name + ".")
             self.s3.create_bucket(
                 Bucket=bucket_name,
                 CreateBucketConfiguration={
