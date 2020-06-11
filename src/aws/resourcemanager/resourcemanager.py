@@ -140,19 +140,19 @@ class Logger(metaclass=Singleton):
         self.s3_session = boto3.session.Session()
         self.create_bucket(bucket_name=config.LOGGING_BUCKET_NAME)
 
-    def log_info(self, instance_id: str, message):
+    def log_info(self, instance_id: str, message: str):
         self.logger.info(message)
         self.add_handler(instance_id)
 
-    def log_error(self, instance_id: str, message):
+    def log_error(self, instance_id: str, message: str):
         self.logger.error(message)
         self.add_handler(instance_id)
 
-    def log_exception(self, instance_id: str, message):
+    def log_exception(self, instance_id: str, message: str):
         self.logger.exception(message)
         self.add_handler(instance_id)
 
-    def add_handler(self, type, instance_id):
+    def add_handler(self, instance_id: str):
         s3_handler = S3Handler(instance_id, config.LOGGING_BUCKET_NAME, workers=1)
         self.logger.addHandler(s3_handler)
 
