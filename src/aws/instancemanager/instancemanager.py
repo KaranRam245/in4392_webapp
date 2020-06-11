@@ -202,9 +202,9 @@ class NodeScheduler:
                 node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
                 # If there are more node managers, one could use a smarter method to divide workers.
                 command[1] += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
-                if self.git_pull:
-                    command.insert(1, 'git pull')
-                    command.insert(2, 'git checkout {}'.format(self.git_pull))
+            if self.git_pull:
+                command.insert(1, 'git pull')
+                command.insert(2, 'git checkout {}'.format(self.git_pull))
             self.logger.log_info("nodescheduler-" + self.instance_id, "Sending start command: [{}]: {}.".format(instance_id, command))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(

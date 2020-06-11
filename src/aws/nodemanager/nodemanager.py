@@ -2,6 +2,7 @@
 Module for the Node Manager.
 """
 import asyncio
+from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
@@ -11,18 +12,19 @@ from aws.utils.state import InstanceState
 from aws.resourcemanager.resourcemanager import Logger
 
 
-class TaskPool(Observable):
+class TaskPool(Observable, con.MultiConnectionServer):
     """
     The TaskPool accepts the tasks from the user.
     """
 
-    def __init__(self, instance_id):
-        super().__init__()
+    def __init__(self, instance_id, host, port):
+        Observable.__init__(self)
+        con.MultiConnectionServer.__init__(self, host, port)
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
 
-    async def run(self):
+    async def run_task_pool(self):
         """
         Start function for the TaskPool.
         """
@@ -40,54 +42,46 @@ class TaskPool(Observable):
         """
         raise NotImplementedError()
 
-    def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
+    def generate_heartbeat(self, notify=True):
+        """
+        Generate a heartbeat that is send to the TaskPoolMonitor.
+        :param notify: If notify is true, send to the listeners. Here it should always be true.
+        """
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='node_manager',
                                     instance_state=self._instance_state)
         if notify:
             self.notify(message=heartbeat)
-        return heartbeat
-
-
-class TaskPoolClientWrapper(con.MultiConnectionClient):
-    """
-    This class is used as a wrapper for the client which connects to the IM.
-    """
-
-    def process_command(self, command):
-        print("Need help with command: {}".format(command))
-
-
-class TaskPoolServerWrapper(con.MultiConnectionServer):
-    """
-    This class is the server for which workers can connect to.
-    """
-
-    def __init__(self, host, port, client):
-        self.client = client
-        super().__init__(host, port)
 
     def process_heartbeat(self, hb, source) -> Packet:
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
-        self.client.send_message(hb)  # Forward the heartbeat to IM.
+        self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
+
+        # TODO: process the heartbeat and take actions which task to send where @Karan.
+
         return hb  # This value is returned to the worker client.
 
     def process_command(self, command: CommandPacket):
         print("A client send me a command: {}".format(command))
 
 
-class TaskPoolMonitor(Listener):
+class TaskPoolMonitor(Listener, con.MultiConnectionClient):
+    """
+    This class is used to monitor the TaskPool and to send heartbeats to the IM.
+    """
 
-    def __init__(self, taskpool, client, server):
+    def __init__(self, taskpool, host, port):
+        Listener.__init__(self)
+        con.MultiConnectionClient.__init__(self, host, port)
         self._tp = taskpool
-        self.client = client
-        self.server = server
         self.logger = Logger()
-        super().__init__()
 
     def event(self, message):
         self.logger.log_info("taskpoolmonitor", "Message sent to Instance Manager: " + message + ".")
-        self.client.send_message(message)  # Send message to IM.
+        self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
+
+    def process_command(self, command):
+        print("Need help with command: {}".format(command))
 
 
 def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
@@ -97,36 +91,29 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     """
     logger = Logger()
     logger.log_info("nodemanager-" + instance_id, "Starting TaskPool with ID: " + instance_id + ".")
-    taskpool = TaskPool(instance_id=instance_id)
-    taskpool_client = TaskPoolClientWrapper(im_host, im_port)
-    taskpool_server = TaskPoolServerWrapper(nm_host, nm_port, taskpool_client)
-    logger.log_info("nodemanager-" + instance_id, "Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
-    monitor = TaskPoolMonitor(taskpool, taskpool_client, taskpool_server)
+    taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
+    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
-    server_core = asyncio.start_server(taskpool_server.run, nm_host, nm_port, loop=loop)
+    server_core = asyncio.start_server(taskpool.run, nm_host, nm_port, loop=loop)
 
-    procs = asyncio.wait([server_core, taskpool.run(), monitor.client.run()])
-    tasks = loop.run_until_complete(procs)
+    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run()])
+    loop.run_until_complete(procs)
 
-    server_socket = None
-    for task in tasks:
-        if task._result:
-            server_socket = task._result.sockets[0]
-            break
-    if server_socket:
-        print('Serving on {}'.format(server_socket.getsockname()))
     try:
         loop.run_forever()
     except KeyboardInterrupt:
         pass
-
-    # Close the server
-    tasks.close()
-    logger.shutdown()
-    loop.run_until_complete(tasks.wait_closed())
-    loop.close()
+    finally:
+        logger.shutdown()
+        tasks = [t for t in asyncio.Task.all_tasks() if t is not
+                 asyncio.Task.current_task()]
+        for task in tasks:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                loop.run_until_complete(task)
+        loop.close()
 
 
 if __name__ == "__main__":

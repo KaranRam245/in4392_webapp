@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from queue import PriorityQueue
-
-from aws.utils.packets import HeartBeatPacket
 
 
 class Observable:

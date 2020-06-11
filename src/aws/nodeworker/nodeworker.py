@@ -2,6 +2,7 @@
 Module for the Node Worker.
 """
 import asyncio
+from contextlib import suppress
 
 import logging
 import aws.utils.connection as con
@@ -67,15 +68,15 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         except KeyboardInterrupt:
             pass
 
-    def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
+    def generate_heartbeat(self, notify=True):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='worker',
                                     instance_state=self._instance_state,
                                     program_state=self._program_state)
         # self.send_message(message=heartbeat)
-        if notify:
+        if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)
-        return heartbeat
+        self.send_message(heartbeat)  # Send heartbeat to NodeManagerCore.
         # TODO: more metrics on current task. Current task should be added to heartbeat.
 
 
@@ -125,11 +126,17 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     procs = asyncio.wait(
         [worker_core.run(), worker_core.heartbeat(), worker_core.process(), monitor.run()])
     try:
-        tasks = loop.run_until_complete(procs)
-        tasks.close()
+        loop.run_until_complete(procs)
     except KeyboardInterrupt:
         pass
     finally:
+        logger.log_info("nodeworker-" + instance_id, "Manually shutting down worker.")
+        print("Manually shutting down worker.")
         logger.shutdown()
-        loop.run_until_complete(tasks.wait_close())
+        tasks = [t for t in asyncio.Task.all_tasks() if t is not
+                 asyncio.Task.current_task()]
+        for task in tasks:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                loop.run_until_complete(task)
         loop.close()
