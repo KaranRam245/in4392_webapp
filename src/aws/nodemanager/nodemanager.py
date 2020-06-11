@@ -10,7 +10,7 @@ import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
-from aws.utils.resourcemanager import Logger
+from aws.resourcemanager.resourcemanager import Logger
 
 
 class TaskPool(Observable):
