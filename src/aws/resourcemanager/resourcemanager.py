@@ -177,4 +177,4 @@ class Logger(metaclass=Singleton):
                     'LocationConstraint': current_region,
                 }
             )
-            self.log_info("logger", "Creating bucket with bucket_name: " + bucket_name + ".")
+        self.log_info("logger", "Creating bucket with bucket_name: " + bucket_name + ".")
