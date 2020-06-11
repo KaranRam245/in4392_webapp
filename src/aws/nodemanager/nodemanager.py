@@ -3,8 +3,6 @@ Module for the Node Manager.
 """
 import asyncio
 
-import logging
-from aws_logging_handlers.S3 import S3Handler
 import aws.utils.connection as con
 import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
@@ -23,7 +21,6 @@ class TaskPool(Observable):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
-        logger = Logger()
 
     async def run(self):
         """
@@ -85,11 +82,11 @@ class TaskPoolMonitor(Listener):
         self._tp = taskpool
         self.client = client
         self.server = server
-        logger = Logger()
+        self.logger = Logger()
         super().__init__()
 
     def event(self, message):
-        logger.log_info("taskpoolmonitor", "Message sent to Instance Manager: " + message + ".")
+        self.logger.log_info("taskpoolmonitor", "Message sent to Instance Manager: " + message + ".")
         self.client.send_message(message)  # Send message to IM.
 
 

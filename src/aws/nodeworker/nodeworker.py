@@ -26,7 +26,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector = storage_connector
-        logger = Logger()
+        self.logger = Logger()
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
@@ -53,12 +53,12 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
-                    logger.log_info("nodeworker_" + self.instance_id, "Downloading File " + self.current_task.file_path + ".")
+                    self.logger.log_info("nodeworker_" + self.instance_id, "Downloading File " + self.current_task.file_path + ".")
                     file = self.storage_connector.download_file(
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
-                    logger.log_info("nodeworker_" + self.instance_id, "Downloaded file " + self.current_task.file_path + ".")
+                    self.logger.log_info("nodeworker_" + self.instance_id, "Downloaded file " + self.current_task.file_path + ".")
                     # TODO: Process the file! @Karan
 
                     # self.send_message(message)
@@ -92,17 +92,17 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
-        logger.log_info("workermonitor", "Sending message: " + message + ".")
+        self.logger.log_info("workermonitor", "Sending message: " + message + ".")
         self.send_message(message)
 
     def process_command(self, command: CommandPacket):
         if command['command'] == 'stop':
-            logger.log_error("workermonitor", "Command 'stop' is not yet implemented.")
+            self.logger.log_error("workermonitor", "Command 'stop' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [stop].")
         if command['command'] == 'kill':
-            logger.log_error("workermonitor", "Command 'kill' is not yet implemented.")
+            self.logger.log_error("workermonitor", "Command 'kill' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [kill].")
-        logger.log_error("workermonitor", "Received unknown command: {}.".format(command['command']))
+        self.logger.log_error("workermonitor", "Received unknown command: {}.".format(command['command']))
         print('Received unknown command: {}'.format(command['command']))
 
 
