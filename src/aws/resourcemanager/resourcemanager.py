@@ -6,7 +6,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError, DataNotFoundError
 
-from aws.utils.logger import Logger as logger
+from aws.utils.logger import Logger
 
 from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
@@ -21,6 +21,7 @@ class ResourceManagerCore(Observable):
         self.s3_resource = boto3.resource('s3')
         self.s3_session = boto3.session.Session()
         self.bucket_name = self.initialize_bucket()
+        logger = Logger()
 
     def initialize_bucket(self):
         try:

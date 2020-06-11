@@ -10,7 +10,7 @@ import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
-from aws.utils.logger import Logger as logger
+from aws.utils.logger import Logger
 
 
 class TaskPool(Observable):
@@ -23,6 +23,7 @@ class TaskPool(Observable):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+        logger = Logger()
 
     async def run(self):
         """
@@ -84,6 +85,7 @@ class TaskPoolMonitor(Listener):
         self._tp = taskpool
         self.client = client
         self.server = server
+        logger = Logger()
         super().__init__()
 
     def event(self, message):
@@ -96,6 +98,7 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
+    logger = Logger()
     logger.log_info("nodemanager_" + instance_id, "Starting TaskPool with ID: " + instance_id + ".")
     taskpool = TaskPool(instance_id=instance_id)
     taskpool_client = TaskPoolClientWrapper(im_host, im_port)

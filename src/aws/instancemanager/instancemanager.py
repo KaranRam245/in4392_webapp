@@ -13,7 +13,7 @@ from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.packets import Packet
 from aws.utils.state import InstanceState
 import aws.utils.config as config
-from aws.utils.logger import Logger as logger
+from aws.utils.logger import Logger
 
 
 class Instances:
@@ -29,6 +29,7 @@ class Instances:
         self._start_signal = {}
         self.ip_addresses = {}
         self.start_retry = {}
+        logger = Logger()
 
     def get_all(self, instance_type, filter_state=None):
         """
@@ -166,6 +167,7 @@ class NodeScheduler:
         self.debug = debug  # Boolean indicating if the debug mode is enabled.
         self.git_pull = git_pull  # String indicating if workers should first git pull and checkout.
         self.node_manager_running = False
+        logger = Logger()
         super().__init__()
 
     def initialize_nodes(self, retry=False):
@@ -376,6 +378,7 @@ class NodeMonitor(con.MultiConnectionServer):
     def __init__(self, nodescheduler, host=con.HOST, port=con.PORT_IM):
         self._ns = nodescheduler
         self.keep_running = True
+        logger = Logger()
         super().__init__(host, port)
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
@@ -390,6 +393,7 @@ def start_instance(debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
+    logger = Logger()
     logger.log_info("nodescheduler", "Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)

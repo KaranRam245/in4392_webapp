@@ -6,7 +6,7 @@ import asyncio
 import logging
 import aws.utils.connection as con
 import aws.utils.config as config
-from aws.utils.logger import Logger as logger
+from aws.utils.logger import Logger
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
@@ -27,6 +27,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector = storage_connector
+        logger = Logger()
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
@@ -83,6 +84,7 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
 
     def __init__(self, host, port, task_queue):
         self._task_queue = task_queue
+        logger = Logger()
         super().__init__(host, port)
 
     def event(self, message):
@@ -106,6 +108,7 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
 
 
 def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=con.PORT_NM):
+    logger = Logger()
     task_queue = []
     storage_connector = ResourceManagerCore()
     logger.log_info("nodeworker_" + instance_id, "Starting WorkerCore with instance id:" + instance_id + ".")
