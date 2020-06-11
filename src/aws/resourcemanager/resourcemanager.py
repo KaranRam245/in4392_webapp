@@ -10,7 +10,7 @@ import logging
 
 from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
-import aws.utils.config as config
+import aws.utils.bucketname as bucketname
 
 
 class ResourceManagerCore(Observable):
@@ -138,7 +138,7 @@ class Logger(metaclass=Singleton):
         self.s3_resource = boto3.resource('s3')
         self.logger = logging.getLogger('root')
         self.s3_session = boto3.session.Session()
-        self.create_bucket(bucket_name=config.LOGGING_BUCKET_NAME)
+        self.create_bucket(bucket_name=bucketname.LOGGING_BUCKET_NAME)
 
     def log_info(self, instance_id: str, message: str):
         self.logger.info(message)
@@ -153,7 +153,7 @@ class Logger(metaclass=Singleton):
         self.add_handler(instance_id)
 
     def add_handler(self, instance_id: str):
-        s3_handler = S3Handler(instance_id, config.LOGGING_BUCKET_NAME)
+        s3_handler = S3Handler(instance_id, bucketname.LOGGING_BUCKET_NAME)
         self.logger.addHandler(s3_handler)
 
 
