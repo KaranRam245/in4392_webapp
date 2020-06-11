@@ -1,14 +1,16 @@
 """
 Shared methods for state indication.
 """
+from abc import ABC, abstractmethod
+from typing import Iterable
 
 
-class State:
+class State(ABC):
     """
     Class for the indication of the current state of an instance.
     """
 
-    def __init__(self, state):
+    def __init__(self, state: int):
         self._state = state
 
     def get_state(self):
@@ -20,6 +22,20 @@ class State:
     def is_state(self, state) -> bool:
         return self._state == state
 
+    def is_any(self, states: Iterable[int]) -> bool:
+        return self._state in states
+
+    @abstractmethod
+    def map_to_str(self, state_to_map):
+        raise NotImplementedError(
+            "Map to string method is not implemented yet for {}".format(type(self)))
+
+    def __str__(self):
+        return self.map_to_str(self._state)
+
+    def __repr__(self):
+        return str(self)
+
 
 class ProgramState(State):
     # States of the program based on the Amazon Elastic Compute Cloud.
@@ -29,6 +45,13 @@ class ProgramState(State):
     STOPPING = 2  # When the stop comment has been received.
     ERROR = 3  # When an error has occured.
 
+    MAPPING = {
+        PENDING: 'pending',
+        RUNNING: 'running',
+        STOPPING: 'stopping',
+        ERROR: 'error'
+    }
+
     def __init__(self, state):
         """
         Initialize a State object indicating the current state of a program.
@@ -36,6 +59,11 @@ class ProgramState(State):
         """
         assert 0 <= state <= 4
         super().__init__(state)
+
+    def map_to_str(self, state_to_map):
+        if isinstance(state_to_map, str):
+            return state_to_map
+        return self.MAPPING[state_to_map]
 
 
 class InstanceState(State):
@@ -49,42 +77,40 @@ class InstanceState(State):
     SHUTTING_DOWN = 4  # Instance is shutting down/preparing to terminate.
     TERMINATED = 5  # Instance is terminated/permanently deleted.
 
+    MAPPING = {
+        PENDING: 'pending',
+        RUNNING: 'running',
+        STOPPING: 'stopping',
+        STOPPED: 'stopped',
+        SHUTTING_DOWN: 'shutting_down',
+        TERMINATED: 'terminated'
+    }
+
     def __init__(self, state):
         """
         Initialize a State object indicating the current state of an instance.
         :param state: Initiger indicating the current state.
         """
         if isinstance(state, str):
-            state = self.map_to(state)
+            state = self.map_to_int(state)
         assert 0 <= state <= 4
         super().__init__(state)
 
-    def map_to(self, state_to_map):
+    def map_to_str(self, state_to_map):
+        if isinstance(state_to_map, str):
+            return state_to_map
+        return self.MAPPING[state_to_map]
+
+    def map_to_int(self, state_to_map):
         """
         Map a string response of EC2 to a state id.
         :param state_to_map: State name or number according to EC2.
         :return: State id.
         """
-        mapping = {
-            self.PENDING: 'pending',
-            self.RUNNING: 'running',
-            self.STOPPING: 'stopping',
-            self.STOPPED: 'stopped',
-            self.SHUTTING_DOWN: 'shutting_down',
-            self.TERMINATED: 'terminated'
-        }
-        if isinstance(state_to_map, str):
-            for key, value in mapping.items():
-                if value == state_to_map:
-                    return key
-        elif isinstance(state_to_map, int):
-            return mapping[state_to_map]
+        if isinstance(state_to_map, int):
+            return state_to_map
+        for key, value in self.MAPPING.items():
+            if value == state_to_map:
+                return key
         raise Exception(
-            'Unknown instance detected. EC2 does not support the "{}" state with type "{}"'.format(
-                state_to_map, type(state_to_map)))
-
-    def __str__(self):
-        return self.map_to(self._state)
-
-    def __repr__(self):
-        return str(self)
+            "This state does not seem to exist for InstanceState: {}".format(state_to_map))

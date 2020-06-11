@@ -9,7 +9,8 @@ from typing import List
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
 
 HOST = '0.0.0.0'
-PORT = 8080
+PORT_IM = 8080
+PORT_NM = 8081
 ENCODING = 'UTF-8'
 
 
@@ -34,7 +35,12 @@ def decode_packet(data) -> Packet:
     :return: Decoded packet.
     """
     value = data.decode(ENCODING)
-    packet_dict = json.loads(value)
+    try:
+        packet_dict = json.loads(value)
+    except json.JSONDecodeError as e:
+        print("JsonDecodeError on: {}".format(value))
+        print(e)
+        raise e
     return PacketTranslator.translate(packet_dict)
 
 
@@ -47,6 +53,7 @@ class MultiConnectionServer:
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        print("Serving on {}:{}..".format(self.host, self.port))
 
     def process_packet(self, message, source) -> Packet:
         """
@@ -63,7 +70,7 @@ class MultiConnectionServer:
         raise TypeError("Unknown packet found: {}".format(packet['packet_type']))
 
     @abstractmethod
-    def process_heartbeat(self, hb, source) -> Packet:
+    def process_heartbeat(self, heartbeat, source) -> Packet:
         raise NotImplementedError("Server process_heartbeat not implemented yet.")
 
     async def run(self, reader, writer):
@@ -76,9 +83,9 @@ class MultiConnectionServer:
                     break
                 packet_received = decode_packet(data)
                 packet_reponse = self.process_packet(packet_received, addr)
-                print("Received {} from {}".format(packet_received, addr))
+                print("+ Received {} from {}".format(packet_received, addr))
 
-                print("Sent: {}".format(packet_reponse))
+                print("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
@@ -103,7 +110,7 @@ class MultiConnectionClient:
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
-        print("Message added to buffer: {}".format(message))
+        print("Added to buffer for [{}:{}]: {}".format(self.host, self.port, message))
 
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
@@ -127,12 +134,12 @@ class MultiConnectionClient:
                 while self.send_buffer:
                     packet_send: Packet = self.send_buffer.pop(0)
 
-                    print('Sent: {}'.format(packet_send))
+                    print('- Sent: {}'.format(packet_send))
                     writer.write(encode_packet(packet_send))
 
                     data_received = await reader.read(1024)
                     packet_received = decode_packet(data_received)
-                    print('Received: {}'.format(packet_received))
+                    print('+ Received: {}'.format(packet_received))
                     self.received_packets.append(packet_received)
                     # TODO: process the received messages.
 

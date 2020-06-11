@@ -2,26 +2,36 @@
 Module for the Node Worker.
 """
 import asyncio
+from contextlib import suppress
 
 import aws.utils.connection as con
+import aws.utils.config as config
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
 
 
-class WorkerCore(Observable):
+class WorkerCore(Observable, con.MultiConnectionClient):
     """
     The WorkerCore accepts the task from the Node Manager.
     """
 
-    def __init__(self, task_queue, storage_connector):
-        super().__init__()
+    def __init__(self, host, port, instance_id, task_queue, storage_connector):
+        Observable.__init__(self)
+        con.MultiConnectionClient.__init__(self, host=host, port=port)
+        self._instance_id = instance_id
         self._task_queue = task_queue
         self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector = storage_connector
+
+    def process_command(self, command: CommandPacket):
+        # Enqueue for worker here!
+        if command['command'] == 'task':
+            self._task_queue.put(command)
+        # TODO: process more commands.
 
     async def heartbeat(self):
         """
@@ -30,11 +40,11 @@ class WorkerCore(Observable):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(15)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
         except KeyboardInterrupt:
             pass
 
-    async def run(self):
+    async def process(self):
         """
         Start function for the WorkerCore.
         """
@@ -47,19 +57,22 @@ class WorkerCore(Observable):
                         key=self.current_task.key
                     )
                     # TODO: Process the file! @Karan
-                    await asyncio.sleep(2)
+
+                    # self.send_message(message)
                     self.current_task = None
                 await asyncio.sleep(1)
         except KeyboardInterrupt:
             pass
 
-    def generate_heartbeat(self, notify=True) -> HeartBeatPacket:
-        hb = HeartBeatPacket(instance_state=self._instance_state,
-                             instance_type='worker',
-                             program_state=self._program_state)
-        if notify:
-            self.notify(message=hb)
-        return hb
+    def generate_heartbeat(self, notify=True):
+        heartbeat = HeartBeatPacket(instance_id=self._instance_id,
+                                    instance_type='worker',
+                                    instance_state=self._instance_state,
+                                    program_state=self._program_state)
+        # self.send_message(message=heartbeat)
+        if notify:  # Notify to the listeners (i.e., WorkerMonitor).
+            self.notify(message=heartbeat)
+        self.send_message(heartbeat)  # Send heartbeat to NodeManagerCore.
         # TODO: more metrics on current task. Current task should be added to heartbeat.
 
 
@@ -80,28 +93,36 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
     def process_command(self, command: CommandPacket):
         if command['command'] == 'stop':
             raise NotImplementedError("Client has not yet implemented [stop].")
-        if command['command'] == '`kill`':
+        if command['command'] == 'kill':
             raise NotImplementedError("Client has not yet implemented [kill].")
-        if command['command'] == 'task':
-            self._task_queue.put(command)
         print('Received unknown command: {}'.format(command['command']))
 
 
-def start_instance(host, port=con.PORT):
+def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=con.PORT_NM):
     task_queue = []
     storage_connector = ResourceManagerCore()
-    worker_core = WorkerCore(task_queue, storage_connector)
-    monitor = WorkerMonitor(host, port, task_queue)
+    worker_core = WorkerCore(host=host_nm,
+                             port=port_nm,
+                             instance_id=instance_id,
+                             task_queue=task_queue,
+                             storage_connector=storage_connector)
+    monitor = WorkerMonitor(host_im, port_im, task_queue)
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
-    procs = asyncio.wait([worker_core.run(), worker_core.heartbeat(), monitor.run()])
+    procs = asyncio.wait(
+        [worker_core.run(), worker_core.heartbeat(), worker_core.process(), monitor.run()])
     try:
-        tasks = loop.run_until_complete(procs)
-        tasks.close()
+        loop.run_until_complete(procs)
     except KeyboardInterrupt:
         pass
     finally:
-        loop.run_until_complete(tasks.wait_close())
+        print("Manually shutting down worker.")
+        tasks = [t for t in asyncio.Task.all_tasks() if t is not
+                 asyncio.Task.current_task()]
+        for task in tasks:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                loop.run_until_complete(task)
         loop.close()
