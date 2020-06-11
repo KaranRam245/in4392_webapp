@@ -133,11 +133,10 @@ class Logger(metaclass=Singleton):
     """
 
     def __init__(self):
-        resource_manager = ResourceManagerCore()
+        self.s3 = boto3.client('s3')
+        self.s3_resource = boto3.resource('s3')
         self.logger = logging.getLogger('root')
-        resource_manager.create_bucket(bucket_name=config.LOGGING_BUCKET_NAME)
-        s3_handler = S3Handler("test_log", config.LOGGING_BUCKET_NAME, workers=1)
-        self.logger.addHandler(s3_handler)
+        self.create_bucket(bucket_name=config.LOGGING_BUCKET_NAME)
 
     def log_info(self, instance_id: str, message):
         self.logger.info(message)
@@ -154,3 +153,18 @@ class Logger(metaclass=Singleton):
     def add_handler(self, type, instance_id):
         s3_handler = S3Handler(instance_id, config.LOGGING_BUCKET_NAME, workers=1)
         self.logger.addHandler(s3_handler)
+
+
+    def create_bucket(self, bucket_name):
+        """
+        Method called to create a bucket, now in logger to avoid circular dependency.
+        """
+        if self.s3_resource.Bucket(bucket_name).creation_date is None:
+            current_region = self.s3_session.region_name
+            self.logger.log_info("logger", "Creating bucket with bucket_name: " + bucket_name + ".")
+            self.s3.create_bucket(
+                Bucket=bucket_name,
+                CreateBucketConfiguration={
+                    'LocationConstraint': current_region,
+                }
+            )
