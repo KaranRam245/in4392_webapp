@@ -424,4 +424,4 @@ def start_instance(debug=False, git_pull=False):
 
 # Main function to start the InstanceManager
 if __name__ == '__main__':
-    start_instance(debug=True)
+    start_instance(debug=False)
