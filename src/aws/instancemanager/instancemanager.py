@@ -29,6 +29,7 @@ class Instances:
         self._start_signal = {}
         self.ip_addresses = {}
         self.start_retry = {}
+        self.instance_id = ec2_metadata.instance_id
         self.logger = Logger()
 
     def get_all(self, instance_type, filter_state=None):
@@ -59,13 +60,13 @@ class Instances:
     def set_state(self, instance_id, instance_type, state):
         nodes = self.get_nodes(instance_type)
         if instance_id not in nodes:
-            self.logger.log_info("instancemanager-" + instance_id, "State of instance " + instance_id + " set to PENDING.")
+            self.logger.log_info("instancemanager-" + self.instance_id, "State of instance " + instance_id + " set to PENDING.")
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
-        self.logger.info("instancemanager-" + instance_id, "State of instance " + instance_id + " set to " + state + ".")
+        self.logger.log_info("instancemanager-" + self.instance_id, "State of instance " + instance_id + " set to " + state + ".")
         nodes[instance_id] = state
 
     def set_ip(self, instance_id, ip_address):
-        self.logger.log_info("instancemanager-" + instance_id, "IP address of " + instance_id + " set to " + ip_address + ".")
+        self.logger.log_info("instancemanager-" + self.instance_id, "IP address of " + instance_id + " set to " + ip_address + ".")
         self.ip_addresses[instance_id] = ip_address
 
     def get_ip(self, instance_id):
@@ -204,7 +205,7 @@ class NodeScheduler:
                 if self.git_pull:
                     command.insert(1, 'git pull')
                     command.insert(2, 'git checkout {}'.format(self.git_pull))
-            self.logger.log_info("nodescheduler-" + instance_id, "Sending start command: [{}]: {}.".format(instance_id, command))
+            self.logger.log_info("nodescheduler-" + self.instance_id, "Sending start command: [{}]: {}.".format(instance_id, command))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
@@ -214,8 +215,8 @@ class NodeScheduler:
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
         except Exception as e:
-            self.logger.exception("The following exception has occurred while trying"
-            + " to send a command: ", e)
+            self.logger.log_exception("nodescheduler-" + self.instance_id, "The following exception has occurred while trying"
+            + " to send a command: " + str(e))
             print(Exception, e, "Retry later")
             self.instances.start_retry[instance_id] = config.INSTANCE_START_CONFIGURE_TIMEOUT
 
@@ -224,7 +225,7 @@ class NodeScheduler:
             nodemanagers = self.instances.get_all(instance_type='node_manager',
                                                   filter_state=[InstanceState.STOPPED])
             if not nodemanagers:
-                self.logger.error("No node manager instances available to start.")
+                self.logger.log_error("nodescheduler-" + self.instance_id, "No node manager instances available to start.")
                 raise ConnectionError('No node manager instances available to start.')
             to_start = nodemanagers[0]
             self.logger.log_info("nodescheduler-" + self.instance_id, "Initializing node manager.")
@@ -287,7 +288,7 @@ class NodeScheduler:
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                self.logger.warning("Debug enabled and no node manager started yet. "
+                self.logger.log_warning("nodescheduler-" + self.instance_id, "Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
@@ -342,7 +343,7 @@ class NodeScheduler:
                     del self.instances.start_retry[instance]
         elif not send_start and heartbeat and heartbeat_timedout:
             # The IM has not received a heartbeat for too long.
-            self.logger.error("No/timedout heartbeat recorded "
+            self.logger.log_error("nodescheduler-" + self.instance_id, "No/timedout heartbeat recorded "
                   "for instance {}: {}".format(instance,
                                                self.instances.get_last_heartbeat(instance)))
             print("No/timedout heartbeat recorded "
