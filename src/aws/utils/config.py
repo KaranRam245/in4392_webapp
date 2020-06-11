@@ -20,7 +20,7 @@ HEART_BEAT_TIMEOUT = 30
 DEBUG_INIT_RETRY = 5
 
 # The name of the bucket in which the logging will be saved.
-LOGGING_BUCKET_NAME = "logging_bucket"
+LOGGING_BUCKET_NAME = "logging-bucket"
 
 # Default parts of the commands.
 DEFAULT_DIRECTORY = 'cd /tmp/in4392_webapp/'

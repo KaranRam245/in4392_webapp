@@ -96,11 +96,11 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
     logger = Logger()
-    logger.log_info("nodemanager_" + instance_id, "Starting TaskPool with ID: " + instance_id + ".")
+    logger.log_info("nodemanager-" + instance_id, "Starting TaskPool with ID: " + instance_id + ".")
     taskpool = TaskPool(instance_id=instance_id)
     taskpool_client = TaskPoolClientWrapper(im_host, im_port)
     taskpool_server = TaskPoolServerWrapper(nm_host, nm_port, taskpool_client)
-    logger.log_info("nodemanager_" + instance_id, "Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
+    logger.log_info("nodemanager-" + instance_id, "Starting TaskPoolMonitor of TaskPool with ID: " + instance_id + ".")
     monitor = TaskPoolMonitor(taskpool, taskpool_client, taskpool_server)
     taskpool.add_listener(monitor)
 

@@ -53,12 +53,12 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
-                    self.logger.log_info("nodeworker_" + self.instance_id, "Downloading File " + self.current_task.file_path + ".")
+                    self.logger.log_info("nodeworker-" + self.instance_id, "Downloading File " + self.current_task.file_path + ".")
                     file = self.storage_connector.download_file(
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
-                    self.logger.log_info("nodeworker_" + self.instance_id, "Downloaded file " + self.current_task.file_path + ".")
+                    self.logger.log_info("nodeworker-" + self.instance_id, "Downloaded file " + self.current_task.file_path + ".")
                     # TODO: Process the file! @Karan
 
                     # self.send_message(message)
@@ -110,14 +110,14 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     logger = Logger()
     task_queue = []
     storage_connector = ResourceManagerCore()
-    logger.log_info("nodeworker_" + instance_id, "Starting WorkerCore with instance id:" + instance_id + ".")
+    logger.log_info("nodeworker-" + instance_id, "Starting WorkerCore with instance id:" + instance_id + ".")
     worker_core = WorkerCore(host=host_nm,
                              port=port_nm,
                              instance_id=instance_id,
                              task_queue=task_queue,
                              storage_connector=storage_connector)
     monitor = WorkerMonitor(host_im, port_im, task_queue)
-    logger.log_info("nodeworker_" + instance_id, "Starting WorkerMonitor...")
+    logger.log_info("nodeworker-" + instance_id, "Starting WorkerMonitor...")
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
 
