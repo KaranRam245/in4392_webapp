@@ -137,6 +137,7 @@ class Logger(metaclass=Singleton):
         self.s3 = boto3.client('s3')
         self.s3_resource = boto3.resource('s3')
         self.logger = logging.getLogger('root')
+        self.logger.setLevel(logging.INFO)
         self.s3_session = boto3.session.Session()
         self.create_bucket(bucket_name=bucketname.LOGGING_BUCKET_NAME)
         self._instance_id = None
