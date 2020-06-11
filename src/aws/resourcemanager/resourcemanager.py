@@ -161,6 +161,7 @@ class Logger(metaclass=Singleton):
         self._instance_id = instance_id
         s3_handler = S3Handler(instance_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=5)
         self.logger.addHandler(s3_handler)
+        print("Handler added")
 
 
     def create_bucket(self, bucket_name):
