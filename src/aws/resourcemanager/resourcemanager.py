@@ -6,7 +6,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError, DataNotFoundError
 
-import aws.utils.logger.Logger as logger
+from aws.utils.logger import Logger as logger
 
 from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState

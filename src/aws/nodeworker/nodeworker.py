@@ -6,7 +6,7 @@ import asyncio
 import logging
 import aws.utils.connection as con
 import aws.utils.config as config
-import aws.utils.logger.Logger as logger
+from aws.utils.logger import Logger as logger
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
