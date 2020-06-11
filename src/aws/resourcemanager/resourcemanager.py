@@ -153,7 +153,7 @@ class Logger(metaclass=Singleton):
         self.add_handler(instance_id)
 
     def add_handler(self, instance_id: str):
-        s3_handler = S3Handler(instance_id, config.LOGGING_BUCKET_NAME, workers=1)
+        s3_handler = S3Handler(instance_id, config.LOGGING_BUCKET_NAME, workers=3)
         self.logger.addHandler(s3_handler)
 
 
