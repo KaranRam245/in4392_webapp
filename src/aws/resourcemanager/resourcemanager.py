@@ -173,7 +173,7 @@ class Logger(metaclass=Singleton):
         s3_handler.setFormatter(formatter)
 
         self.logger.addHandler(s3_handler)
-        print("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME + " and key: " + key + ".")
+        print("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME + " and key: " + "key" + ".")
 
     def create_bucket(self, bucket_name=bucketname.LOGGING_BUCKET_NAME):
         """
