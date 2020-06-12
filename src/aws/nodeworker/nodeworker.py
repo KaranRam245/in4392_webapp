@@ -26,7 +26,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector = storage_connector
-        self.logger = Logger()
+        self.logger = Logger(instance_id)
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
@@ -53,12 +53,12 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
-                    self.logger.log_info("workercore-" + self._instance_id, "Downloading File " + self.current_task.file_path + ".")
+                    self.logger.log_info("Downloading File " + self.current_task.file_path + ".")
                     file = self.storage_connector.download_file(
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
-                    self.logger.log_info("workercore-" + self._instance_id, "Downloaded file " + self.current_task.file_path + ".")
+                    self.logger.log_info("Downloaded file " + self.current_task.file_path + ".")
                     # TODO: Process the file! @Karan
 
                     # self.send_message(message)
@@ -81,9 +81,9 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
 class WorkerMonitor(Listener, con.MultiConnectionClient):
 
-    def __init__(self, host, port, task_queue):
+    def __init__(self, host, port, task_queue, instance_id):
         self._task_queue = task_queue
-        self.logger = Logger()
+        self.logger = Logger(instance_id)
         super().__init__(host, port)
 
     def event(self, message):
@@ -92,32 +92,32 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
-        self.logger.log_info("workermonitor", "Sending message: " + message + ".")
+        self.logger.log_info("Sending message: " + message + ".")
         self.send_message(message)
 
     def process_command(self, command: CommandPacket):
         if command['command'] == 'stop':
-            self.logger.log_error("workermonitor", "Command 'stop' is not yet implemented.")
+            self.logger.log_error("Command 'stop' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [stop].")
         if command['command'] == 'kill':
-            self.logger.log_error("workermonitor", "Command 'kill' is not yet implemented.")
+            self.logger.log_error("Command 'kill' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [kill].")
-        self.logger.log_error("workermonitor", "Received unknown command: {}.".format(command['command']))
+        self.logger.log_error("Received unknown command: {}.".format(command['command']))
         print('Received unknown command: {}'.format(command['command']))
 
 
 def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=con.PORT_NM):
-    logger = Logger()
+    logger = Logger(instance_id)
     task_queue = []
-    storage_connector = ResourceManagerCore()
-    logger.log_info("nodeworker", "Starting WorkerCore with instance id:" + instance_id + ".")
+    storage_connector = ResourceManagerCore(instance_id)
+    logger.log_info("Starting WorkerCore with instance id:" + instance_id + ".")
     worker_core = WorkerCore(host=host_nm,
                              port=port_nm,
                              instance_id=instance_id,
                              task_queue=task_queue,
                              storage_connector=storage_connector)
-    monitor = WorkerMonitor(host_im, port_im, task_queue)
-    logger.log_info("nodeworker", "Starting WorkerMonitor...")
+    monitor = WorkerMonitor(host_im, port_im, task_queue, instance_id)
+    logger.log_info("Starting WorkerMonitor...")
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
 
@@ -129,7 +129,7 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     except KeyboardInterrupt:
         pass
     finally:
-        logger.log_info("nodeworker", "Manually shutting down worker.")
+        logger.log_info("Manually shutting down worker.")
         print("Manually shutting down worker.")
         logger.close()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not

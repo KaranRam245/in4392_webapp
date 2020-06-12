@@ -70,14 +70,14 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
     This class is used to monitor the TaskPool and to send heartbeats to the IM.
     """
 
-    def __init__(self, taskpool, host, port):
+    def __init__(self, taskpool, host, port, instance_id):
         Listener.__init__(self)
         con.MultiConnectionClient.__init__(self, host, port)
         self._tp = taskpool
-        self.logger = Logger()
+        self.logger = Logger(instance_id)
 
     def event(self, message):
-        self.logger.log_info("taskpoolmonitor", "Message sent to Instance Manager: " + message + ".")
+        self.logger.log_info("Message sent to Instance Manager: " + message + ".")
         self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
 
     def process_command(self, command):
@@ -89,8 +89,8 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
-    logger = Logger()
-    logger.log_info("nodemanager", "Starting TaskPool with ID: " + instance_id + ".")
+    logger = Logger(instance_id)
+    logger.log_info("Starting TaskPool with ID: " + instance_id + ".")
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
     monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
     taskpool.add_listener(monitor)
