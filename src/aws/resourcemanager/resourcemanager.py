@@ -7,6 +7,7 @@ import boto3
 from botocore.exceptions import ClientError, DataNotFoundError
 from aws_logging_handlers.S3 import S3Handler
 import logging
+from datetime import datetime, timezone
 
 from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
@@ -139,31 +140,33 @@ class Logger(metaclass=Singleton):
         self.logger = logging.getLogger('root')
         self.logger.setLevel(logging.INFO)
         self.s3_session = boto3.session.Session()
-        self._instance_id = None
+        self._log_made = False
         self.create_bucket(bucket_name=bucketname.LOGGING_BUCKET_NAME)
 
 
-    def log_info(self, instance_id: str, message: str):
+    def log_info(self, message: str):
         self.logger.info(message)
-        if not self._instance_id:
-            self.add_handler(instance_id)
+        if not self._log_made:
+            self.add_handler()
 
-    def log_error(self, instance_id: str, message: str):
+    def log_error(self, message: str):
         self.logger.error(message)
-        if not self._instance_id:
-            self.add_handler(instance_id)
+        if not self._log_made:
+            self.add_handler()
 
-    def log_exception(self, instance_id: str, message: str):
+    def log_exception(self, message: str):
         self.logger.exception(message)
-        if not self._instance_id:
-            self.add_handler(instance_id)
+        if not self._log_made:
+            self.add_handler()
 
-    def add_handler(self, instance_id: str):
-        self._instance_id = instance_id
-        s3_handler = S3Handler(instance_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=5)
+    def add_handler(self):
+        self._log_made = True
+        dt = datetime.now(tz=timezone.utc)
+        dt_id = dt.strftime('%Y%m%d%H%M%S')
+        s3_handler = S3Handler(dt_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=5)
         self.logger.addHandler(s3_handler)
-        self.log_info(instance_id, "Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME +
-                      " and key: " + instance_id + ".")
+        self.log_info("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME +
+                      " and key: " + dt_id + ".")
         print("Handler added")
 
 
