@@ -132,7 +132,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Logger(metaclass=Singleton):
+class Logger:
     """"
     Class for the logger.
     """

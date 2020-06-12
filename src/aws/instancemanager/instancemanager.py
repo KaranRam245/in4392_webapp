@@ -22,14 +22,14 @@ class Instances:
     # Instance example:
     # <instance_id>:  <InstanceState>
 
-    def __init__(self):
+    def __init__(self, logger):
         self._node_managers = {}
         self._workers = {}
         self._last_heartbeat = {}
         self._start_signal = {}
         self.ip_addresses = {}
         self.start_retry = {}
-        self.logger = Logger()
+        self.logger = logger
 
     def get_all(self, instance_type, filter_state=None):
         """
@@ -156,8 +156,8 @@ class NodeScheduler:
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
-    def __init__(self, debug, git_pull):
-        self.instances = Instances()
+    def __init__(self, debug, git_pull, logger):
+        self.instances = Instances(logger)
         self.instance_id = ec2_metadata.instance_id
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
@@ -167,7 +167,7 @@ class NodeScheduler:
         self.debug = debug  # Boolean indicating if the debug mode is enabled.
         self.git_pull = git_pull  # String indicating if workers should first git pull and checkout.
         self.node_manager_running = False
-        self.logger = Logger()
+        self.logger = logger
         super().__init__()
 
     def initialize_nodes(self, retry=False):
@@ -394,7 +394,7 @@ def start_instance(debug=False, git_pull=False):
     """
     logger = Logger()
     logger.log_info("Starting Node Scheduler..")
-    scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
+    scheduler = NodeScheduler(debug=debug, git_pull=git_pull, logger=logger)
     monitor = NodeMonitor(scheduler)
 
     loop = asyncio.get_event_loop()
