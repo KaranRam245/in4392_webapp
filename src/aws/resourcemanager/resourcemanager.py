@@ -162,6 +162,8 @@ class Logger(metaclass=Singleton):
         self._instance_id = instance_id
         s3_handler = S3Handler(instance_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=5)
         self.logger.addHandler(s3_handler)
+        self.log_info(instance_id, "Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME +
+                      " and key: " + instance_id + ".")
         print("Handler added")
 
 
@@ -177,4 +179,3 @@ class Logger(metaclass=Singleton):
                     'LocationConstraint': current_region,
                 }
             )
-        self.log_info("log", "Creating bucket with bucket_name: " + bucket_name + ".")
