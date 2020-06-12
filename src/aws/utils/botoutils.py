@@ -56,6 +56,7 @@ class BotoInstance:
 
     @staticmethod
     def instance(content):
+        print(content)
         return BotoInstance(**content)
 
     def __init__(self, InstanceId, PublicDnsName, PublicIpAddress, State, Tags, **kwargs):
