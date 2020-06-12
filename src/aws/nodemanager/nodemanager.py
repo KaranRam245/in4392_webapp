@@ -92,7 +92,7 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     logger = Logger(instance_id)
     logger.log_info("Starting TaskPool with ID: " + instance_id + ".")
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
-    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
+    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port, instance_id=instance_id)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
