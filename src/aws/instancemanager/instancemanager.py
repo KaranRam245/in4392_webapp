@@ -409,7 +409,6 @@ def start_instance(debug=False, git_pull=False):
     except KeyboardInterrupt:
         pass
     finally:
-        logger.close()
         if not scheduler.cleaned_up:
             scheduler.cancel_all()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
@@ -419,6 +418,7 @@ def start_instance(debug=False, git_pull=False):
             with suppress(asyncio.CancelledError):
                 loop.run_until_complete(task)
         loop.close()
+        logger.close()
 
 
 # Main function to start the InstanceManager
