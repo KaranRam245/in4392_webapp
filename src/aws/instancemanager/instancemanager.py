@@ -287,8 +287,8 @@ class NodeScheduler:
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                # self.logger.log_warning("Debug enabled and no node manager started yet. "
-                #       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
+                self.logger.log_warning("Debug enabled and no node manager started yet. "
+                      "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 await asyncio.sleep(config.DEBUG_INIT_RETRY)
