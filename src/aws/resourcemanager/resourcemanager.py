@@ -7,7 +7,6 @@ import boto3
 from botocore.exceptions import ClientError, DataNotFoundError
 from aws_logging_handlers.S3 import S3Handler
 import logging
-from datetime import datetime, timezone
 
 from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
@@ -138,12 +137,12 @@ class Logger(metaclass=Singleton):
     """
 
     def __init__(self):
-        self.s3 = boto3.client('s3')
-        self.s3_resource = boto3.resource('s3')
+        self.s3_session = boto3.session.Session()
+        self.s3 = self.s3_session.client('s3')
+        self.s3_resource = self.s3_session.resource('s3')
         self.logger: logging.Logger = logging.getLogger('root')
         print("Logger set to {}".format(self.logger))
         self.logger.setLevel(logging.INFO)
-        self.s3_session = boto3.session.Session()
         self._log_made = False
         self.create_bucket()
 
