@@ -63,7 +63,7 @@ class ResourceManagerCore(Observable):
         """
         if self.s3_resource.Bucket(bucket_name).creation_date is None:
             self.logger.log_error("Bucket " + bucket_name + " does not exist, so it"
-                " cannot be deleted.")
+                                                            " cannot be deleted.")
             print("Bucket " + bucket_name + " does not exist")
         else:
             self.logger.log_info("Deleting bucket with bucket_name: " + bucket_name)
@@ -81,7 +81,7 @@ class ResourceManagerCore(Observable):
         """
         if self.s3_resource.Bucket(self.bucket_name).creation_date is None:
             self.logger.log_error("Bucket " + self.bucket_name + " does not exist, so a"
-                " file cannot be uploaded to this bucket.")
+                                                                 " file cannot be uploaded to this bucket.")
             print("Bucket " + self.bucket_name + " does not exist")
         else:
             try:
@@ -89,7 +89,7 @@ class ResourceManagerCore(Observable):
                 self.s3.upload_file(file_path, self.bucket_name, key)
             except DataNotFoundError:
                 self.logger.log_error("There is no file with file_path " + file_path +
-                    ", so the file cannot be uploaded")
+                                      ", so the file cannot be uploaded")
                 print("There is no file with file_path " + file_path)
 
     def download_file(self, key, file_path):
@@ -102,29 +102,31 @@ class ResourceManagerCore(Observable):
         """
         if not self.bucket_name:
             self.logger.log_error("Could not download file with key: {}, as the bucket"
-                                    "permissions are wrong!".format(key))
+                                  "permissions are wrong!".format(key))
             raise FileNotFoundError("Could not download file with key: {}, as the bucket"
                                     "permissions are wrong!".format(key))
         if self.s3_resource.Bucket(self.bucket_name).creation_date is None:
             self.logger.log_error("Bucket " + self.bucket_name + " does not exist, "
-                "so a file cannot be downloaded from it.")
+                                                                 "so a file cannot be downloaded from it.")
             print("Bucket " + self.bucket_name + " does not exist")
         else:
             try:
                 self.s3.download_file(self.bucket_name, key, file_path)
                 self.logger.log_info("Downloading file " + file_path + " from the bucket"
-                    + self.bucket_name + ".")
+                                     + self.bucket_name + ".")
             except DataNotFoundError:
                 self.logger.log_error("There is no key " + key + " in bucket " + self.bucket_name
-                    + "so a file cannot be downloaded from it.")
+                                      + "so a file cannot be downloaded from it.")
                 print("There is no key " + key + " in bucket " + self.bucket_name)
+
 
 class Singleton(type):
     """"
     Singleton class to ensure only one logger per instance.
     """
     _instances = {}
-    def __call__(cls,*args, **kwargs):
+
+    def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
@@ -144,34 +146,34 @@ class Logger(metaclass=Singleton):
         self._log_made = False
         self.create_bucket()
 
-
     def log_info(self, message: str):
-        self.logger.info(message)
         if not self._log_made:
             self.add_handler()
+        self.logger.info(message)
 
     def log_error(self, message: str):
-        self.logger.error(message)
         if not self._log_made:
             self.add_handler()
+        self.logger.error(message)
 
     def log_exception(self, message: str):
-        self.logger.exception(message)
         if not self._log_made:
             self.add_handler()
+        self.logger.exception(message)
 
     def log_warning(self, message: str):
-        self.logger.warning(message)
         if not self._log_made:
             self.add_handler()
+        self.logger.warning(message)
 
     def add_handler(self):
         self._log_made = True
-        dt = datetime.now(tz=timezone.utc)
-        dt_id = dt.strftime('%Y%m%d%H%M%S')
-        s3_handler = S3Handler(dt_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=10)
+        s3_handler = S3Handler("key", bucketname.LOGGING_BUCKET_NAME, time_rotation=10)
+        formatter = logging.Formatter('[%(asctime)s] %(filename)s:%(lineno)d} %(levelname)s - %(message)s')
+        s3_handler.setFormatter(formatter)
+
         self.logger.addHandler(s3_handler)
-        print("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME + " and key: " + dt_id + ".")
+        print("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME + " and key: " + key + ".")
 
     def create_bucket(self, bucket_name=bucketname.LOGGING_BUCKET_NAME):
         """
@@ -187,4 +189,4 @@ class Logger(metaclass=Singleton):
             )
 
     def close(self):
-        self.logger.close()
+        logging.shutdown()
