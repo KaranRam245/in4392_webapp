@@ -177,18 +177,18 @@ class NodeScheduler:
         if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
             self.update_instances(check=False)
         if self.debug and not self.node_manager_running:
-            # self.logger.log_info("Debugging waiting for node manager to start running.")
+            self.logger.log_info("Debugging waiting for node manager to start running.")
             print("Debugging waiting for node manager to start running.")
             return False
-        # self.logger.log_info("Initializing nodes..")
+        self.logger.log_info("Initializing nodes..")
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
-            # self.logger.log_info("No node manager running. Intializing startup protocol..")
+            self.logger.log_info("No node manager running. Intializing startup protocol..")
             print("No node manager running. Intializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
-            # self.logger.log_info("No single worker running. Intializing startup protocol..")
+            self.logger.log_info("No single worker running. Intializing startup protocol..")
             print("No single worker running. Intializing startup protocol..")
             self.start_worker()  # Require at least one worker.
         return True
@@ -204,7 +204,7 @@ class NodeScheduler:
             if self.git_pull:
                 command.insert(1, 'git pull')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
-            # self.logger.log_info("Sending start command: [{}]: {}.".format(instance_id, command))
+            self.logger.log_info("Sending start command: [{}]: {}.".format(instance_id, command))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
@@ -214,8 +214,8 @@ class NodeScheduler:
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
         except Exception as e:
-            # self.logger.log_exception("The following exception has occurred while trying"
-            # + " to send a command: " + str(e))
+            self.logger.log_exception("The following exception has occurred while trying"
+            + " to send a command: " + str(e))
             print(Exception, e, "Retry later")
             self.instances.start_retry[instance_id] = config.INSTANCE_START_CONFIGURE_TIMEOUT
 
@@ -224,24 +224,24 @@ class NodeScheduler:
             nodemanagers = self.instances.get_all(instance_type='node_manager',
                                                   filter_state=[InstanceState.STOPPED])
             if not nodemanagers:
-                # self.logger.log_error("No node manager instances available to start.")
+                self.logger.log_error("No node manager instances available to start.")
                 raise ConnectionError('No node manager instances available to start.')
             to_start = nodemanagers[0]
-            # self.logger.log_info("Initializing node manager.")
+            self.logger.log_info("Initializing node manager.")
             self._init_instance(to_start, instance_type='node_manager', wait=True)
             self._send_start_command('node_manager', to_start)
 
     def start_worker(self):
         workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
         if not workers:
-            # self.logger.log_info("No more worker instances can be started.")
+            self.logger.log_info("No more worker instances can be started.")
             print('No more worker instances can be started.')
             return
-        # self.logger.log_info("Initializing worker.")
+        self.logger.log_info("Initializing worker.")
         self._init_instance(workers[0], instance_type='workers', wait=False)
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
-        # self.logger.log_info("Starting {} instance {}".format(instance_type, instance_id))
+        self.logger.log_info("Starting {} instance {}".format(instance_type, instance_id))
         print("Starting {} instance {}".format(instance_type, instance_id))
         self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
@@ -273,22 +273,22 @@ class NodeScheduler:
         if check and not (
                 self.instances.has('worker', states) or self.instances.has('node_manager', states)):
             return
-        # self.logger.log_info("Updated instance states from AWS state.")
+        self.logger.log_info("Updated instance states from AWS state.")
         print("Updated instance states from AWS state")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
         print(self.instances)
 
     async def run(self):
-        # self.logger.log_info("Running NodeScheduler..")
+        self.logger.log_info("Running NodeScheduler..")
         print("Running NodeScheduler..")
         sleep_time = 1
         update_counter = config.BOTO_UPDATE_SEC
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                # self.logger.log_warning("Debug enabled and no node manager started yet. "
-                #       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
+                self.logger.log_warning("Debug enabled and no node manager started yet. "
+                      "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
                       "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 await asyncio.sleep(config.DEBUG_INIT_RETRY)
@@ -342,15 +342,15 @@ class NodeScheduler:
                     del self.instances.start_retry[instance]
         elif not send_start and heartbeat and heartbeat_timedout:
             # The IM has not received a heartbeat for too long.
-            # self.logger.log_error("No/timedout heartbeat recorded "
-            #       "for instance {}: {}".format(instance,
-            #                                    self.instances.get_last_heartbeat(instance)))
+            self.logger.log_error("No/timedout heartbeat recorded "
+                  "for instance {}: {}".format(instance,
+                                               self.instances.get_last_heartbeat(instance)))
             print("No/timedout heartbeat recorded "
                   "for instance {}: {}".format(instance,
                                                self.instances.get_last_heartbeat(instance)))
             send_start = True
         if send_start:  # Send a new start signal to the instance.
-            # self.logger.log_info("Sent start command to instance {}".format(instance))
+            self.logger.log_info("Sent start command to instance {}".format(instance))
             print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
@@ -362,11 +362,11 @@ class NodeScheduler:
         else:
             running_instances = self.running_instances()
         if running_instances:
-            # self.logger.log_info("Killing all instances: {}".format(running_instances))
+            self.logger.log_info("Killing all instances: {}".format(running_instances))
             print("Killing all instances: {}".format(running_instances))
             self.boto.ec2.stop_instances(InstanceIds=running_instances)
 
-        # self.logger.log_info("Cancelling all commands..")
+        self.logger.log_info("Cancelling all commands..")
         print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
