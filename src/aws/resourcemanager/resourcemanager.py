@@ -141,6 +141,7 @@ class Logger(metaclass=Singleton):
         self.s3 = boto3.client('s3')
         self.s3_resource = boto3.resource('s3')
         self.logger: logging.Logger = logging.getLogger('root')
+        print("Logger set to {}".format(self.logger))
         self.logger.setLevel(logging.INFO)
         self.s3_session = boto3.session.Session()
         self._log_made = False
