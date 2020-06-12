@@ -362,11 +362,11 @@ class NodeScheduler:
         else:
             running_instances = self.running_instances()
         if running_instances:
-            # self.logger.log_info("Killing all instances: {}".format(running_instances))
+            self.logger.log_info("Killing all instances: {}".format(running_instances))
             print("Killing all instances: {}".format(running_instances))
             self.boto.ec2.stop_instances(InstanceIds=running_instances)
 
-        # self.logger.log_info("Cancelling all commands..")
+        self.logger.log_info("Cancelling all commands..")
         print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
@@ -393,7 +393,6 @@ def start_instance(debug=False, git_pull=False):
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
     logger = Logger()
-    logger.log_info("Starting Node Scheduler..")
     logger.log_info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
