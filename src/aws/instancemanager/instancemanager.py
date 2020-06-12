@@ -62,7 +62,7 @@ class Instances:
         if instance_id not in nodes:
             self.logger.log_info("State of instance " + instance_id + " set to PENDING.")
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
-        self.logger.log_info("State of instance " + instance_id + " set to " + state + ".")
+        self.logger.log_info("State of instance " + instance_id + " set to " + state.__str__() + ".")
         nodes[instance_id] = state
 
     def set_ip(self, instance_id, ip_address):
