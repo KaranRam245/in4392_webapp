@@ -394,6 +394,7 @@ def start_instance(debug=False, git_pull=False):
     """
     logger = Logger()
     logger.log_info("Starting Node Scheduler..")
+    logger.log_info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
 
