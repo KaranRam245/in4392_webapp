@@ -169,11 +169,9 @@ class Logger(metaclass=Singleton):
         self._log_made = True
         dt = datetime.now(tz=timezone.utc)
         dt_id = dt.strftime('%Y%m%d%H%M%S')
-        s3_handler = S3Handler(dt_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=5)
+        s3_handler = S3Handler(dt_id, bucketname.LOGGING_BUCKET_NAME, time_rotation=10)
         self.logger.addHandler(s3_handler)
-        self.log_info("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME +
-                      " and key: " + dt_id + ".")
-        print("Handler added")
+        print("Using bucket with bucket_name: " + bucketname.LOGGING_BUCKET_NAME + " and key: " + dt_id + ".")
 
     def create_bucket(self, bucket_name=bucketname.LOGGING_BUCKET_NAME):
         """
