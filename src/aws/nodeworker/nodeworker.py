@@ -4,7 +4,6 @@ Module for the Node Worker.
 import asyncio
 from contextlib import suppress
 
-import logging
 import aws.utils.connection as con
 import aws.utils.config as config
 from aws.resourcemanager.resourcemanager import ResourceManagerCore, Logger
@@ -84,7 +83,7 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
 
     def __init__(self, host, port, task_queue):
         self._task_queue = task_queue
-        logger = Logger()
+        self.logger = Logger()
         super().__init__(host, port)
 
     def event(self, message):
@@ -132,7 +131,7 @@ def start_instance(instance_id, host_im, host_nm, port_im=con.PORT_IM, port_nm=c
     finally:
         logger.log_info("Manually shutting down worker.")
         print("Manually shutting down worker.")
-        logger.shutdown()
+        logger.close()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
         for task in tasks:

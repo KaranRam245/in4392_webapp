@@ -129,6 +129,7 @@ class Singleton(type):
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
+
 class Logger(metaclass=Singleton):
     """"
     Class for the logger.
@@ -137,11 +138,11 @@ class Logger(metaclass=Singleton):
     def __init__(self):
         self.s3 = boto3.client('s3')
         self.s3_resource = boto3.resource('s3')
-        self.logger = logging.getLogger('root')
+        self.logger: logging.Logger = logging.getLogger('root')
         self.logger.setLevel(logging.INFO)
         self.s3_session = boto3.session.Session()
         self._log_made = False
-        self.create_bucket(bucket_name=bucketname.LOGGING_BUCKET_NAME)
+        self.create_bucket()
 
 
     def log_info(self, message: str):
@@ -174,8 +175,7 @@ class Logger(metaclass=Singleton):
                       " and key: " + dt_id + ".")
         print("Handler added")
 
-
-    def create_bucket(self, bucket_name):
+    def create_bucket(self, bucket_name=bucketname.LOGGING_BUCKET_NAME):
         """
         Method called to create a bucket, now in logger to avoid circular dependency.
         """
@@ -187,3 +187,6 @@ class Logger(metaclass=Singleton):
                     'LocationConstraint': current_region,
                 }
             )
+
+    def close(self):
+        self.logger.close()

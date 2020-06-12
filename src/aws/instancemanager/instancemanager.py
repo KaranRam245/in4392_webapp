@@ -61,7 +61,7 @@ class Instances:
         if instance_id not in nodes:
             self.logger.log_info("State of instance " + instance_id + " set to PENDING.")
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
-        self.logger.log_info("State of instance " + instance_id + " set to " + state.__str__() + ".")
+        self.logger.log_info("State of instance " + instance_id + " set to " + str(state) + ".")
         nodes[instance_id] = state
 
     def set_ip(self, instance_id, ip_address):
@@ -366,7 +366,7 @@ class NodeScheduler:
             print("Killing all instances: {}".format(running_instances))
             self.boto.ec2.stop_instances(InstanceIds=running_instances)
 
-        self.logger.log_info("nodescheduler-" + self.instance_id, "Cancelling all commands..")
+        self.logger.log_info("Cancelling all commands..")
         print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
@@ -409,7 +409,7 @@ def start_instance(debug=False, git_pull=False):
     except KeyboardInterrupt:
         pass
     finally:
-        logger.shutdown()
+        logger.close()
         if not scheduler.cleaned_up:
             scheduler.cancel_all()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
