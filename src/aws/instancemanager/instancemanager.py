@@ -29,7 +29,6 @@ class Instances:
         self._start_signal = {}
         self.ip_addresses = {}
         self.start_retry = {}
-        self.instance_id = ec2_metadata.instance_id
         self.logger = Logger()
 
     def get_all(self, instance_type, filter_state=None):
@@ -424,4 +423,4 @@ def start_instance(debug=False, git_pull=False):
 
 # Main function to start the InstanceManager
 if __name__ == '__main__':
-    start_instance(debug=False)
+    start_instance()
