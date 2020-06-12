@@ -159,6 +159,11 @@ class Logger(metaclass=Singleton):
         if not self._log_made:
             self.add_handler()
 
+    def log_warning(self, message: str):
+        self.logger.warning(message)
+        if not self._log_made:
+            self.add_handler()
+
     def add_handler(self):
         self._log_made = True
         dt = datetime.now(tz=timezone.utc)
