@@ -68,7 +68,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='worker',
                                     instance_state=self._instance_state,
-                                    program_state=self._program_state)
+                                    program_state=self._program_state,
+                                    queue_size=len(self._task_queue))
         # self.send_message(message=heartbeat)
         if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)

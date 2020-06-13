@@ -48,7 +48,10 @@ class TaskPool(Observable, con.MultiConnectionServer):
         """
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='node_manager',
-                                    instance_state=self._instance_state)
+                                    instance_state=self._instance_state,
+                                    tasks_waiting=len(self._tasks),
+                                    tasks_running=len(self._tasks))
+        # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
         if notify:
             self.notify(message=heartbeat)
 

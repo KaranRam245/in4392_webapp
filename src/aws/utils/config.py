@@ -10,7 +10,10 @@ INSTANCE_START_CONFIGURE_TIMEOUT = 5
 # How many seconds should the program wait until a script should give life?
 START_SIGNAL_TIMEOUT = 30
 
-# How many seconds should be between heartbeats?
+# The amount of seconds a server is allowed to sleep until the same client sends again.
+SERVER_SLEEP_TIME = 2
+
+# How many seconds should be between heartbeats? Must be greater than SERVER_SLEEP_TIME.
 HEART_BEAT_INTERVAL = 3
 
 # How many seconds until a program is deemed dead? Max wait time until heartbeats?
@@ -22,3 +25,27 @@ DEBUG_INIT_RETRY = 5
 # Default parts of the commands.
 DEFAULT_DIRECTORY = 'cd /tmp/in4392_webapp/'
 DEFAULT_MAIN_CALL = 'python3 src/main.py {} {} {}'
+
+"""
+Parameters for Load balancing.
+"""
+# Size of a time window to check overload metrics on.
+# The time span checked is WINDOW_SIZE*HEART_BEAT_INTERVAL seconds.
+WINDOW_SIZE = 2
+
+# Percentage 0-100 for which a CPU is deemed to overload.
+CPU_OVERLOAD_PERCENTAGE = 99
+
+# Product of WINDOW_SIZE and CPU_OVERLOAD_PERCENTAGE. A value greater or equal to this value
+# indicates the CPU has been overloaded during the full window size.
+CPU_OVERLOAD_PRODUCT = WINDOW_SIZE * CPU_OVERLOAD_PERCENTAGE
+
+# Percentage 0-100 for which memory is deemed to overload.
+MEM_OVERLOAD_PERCENTAGE = 100
+
+# Product of WINDOW_SIZE and MEM_OVERLOAD_PERCENTAGE. A value greater or equal to this value
+# indicates the memory has been overloaded during the full window size.
+MEM_OVERLOAD_PRODUCT = WINDOW_SIZE * MEM_OVERLOAD_PERCENTAGE
+
+# Maximum allowed jobs per worker. A value above this means there should be a new worker.
+MAX_JOBS_PER_WORKER = 5

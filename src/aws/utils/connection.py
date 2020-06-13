@@ -89,7 +89,7 @@ class MultiConnectionServer:
                 data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
-                await asyncio.sleep(2)
+                await asyncio.sleep(config.SERVER_SLEEP_TIME)
         except ConnectionResetError:
             print("Client {} forcibly closed its connection.".format(addr))
         except TypeError as excep:
