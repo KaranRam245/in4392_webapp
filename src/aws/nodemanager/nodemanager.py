@@ -22,6 +22,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+        self.available_workers = []
 
     async def run_task_pool(self):
         """
@@ -30,7 +31,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
             pass
 
@@ -48,7 +49,10 @@ class TaskPool(Observable, con.MultiConnectionServer):
         """
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='node_manager',
-                                    instance_state=self._instance_state)
+                                    instance_state=self._instance_state,
+                                    tasks_waiting=len(self._tasks),
+                                    tasks_running=len(self._tasks))
+        # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
         if notify:
             self.notify(message=heartbeat)
 
@@ -79,6 +83,9 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
+
+    def process_heartbeat(self, heartbeat: HeartBeatPacket):
+        self._tp.available_workers = heartbeat['available_workers']
 
 
 def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,

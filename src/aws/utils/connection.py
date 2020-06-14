@@ -6,6 +6,7 @@ import asyncio
 from abc import abstractmethod
 from typing import List
 
+from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
 
 HOST = '0.0.0.0'
@@ -89,7 +90,7 @@ class MultiConnectionServer:
                 data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
-                await asyncio.sleep(2)
+                await asyncio.sleep(config.SERVER_SLEEP_TIME)
         except ConnectionResetError:
             print("Client {} forcibly closed its connection.".format(addr))
         except TypeError as excep:
@@ -101,25 +102,28 @@ class MultiConnectionServer:
 
 class MultiConnectionClient:
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, sleep_time=config.CLIENT_SEND_SLEEP):
         self.host = host
         self.port = port
         self.send_buffer: List[Packet] = []
         self.received_packets: List[Packet] = []
         self.running = True
+        self._sleep_time = sleep_time
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
-        print("Added to buffer for [{}:{}]: {}".format(self.host, self.port, message))
 
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
             self.process_command(packet['command'])
         elif isinstance(packet, HeartBeatPacket):
-            print("Acknowledge on my heartbeat. No additional action to take.")
+            self.process_heartbeat(packet)
         else:
             print("I do not know this packet type: {}".format(packet['packet_type']))
+
+    def process_heartbeat(self, hearbeat: HeartBeatPacket):
+        print("Acknowledge on my heartbeat. No additional action to take.")
 
     @abstractmethod
     def process_command(self, command: CommandPacket):
@@ -143,7 +147,7 @@ class MultiConnectionClient:
                     self.received_packets.append(packet_received)
                     # TODO: process the received messages.
 
-                await asyncio.sleep(1)
+                await asyncio.sleep(self._sleep_time)
         except KeyboardInterrupt:
             pass
         finally:
