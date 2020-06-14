@@ -41,6 +41,7 @@ def decode_packet(data) -> Packet:
         print("JsonDecodeError on: {}".format(value))
         print(e)
         raise e
+    str(packet_dict)
     return PacketTranslator.translate(packet_dict)
 
 
