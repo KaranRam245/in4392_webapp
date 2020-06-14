@@ -404,12 +404,22 @@ class NodeMonitor(con.MultiConnectionServer):
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
             self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
+            return self._generate_nm_response(heartbeat)
         if heartbeat['instance_type'] == 'worker':
             self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
         # TODO: process the current state of the node manager
         # TODO: combine the metrics into the final metrics.
         self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
         return heartbeat
+
+    def _generate_nm_response(self, heartbeat):
+        workers = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING,
+                                                                     InstanceState.PENDING])
+        response = HeartBeatPacket(instance_id=heartbeat['instance_id'],
+                                   instance_state=InstanceState.RUNNING,
+                                   instance_type='instance_manager',
+                                   available_workers=workers)
+        return response
 
 
 class TimeWindow:
@@ -450,7 +460,7 @@ class TimeWindow:
                 # The window has has exceeded (i.e.,
                 new_window = (old_window + [current_metric])[
                              max(len(old_window) - (config.WINDOW_SIZE - 1), 0):(
-                                         config.WINDOW_SIZE + 1)]
+                                     config.WINDOW_SIZE + 1)]
                 window[worker_heartbeat['instance_id']] = new_window
             else:
                 window[worker_heartbeat['instance_id']] = [current_metric]

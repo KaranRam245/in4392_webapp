@@ -22,6 +22,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+        self.available_workers = []
 
     async def run_task_pool(self):
         """
@@ -82,6 +83,9 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
+
+    def process_heartbeat(self, heartbeat: HeartBeatPacket):
+        self._tp.available_workers = heartbeat['available_workers']
 
 
 def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,

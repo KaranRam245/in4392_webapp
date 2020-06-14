@@ -118,9 +118,12 @@ class MultiConnectionClient:
         if isinstance(packet, CommandPacket):
             self.process_command(packet['command'])
         elif isinstance(packet, HeartBeatPacket):
-            print("Acknowledge on my heartbeat. No additional action to take.")
+            self.process_heartbeat(packet)
         else:
             print("I do not know this packet type: {}".format(packet['packet_type']))
+
+    def process_heartbeat(self, hearbeat: HeartBeatPacket):
+        print("Acknowledge on my heartbeat. No additional action to take.")
 
     @abstractmethod
     def process_command(self, command: CommandPacket):
