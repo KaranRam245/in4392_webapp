@@ -16,17 +16,20 @@ from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
 
 
+# Boolean indicating if the logging is initialized.
 INITIALIZED = False
 
 
 def initialize_logging():
-    logging.basicConfig(filename=config.DEFAULT_LOG_FILE + '.log', level=logging.DEBUG)
+    global INITIALIZED
+    logging.basicConfig(filename=config.DEFAULT_LOG_FILE + '.log', level=logging.INFO)
     INITIALIZED = True
 
 
 class ResourceManagerCore(Observable):
 
     def __init__(self, instance_id, account_id):
+        global INITIALIZED
         super().__init__()
         if not INITIALIZED:
             initialize_logging()
