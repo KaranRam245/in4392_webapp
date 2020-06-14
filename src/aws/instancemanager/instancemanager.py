@@ -407,7 +407,6 @@ class NodeMonitor(con.MultiConnectionServer):
             return self._generate_nm_response(heartbeat)
         if heartbeat['instance_type'] == 'worker':
             self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
-        # TODO: process the current state of the node manager
         # TODO: combine the metrics into the final metrics.
         self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
         return heartbeat
