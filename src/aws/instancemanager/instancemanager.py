@@ -13,6 +13,7 @@ from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.packets import Packet
 from aws.utils.state import InstanceState
 import aws.utils.config as config
+from aws.resourcemanager.resourcemanager import log_metric
 
 
 class Instances:
