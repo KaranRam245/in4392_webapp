@@ -183,13 +183,13 @@ class NodeScheduler:
         logging.info("Initializing nodes..")
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
-            logging.info("No node manager running. Intializing startup protocol..")
-            print("No node manager running. Intializing startup protocol..")
+            logging.info("No node manager running. Initializing startup protocol..")
+            print("No node manager running. Initializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
-            logging.info("No single worker running. Intializing startup protocol..")
-            print("No single worker running. Intializing startup protocol..")
+            logging.info("No single worker running. Initializing startup protocol..")
+            print("No single worker running. Initializing startup protocol..")
             self.start_worker()  # Require at least one worker.
         return True
 
@@ -287,7 +287,7 @@ class NodeScheduler:
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                logging.warning("nodescheduler-" + str(self.instance_id),
+                logging.warning(
                                 "Debug enabled and no node manager started yet. "
                                 "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
