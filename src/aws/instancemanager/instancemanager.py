@@ -418,7 +418,7 @@ def start_instance(debug=False, git_pull=False):
             with suppress(asyncio.CancelledError):
                 loop.run_until_complete(task)
         loop.close()
-        # logger.close()
+        logger.close()
 
 
 # Main function to start the InstanceManager

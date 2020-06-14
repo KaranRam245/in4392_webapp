@@ -106,7 +106,7 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
     except KeyboardInterrupt:
         pass
     finally:
-        # logger.close()
+        logger.close()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
         for task in tasks:
