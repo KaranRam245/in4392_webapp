@@ -393,7 +393,7 @@ def start_instance(debug=False, git_pull=False):
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
     logger = Logger('instance_manager')
-    # logger.log_info("Starting Node Scheduler..")
+    logger.log_info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
 
