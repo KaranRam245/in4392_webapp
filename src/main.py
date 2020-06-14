@@ -32,14 +32,19 @@ def main():
         if args[1] == 'node_manager':
             # Example: python src/main.py worker [IM ip] [node_manager_id]
             print('[INFO] Initiating bootcall Node Manager..')
-            nm.start_instance(im_host=args[2], instance_id=args[3])
+            if len(args) < 5:
+                print("[ERROR] node managers need the following arguments:\n"
+                      "python src/main.py node_manager [IM ip] [NM_instance_id] [account_id]")
+                return
+            nm.start_instance(im_host=args[2], instance_id=args[3], account_id=args[4])
         elif args[1] == 'worker' or args[0] == 'node_worker':
             print('[INFO] Initiating bootcall Worker..')
-            if len(args) < 5:
-                print("[ERROR] workers need an host adddress of the Node Manager.\n"
-                      "python src/main.py worker [IM ip] [worker_instance_id] [NM ip]")
+            if len(args) < 6:
+                print("[ERROR] workers need an host address of the Node Manager\n"
+                      "and an account_id of the user:\n"
+                      "python src/main.py worker [IM ip] [worker_instance_id] [NM ip] [account_id]")
                 return
-            nw.start_instance(host_im=args[2], host_nm=args[4], instance_id=args[3])
+            nw.start_instance(host_im=args[2], host_nm=args[4], instance_id=args[3], account_id=args[5])
         else:
             print('[ERROR] Unknown argument passed to program {}\n'
                   'Expected "instance_manager", "node_manager", or "worker"'.format(args[1]))
