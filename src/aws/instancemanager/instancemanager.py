@@ -403,6 +403,7 @@ class NodeMonitor(con.MultiConnectionServer):
     def process_heartbeat(self, heartbeat, source) -> Packet:
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
+            self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
         if heartbeat['instance_type'] == 'worker':
             self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
         # TODO: process the current state of the node manager
@@ -412,12 +413,28 @@ class NodeMonitor(con.MultiConnectionServer):
 
 
 class TimeWindow:
+    """
+    Time window class for keeping track of metrics for overload and underload of workers.
+    """
 
     def __init__(self):
-        self.window_size = 5
         self.cpu_window = {}
         self.mem_window = {}
         self.queue_window = {}
+        self.nm_task_window = {
+            'tasks_waiting': 0,
+            'tasks_running': 0
+        }
+
+    def update_node_manager(self, nm_heartbeat: HeartBeatPacket):
+        """
+        Update the state of the node manager in the time window.
+        :param nm_heartbeat: The heartbeat from the Node manager.
+        """
+        self.nm_task_window = {
+            'tasks_waiting': nm_heartbeat['tasks_waiting'],
+            'tasks_running': nm_heartbeat['tasks_running']
+        }
 
     def update_worker(self, worker_heartbeat: HeartBeatPacket):
         """
@@ -432,15 +449,22 @@ class TimeWindow:
                 # Add the current metric at the end and shift by removing the first element if
                 # The window has has exceeded (i.e.,
                 new_window = (old_window + [current_metric])[
-                             max(len(old_window) - (self.window_size - 1), 0):(self.window_size + 1)
-                             ]
+                             max(len(old_window) - (config.WINDOW_SIZE - 1), 0):(
+                                         config.WINDOW_SIZE + 1)]
                 window[worker_heartbeat['instance_id']] = new_window
             else:
                 window[worker_heartbeat['instance_id']] = [current_metric]
 
     def get_overloaded(self, sort=False) -> list:
+        """
+        Get a list of overloaded workers.
+        :param sort: Boolean indicating if the workers should be sorted on the number of jobs.
+        :return: List of overloaded workers.
+        """
         overloaded = []
         jobs_running = []
+        if not self.nm_task_window['tasks_running']:
+            return []  # If there are no tasks running, there cannot be an overloaded worker.
         for instance in self.cpu_window:
             if sum(self.cpu_window[instance]) >= config.CPU_OVERLOAD_PRODUCT or \
                     sum(self.mem_window[instance]) >= config.MEM_OVERLOAD_PRODUCT or \
@@ -452,18 +476,34 @@ class TimeWindow:
         return overloaded
 
     def get_underloaded(self) -> list:
+        """
+        Get a list of underloaded workers. Currently, workers without a job.
+        :return: List of underloaded workers.
+        """
         underloaded = []
+        if self.nm_task_window['tasks_waiting']:
+            return []  # There are tasks that need to be divided before one can be underloaded.
         for instance in self.queue_window:
             if len(self.queue_window[instance]) > 0 and sum(self.queue_window[instance]) == 0:
                 underloaded.append(instance)
         return underloaded
 
     def add_empty(self, instance_id):
+        """
+        Add an empty worker to the time window. This worker likely hasn't started yet.
+        :param instance_id: Instance id of the worker added.
+        """
         self.queue_window[instance_id] = []
         self.mem_window = []
         self.cpu_window = []
 
     def _queue_overloaded(self, instance):
+        """
+        Check if the queue of a worker is overloaded. If there are no measurements yet, the
+        worker cannot be overloaded yet.
+        :param instance: Instance id of the checked worker.
+        :return: Boolean indicating if the worker is overloaded.
+        """
         window_size = len(self.queue_window[instance])
         if window_size == 0:  # No measurements yet. Likely it is still starting.
             return False
