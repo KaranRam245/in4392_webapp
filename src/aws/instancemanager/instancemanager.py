@@ -2,7 +2,6 @@
 Module for the Instance Manager.
 """
 import asyncio
-import logging
 import time
 import traceback
 from contextlib import suppress

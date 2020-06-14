@@ -7,7 +7,7 @@ sys.path.append('./src')
 import aws.instancemanager.instancemanager as im
 import aws.nodemanager.nodemanager as nm
 import aws.nodeworker.nodeworker as nw
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception
+from aws.resourcemanager.resourcemanager import log_info, log_error
 
 
 def main():

@@ -5,11 +5,10 @@ import json
 import asyncio
 from abc import abstractmethod
 from typing import List
-import logging
 
 from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
-from aws.resourcemanager.resourcemanager import log_heartbeat, log_info, log_warning, log_error, log_exception
+from aws.resourcemanager.resourcemanager import log_heartbeat, log_info, log_error, log_exception
 
 HOST = '0.0.0.0'
 PORT_IM = 8080
@@ -102,7 +101,7 @@ class MultiConnectionServer:
             print("Client {} forcibly closed its connection.".format(addr))
             log_exception("Client {} forcibly closed its connection.".format(addr))
         except TypeError as excep:
-            log_exception(excep)
+            log_exception(str(excep))
         finally:
             log_info("Closed connection of client: {}".format(addr))
             writer.close()
