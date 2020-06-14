@@ -15,7 +15,7 @@ import aws.utils.connection as con
 from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.packets import Packet, HeartBeatPacket
 from aws.utils.state import InstanceState
-from aws.resourcemanager.resourcemanager import ResourceManagerCore
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
 
 
 class Instances:
@@ -60,13 +60,13 @@ class Instances:
     def set_state(self, instance_id, instance_type, state):
         nodes = self.get_nodes(instance_type)
         if instance_id not in nodes:
-            logging.info("State of instance " + instance_id + " set to PENDING.")
+            log_info("State of instance " + instance_id + " set to PENDING.")
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
-        logging.info("State of instance " + instance_id + " set to " + str(state) + ".")
+        log_info("State of instance " + instance_id + " set to " + str(state) + ".")
         nodes[instance_id] = state
 
     def set_ip(self, instance_id, ip_address):
-        logging.info("IP address of " + instance_id + " set to " + ip_address + ".")
+        log_info("IP address of " + instance_id + " set to " + ip_address + ".")
         self.ip_addresses[instance_id] = ip_address
 
     def get_ip(self, instance_id):
@@ -178,18 +178,18 @@ class NodeScheduler:
         if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
             self.update_instances(check=False)
         if self.debug and not self.node_manager_running:
-            logging.info("Debugging waiting for node manager to start running.")
+            log_info("Debugging waiting for node manager to start running.")
             print("Debugging waiting for node manager to start running.")
             return False
-        logging.info("Initializing nodes..")
+        log_info("Initializing nodes..")
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
-            logging.info("No node manager running. Initializing startup protocol..")
+            log_info("No node manager running. Initializing startup protocol..")
             print("No node manager running. Initializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
-            logging.info("No single worker running. Initializing startup protocol..")
+            log_info("No single worker running. Initializing startup protocol..")
             print("No single worker running. Initializing startup protocol..")
             self.start_worker()  # Require at least one worker.
         return True
@@ -205,7 +205,7 @@ class NodeScheduler:
             if self.git_pull:
                 command.insert(1, 'git pull')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
-            logging.info("Sending start command: [{}]: {}.".format(instance_id, command))
+            log_info("Sending start command: [{}]: {}.".format(instance_id, command))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
@@ -215,7 +215,7 @@ class NodeScheduler:
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
         except Exception as e:
-            logging.exception("The following exception has occurred while trying"
+            log_exception("The following exception has occurred while trying"
                               + " to send a command: " + str(e))
             print(Exception, e, "Retry later")
             self.instances.start_retry[instance_id] = config.INSTANCE_START_CONFIGURE_TIMEOUT
@@ -225,25 +225,25 @@ class NodeScheduler:
             nodemanagers = self.instances.get_all(instance_type='node_manager',
                                                   filter_state=[InstanceState.STOPPED])
             if not nodemanagers:
-                logging.error("No node manager instances available to start.")
+                log_error("No node manager instances available to start.")
                 raise ConnectionError('No node manager instances available to start.')
             to_start = nodemanagers[0]
-            logging.info("Initializing node manager.")
+            log_info("Initializing node manager.")
             self._init_instance(to_start, instance_type='node_manager', wait=True)
             self._send_start_command('node_manager', to_start)
 
     def start_worker(self):
         workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
         if not workers:
-            logging.info("No more worker instances can be started.")
+            log_info("No more worker instances can be started.")
             print('No more worker instances can be started.')
             return None
-        logging.info("Initializing worker.")
+        log_info("Initializing worker.")
         self._init_instance(workers[0], instance_type='workers', wait=False)
         return workers[0]
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
-        logging.info("Starting {} instance {}".format(instance_type, instance_id))
+        log_info("Starting {} instance {}".format(instance_type, instance_id))
         print("Starting {} instance {}".format(instance_type, instance_id))
         self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
@@ -287,21 +287,21 @@ class NodeScheduler:
         if check and not (
                 self.instances.has('worker', states) or self.instances.has('node_manager', states)):
             return
-        logging.info("Updated instance states from AWS state.")
+        log_info("Updated instance states from AWS state.")
         print("Updated instance states from AWS state")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
         print(self.instances)
 
     async def run(self):
-        logging.info("Running NodeScheduler..")
+        log_info("Running NodeScheduler..")
         print("Running NodeScheduler..")
         sleep_time = config.SERVER_SLEEP_TIME
         update_counter = config.BOTO_UPDATE_SEC
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                logging.warning(
+                log_warning(
                                 "Debug enabled and no node manager started yet. "
                                 "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
@@ -384,7 +384,7 @@ class NodeScheduler:
                     del self.instances.start_retry[instance]
         elif not send_start and heartbeat and heartbeat_timedout:
             # The IM has not received a heartbeat for too long.
-            logging.error("No/timedout heartbeat recorded "
+            log_error("No/timedout heartbeat recorded "
                           "for instance {}: {}".format(instance,
                                                        self.instances.get_last_heartbeat(instance)))
             print("No/timedout heartbeat recorded "
@@ -392,7 +392,7 @@ class NodeScheduler:
                                                self.instances.get_last_heartbeat(instance)))
             send_start = True
         if send_start:  # Send a new start signal to the instance.
-            logging.info("Sent start command to instance {}".format(instance))
+            log_info("Sent start command to instance {}".format(instance))
             print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
@@ -408,11 +408,11 @@ class NodeScheduler:
         else:
             running_instances = self.running_instances()
         if running_instances:
-            logging.info("Killing all instances: {}".format(running_instances))
+            log_info("Killing all instances: {}".format(running_instances))
             print("Killing all instances: {}".format(running_instances))
             self._kill_instance(running_instances, instance_types=None)
 
-        logging.info("Cancelling all commands..")
+        log_info("Cancelling all commands..")
         print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
@@ -555,7 +555,7 @@ def start_instance(debug=False, git_pull=False):
     client = boto3.client("sts")
     account_id = client.get_caller_identity()["Account"]
     resource_manager = ResourceManagerCore(account_id=account_id, instance_id='instance_manager')
-    logging.info("Starting Node Scheduler..")
+    log_info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
 

@@ -7,7 +7,7 @@ from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import ResourceManagerCore
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -82,7 +82,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def event(self, message):
         self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
-        logging.info("Message sent to Instance Manager: ")
+        log_info("Message sent to Instance Manager: ")
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
@@ -96,7 +96,7 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
-    logging.info("Starting TaskPool with ID: " + instance_id + ".")
+    log_info("Starting TaskPool with ID: " + instance_id + ".")
     resource_manager = ResourceManagerCore(instance_id=instance_id, account_id=account_id)
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
     monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port, instance_id=instance_id)
