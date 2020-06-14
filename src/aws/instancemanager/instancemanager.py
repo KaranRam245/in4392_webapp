@@ -12,10 +12,10 @@ from ec2_metadata import ec2_metadata
 
 import aws.utils.connection as con
 from aws.utils.botoutils import BotoInstanceReader
-from aws.utils.packets import Packet
+from aws.utils.packets import Packet, HeartBeatPacket
 from aws.utils.state import InstanceState
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import log_metric, ResourceManagerCore
+from aws.resourcemanager.resourcemanager import log_metric, log_info, log_warning, log_error, log_exception, ResourceManagerCore
 
 
 class Instances:
@@ -60,13 +60,13 @@ class Instances:
     def set_state(self, instance_id, instance_type, state):
         nodes = self.get_nodes(instance_type)
         if instance_id not in nodes:
-            logging.info("State of instance " + instance_id + " set to PENDING.")
+            log_info("State of instance " + instance_id + " set to PENDING.")
             nodes[instance_id] = InstanceState(InstanceState.PENDING)
-        logging.info("State of instance " + instance_id + " set to " + str(state) + ".")
+        log_info("State of instance " + instance_id + " set to " + str(state) + ".")
         nodes[instance_id] = state
 
     def set_ip(self, instance_id, ip_address):
-        logging.info("IP address of " + instance_id + " set to " + ip_address + ".")
+        log_info("IP address of " + instance_id + " set to " + ip_address + ".")
         self.ip_addresses[instance_id] = ip_address
 
     def get_ip(self, instance_id):
@@ -108,9 +108,10 @@ class Instances:
         Get a tuple of (1) workers PENDING or RUNNING and (2) workers STOPPING or STOPPED.
         :return: Tuple of workers that are ON and workers that are OFF.
         """
-        workers_on = self.get_all('worker', [InstanceState.PENDING, InstanceState.RUNNING])
-        workers_off = self.get_all('worker', [InstanceState.STOPPING, InstanceState.STOPPED])
-        return workers_on, workers_off
+        workers_on = self.get_all('worker', [InstanceState.RUNNING])
+        workers_off = self.get_all('worker', [InstanceState.STOPPED])
+        workers_transition = self.get_all('worker', [InstanceState.PENDING, InstanceState.STOPPING])
+        return workers_on, workers_off, workers_transition
 
     def is_type(self, instance_id, instance_type):
         nodes = self.get_nodes(instance_type)
@@ -128,6 +129,7 @@ class Instances:
         instance_id = heartbeat['instance_id']
         self._last_heartbeat[instance_id] = heartbeat['time']
         print("Last heartbeats: {}".format(self._last_heartbeat))
+        log_info("Last heartbeats: {}".format(self._last_heartbeat))
 
     def heart_beat_timedout(self, instance_id):
         heartbeat_time = self.get_last_heartbeat(instance_id)
@@ -168,6 +170,7 @@ class NodeScheduler:
         self.debug = debug  # Boolean indicating if the debug mode is enabled.
         self.git_pull = git_pull  # String indicating if workers should first git pull and checkout.
         self.node_manager_running = False
+        self.timewindow = TimeWindow()
         super().__init__()
 
     def initialize_nodes(self, retry=False):
@@ -177,18 +180,18 @@ class NodeScheduler:
         if not retry:  # If debug is enabled, retries may be done. A sync is then not needed.
             self.update_instances(check=False)
         if self.debug and not self.node_manager_running:
-            logging.info("Debugging waiting for node manager to start running.")
+            log_info("Debugging waiting for node manager to start running.")
             print("Debugging waiting for node manager to start running.")
             return False
-        logging.info("Initializing nodes..")
+        log_info("Initializing nodes..")
         print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
-            logging.info("No node manager running. Initializing startup protocol..")
+            log_info("No node manager running. Initializing startup protocol..")
             print("No node manager running. Initializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
-            logging.info("No single worker running. Initializing startup protocol..")
+            log_info("No single worker running. Initializing startup protocol..")
             print("No single worker running. Initializing startup protocol..")
             self.start_worker()  # Require at least one worker.
         return True
@@ -204,7 +207,7 @@ class NodeScheduler:
             if self.git_pull:
                 command.insert(1, 'git pull')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
-            logging.info("Sending start command: [{}]: {}.".format(instance_id, command))
+            log_info("Sending start command: [{}]: {}.".format(instance_id, command))
             print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
@@ -214,7 +217,7 @@ class NodeScheduler:
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
         except Exception as e:
-            logging.exception("The following exception has occurred while trying"
+            log_exception("The following exception has occurred while trying"
                               + " to send a command: " + str(e))
             print(Exception, e, "Retry later")
             self.instances.start_retry[instance_id] = config.INSTANCE_START_CONFIGURE_TIMEOUT
@@ -224,24 +227,25 @@ class NodeScheduler:
             nodemanagers = self.instances.get_all(instance_type='node_manager',
                                                   filter_state=[InstanceState.STOPPED])
             if not nodemanagers:
-                logging.error("No node manager instances available to start.")
+                log_error("No node manager instances available to start.")
                 raise ConnectionError('No node manager instances available to start.')
             to_start = nodemanagers[0]
-            logging.info("Initializing node manager.")
+            log_info("Initializing node manager.")
             self._init_instance(to_start, instance_type='node_manager', wait=True)
             self._send_start_command('node_manager', to_start)
 
     def start_worker(self):
         workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
         if not workers:
-            logging.info("No more worker instances can be started.")
+            log_info("No more worker instances can be started.")
             print('No more worker instances can be started.')
-            return
-        logging.info("Initializing worker.")
+            return None
+        log_info("Initializing worker.")
         self._init_instance(workers[0], instance_type='workers', wait=False)
+        return workers[0]
 
     def _init_instance(self, instance_id: int, instance_type: str, wait=False):
-        logging.info("Starting {} instance {}".format(instance_type, instance_id))
+        log_info("Starting {} instance {}".format(instance_type, instance_id))
         print("Starting {} instance {}".format(instance_type, instance_id))
         self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
@@ -253,10 +257,22 @@ class NodeScheduler:
             self.instances.set_state(instance_id, instance_type,
                                      InstanceState(InstanceState.PENDING))
 
-    def _kill_instance(self, instance_id, instance_type):
-        self.boto.ec2.stop_instances(id=[instance_id])
-        self.instances.set_state(instance_id, instance_type, InstanceState(InstanceState.STOPPING))
-        self.instances.clear_time(instance_id)
+    def _kill_instance(self, instance_ids, instance_types):
+        """
+        Kill a single instance of a list of instances.
+        :param instance_ids: List of instance_ids or a single instance_id.
+        :param instance_types: The types of the instance_ids being killed. Or None if not needed.
+        """
+        if isinstance(instance_ids, str):
+            instance_ids = [instance_ids]  # If not already a list, convert to a single-item list.
+        self.boto.ec2.stop_instances(InstanceIds=instance_ids)
+        if instance_types:
+            if isinstance(instance_types, str):
+                instance_types = instance_types * len(instance_ids)
+            for idx, instance_id in enumerate(instance_ids):
+                self.instances.set_state(instance_id, instance_types[idx],
+                                         InstanceState(InstanceState.STOPPING))
+                self.instances.clear_time(instance_id)
 
     def running_instances(self):
         """
@@ -273,21 +289,21 @@ class NodeScheduler:
         if check and not (
                 self.instances.has('worker', states) or self.instances.has('node_manager', states)):
             return
-        logging.info("Updated instance states from AWS state.")
+        log_info("Updated instance states from AWS state.")
         print("Updated instance states from AWS state")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
         print(self.instances)
 
     async def run(self):
-        logging.info("Running NodeScheduler..")
+        log_info("Running NodeScheduler..")
         print("Running NodeScheduler..")
-        sleep_time = 1
+        sleep_time = config.SERVER_SLEEP_TIME
         update_counter = config.BOTO_UPDATE_SEC
         try:
             initialized = self.initialize_nodes()
             while self.debug and not initialized:
-                logging.warning(
+                log_warning(
                                 "Debug enabled and no node manager started yet. "
                                 "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 print("Debug enabled and no node manager started yet. "
@@ -304,6 +320,25 @@ class NodeScheduler:
 
                 self.check_all_living()
 
+                # Check if some worker is underloaded or overloaded.
+                underloaded = self.timewindow.get_underloaded()
+                overloaded = self.timewindow.get_overloaded()
+                print("Overloaded: {}, Underloaded: {}".format(overloaded, underloaded))
+                if underloaded:
+                    if overloaded:
+                        pass  # The workload should be balanced. IM should do nothing.
+                    else:
+                        # Kill an underloaded worker. There is not enough work.
+                        self._kill_instance(underloaded[0], instance_types=['worker'])
+                else:
+                    if overloaded:
+                        # We need a new worker. There is too much work.
+                        worker_id = self.start_worker()
+                        self.timewindow.add_empty(worker_id)
+                    else:
+                        pass  # Everything is doing fine! Do nothing.
+
+                # Check if new worker is needed.
                 # TODO: Create workers when more needed
                 # TODO: Kill workers if not needed anymore.
 
@@ -313,16 +348,24 @@ class NodeScheduler:
             self.cancel_all()
         except asyncio.CancelledError:
             pass
-        except Exception as e:
-            print(Exception, e)
+        except Exception as exc:
+            print(Exception, exc)
             print(traceback.print_exc())
 
     def check_all_living(self):
+        """
+        Check for all node managers and all workers if they are still alive.
+        """
         for instance_type in ('node_manager', 'worker'):
             for instance in self.instances.get_nodes(instance_type):
                 self._check_living(instance, instance_type)
 
     def _check_living(self, instance, instance_type):
+        """
+        Check for an instance if it is still alive or if it should receive a new start command.
+        :param instance: Instance id that is checked.
+        :param instance_type: Type of the instance being checked.
+        """
         if not self.instances.is_state(instance, instance_type, state=InstanceState.RUNNING):
             return  # Instances that are not running, should be started elsewhere.
         heartbeat = self.instances.get_last_heartbeat(instance)
@@ -333,7 +376,7 @@ class NodeScheduler:
         if self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
             if instance not in self.instances.start_retry:
-                logging.info("No start/timedout signal sent to {}".format(instance))
+                log_info("No start/timedout signal sent to {}".format(instance))
                 print("No start/timedout signal sent to {}".format(instance))
                 send_start = True
             else:
@@ -344,7 +387,7 @@ class NodeScheduler:
                     del self.instances.start_retry[instance]
         elif not send_start and heartbeat and heartbeat_timedout:
             # The IM has not received a heartbeat for too long.
-            logging.error("No/timedout heartbeat recorded "
+            log_error("No/timedout heartbeat recorded "
                           "for instance {}: {}".format(instance,
                                                        self.instances.get_last_heartbeat(instance)))
             print("No/timedout heartbeat recorded "
@@ -352,11 +395,15 @@ class NodeScheduler:
                                                self.instances.get_last_heartbeat(instance)))
             send_start = True
         if send_start:  # Send a new start signal to the instance.
-            logging.info("Sent start command to instance {}".format(instance))
+            log_info("Sent start command to instance {}".format(instance))
             print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
     def cancel_all(self):
+        """
+        Cancel all running tasks and kill all instances.
+        When the debug mode is enabled, the node manager is not killed.
+        """
         if self.debug:
             running_instances = self.running_instances()
             running_instances = [kill for kill in running_instances if
@@ -364,11 +411,11 @@ class NodeScheduler:
         else:
             running_instances = self.running_instances()
         if running_instances:
-            logging.info("Killing all instances: {}".format(running_instances))
+            log_info("Killing all instances: {}".format(running_instances))
             print("Killing all instances: {}".format(running_instances))
-            self.boto.ec2.stop_instances(InstanceIds=running_instances)
+            self._kill_instance(running_instances, instance_types=None)
 
-        logging.info("Cancelling all commands..")
+        log_info("Cancelling all commands..")
         print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
@@ -376,6 +423,9 @@ class NodeScheduler:
 
 
 class NodeMonitor(con.MultiConnectionServer):
+    """
+    Monitor for the Instance Manager.
+    """
 
     def __init__(self, nodescheduler, host=con.HOST, port=con.PORT_IM):
         self._ns = nodescheduler
@@ -385,9 +435,120 @@ class NodeMonitor(con.MultiConnectionServer):
     def process_heartbeat(self, heartbeat, source) -> Packet:
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
+            self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
+            return self._generate_nm_response(heartbeat)
+        if heartbeat['instance_type'] == 'worker':
+            self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
+        # TODO: combine the metrics into the final metrics.
         self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
         return heartbeat
-        # TODO load-balancing on heartbeats. Action if needed.
+
+    def _generate_nm_response(self, heartbeat):
+        workers = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING,
+                                                                     InstanceState.PENDING])
+        response = HeartBeatPacket(instance_id=heartbeat['instance_id'],
+                                   instance_state=InstanceState.RUNNING,
+                                   instance_type='instance_manager',
+                                   available_workers=workers)
+        return response
+
+
+class TimeWindow:
+    """
+    Time window class for keeping track of metrics for overload and underload of workers.
+    """
+
+    def __init__(self):
+        self.cpu_window = {}
+        self.mem_window = {}
+        self.queue_window = {}
+        self.nm_task_window = {
+            'tasks_waiting': 0,
+            'tasks_running': 0
+        }
+
+    def update_node_manager(self, nm_heartbeat: HeartBeatPacket):
+        """
+        Update the state of the node manager in the time window.
+        :param nm_heartbeat: The heartbeat from the Node manager.
+        """
+        self.nm_task_window = {
+            'tasks_waiting': nm_heartbeat['tasks_waiting'],
+            'tasks_running': nm_heartbeat['tasks_running']
+        }
+
+    def update_worker(self, worker_heartbeat: HeartBeatPacket):
+        """
+        Update the worker in the windows. The windows keep track of the last metrics, such as CPU.
+        :param worker_heartbeat: Heartbeat received belonging to the worker.
+        """
+        metric = ('cpu_usage', 'mem_usage', 'queue_size')
+        for idx, window in enumerate((self.cpu_window, self.mem_window, self.queue_window)):
+            old_window = window.get(worker_heartbeat['instance_id'], None)
+            current_metric = worker_heartbeat[metric[idx]]
+            if old_window:
+                # Add the current metric at the end and shift by removing the first element if
+                # The window has has exceeded (i.e.,
+                new_window = (old_window + [current_metric])[
+                             max(len(old_window) - (config.WINDOW_SIZE - 1), 0):(
+                                     config.WINDOW_SIZE + 1)]
+                window[worker_heartbeat['instance_id']] = new_window
+            else:
+                window[worker_heartbeat['instance_id']] = [current_metric]
+
+    def get_overloaded(self, sort=False) -> list:
+        """
+        Get a list of overloaded workers.
+        :param sort: Boolean indicating if the workers should be sorted on the number of jobs.
+        :return: List of overloaded workers.
+        """
+        overloaded = []
+        jobs_running = []
+        if not self.nm_task_window['tasks_running']:
+            return []  # If there are no tasks running, there cannot be an overloaded worker.
+        for instance in self.cpu_window:
+            if sum(self.cpu_window[instance]) >= config.CPU_OVERLOAD_PRODUCT or \
+                    sum(self.mem_window[instance]) >= config.MEM_OVERLOAD_PRODUCT or \
+                    self._queue_overloaded(instance):
+                overloaded.append(instance)
+                jobs_running.append(self.queue_window)
+        if sort:
+            overloaded, _ = (list(t) for t in zip(*sorted(zip(overloaded, jobs_running))))
+        return overloaded
+
+    def get_underloaded(self) -> list:
+        """
+        Get a list of underloaded workers. Currently, workers without a job.
+        :return: List of underloaded workers.
+        """
+        underloaded = []
+        if self.nm_task_window['tasks_waiting']:
+            return []  # There are tasks that need to be divided before one can be underloaded.
+        for instance in self.queue_window:
+            if len(self.queue_window[instance]) > 0 and sum(self.queue_window[instance]) == 0:
+                underloaded.append(instance)
+        return underloaded
+
+    def add_empty(self, instance_id):
+        """
+        Add an empty worker to the time window. This worker likely hasn't started yet.
+        :param instance_id: Instance id of the worker added.
+        """
+        self.queue_window[instance_id] = []
+        self.mem_window = []
+        self.cpu_window = []
+
+    def _queue_overloaded(self, instance):
+        """
+        Check if the queue of a worker is overloaded. If there are no measurements yet, the
+        worker cannot be overloaded yet.
+        :param instance: Instance id of the checked worker.
+        :return: Boolean indicating if the worker is overloaded.
+        """
+        window_size = len(self.queue_window[instance])
+        if window_size == 0:  # No measurements yet. Likely it is still starting.
+            return False
+        return sum(self.queue_window[instance]) / window_size >= config.MAX_JOBS_PER_WORKER
 
 
 def start_instance(debug=False, git_pull=False):
@@ -397,7 +558,7 @@ def start_instance(debug=False, git_pull=False):
     client = boto3.client("sts")
     account_id = client.get_caller_identity()["Account"]
     resource_manager = ResourceManagerCore(account_id=account_id, instance_id='instance_manager')
-    logging.info("Starting Node Scheduler..")
+    log_info("Starting Node Scheduler..")
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
     monitor = NodeMonitor(scheduler)
 

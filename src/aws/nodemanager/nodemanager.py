@@ -7,7 +7,7 @@ from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import ResourceManagerCore
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -24,6 +24,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+        self.available_workers = []
 
     async def run_task_pool(self):
         """
@@ -32,7 +33,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
             pass
 
@@ -50,7 +51,10 @@ class TaskPool(Observable, con.MultiConnectionServer):
         """
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='node_manager',
-                                    instance_state=self._instance_state)
+                                    instance_state=self._instance_state,
+                                    tasks_waiting=len(self._tasks),
+                                    tasks_running=len(self._tasks))
+        # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
         if notify:
             self.notify(message=heartbeat)
 
@@ -63,7 +67,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         return hb  # This value is returned to the worker client.
 
     def process_command(self, command: CommandPacket):
-        logging.info("A client send me a command: {}".format(command))
+        log_info("A client send me a command: {}".format(command))
 
 
 class TaskPoolMonitor(Listener, con.MultiConnectionClient):
@@ -78,10 +82,13 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def event(self, message):
         self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
-        logging.info("Message sent to Instance Manager: " + str(message))
+        log_info("Message sent to Instance Manager: " + str(message))
 
     def process_command(self, command):
-        logging.info("Need help with command: {}".format(command))
+        log_info("Need help with command: {}".format(command))
+
+    def process_heartbeat(self, heartbeat: HeartBeatPacket):
+        self._tp.available_workers = heartbeat['available_workers']
 
 
 def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=con.PORT_IM,
@@ -89,7 +96,7 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
-    logging.info("Starting TaskPool with ID: " + instance_id + ".")
+    log_info("Starting TaskPool with ID: " + instance_id + ".")
     resource_manager = ResourceManagerCore(instance_id=instance_id, account_id=account_id)
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
     monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port, instance_id=instance_id)
