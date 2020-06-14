@@ -241,7 +241,7 @@ class NodeScheduler:
         """
         Kill a single instance of a list of instances.
         :param instance_ids: List of instance_ids or a single instance_id.
-        :param instance_type: The type of the instance_ids being killed.
+        :param instance_types: The types of the instance_ids being killed. Or None if not needed.
         """
         if isinstance(instance_ids, str):
             instance_ids = [instance_ids]  # If not already a list, convert to a single-item list.
@@ -298,6 +298,7 @@ class NodeScheduler:
                 # Check if some worker is underloaded or overloaded.
                 underloaded = self.timewindow.get_underloaded()
                 overloaded = self.timewindow.get_overloaded()
+                print("Overloaded: {}, Underloaded: {}".format(overloaded, underloaded))
                 if underloaded:
                     if overloaded:
                         pass  # The workload should be balanced. IM should do nothing.
