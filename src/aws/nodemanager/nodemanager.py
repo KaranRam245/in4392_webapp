@@ -74,10 +74,10 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         Listener.__init__(self)
         con.MultiConnectionClient.__init__(self, host, port)
         self._tp = taskpool
-        # self.logger = Logger(instance_id)
+        self.logger = Logger(instance_id)
 
     def event(self, message):
-        # self.logger.log_info("Message sent to Instance Manager: " + message + ".")
+        self.logger.log_info("Message sent to Instance Manager: " + message + ".")
         self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
 
     def process_command(self, command):
