@@ -2,6 +2,7 @@
 Module for the Resource Manager.
 """
 import asyncio
+import json
 import logging
 import shutil
 import os
@@ -22,7 +23,11 @@ INITIALIZED = False
 
 
 def log_metric(metric: dict):
-    logging.info("METRIC{}".format(metric))
+    logging.info("METRIC{}".format(json.dumps(metric)))
+
+
+def log_heartbeat(heartbeat: dict):
+    logging.info("HEARTBEAT{}".format(json.dumps(heartbeat)))
 
 
 def initialize_logging():
@@ -109,7 +114,7 @@ class ResourceManagerCore(Observable):
             except DataNotFoundError:
                 logging.error("There is no file with file_path " + file_path +
                               ", so the file cannot be uploaded")
-        log_metric({'upload_duration': time() - start_time})
+        log_metric({'upload_duration': time() - start_time, 'time': time()})
 
     def download_file(self, bucket_name, key, file_path):
         """
@@ -135,7 +140,7 @@ class ResourceManagerCore(Observable):
             except DataNotFoundError:
                 logging.error("There is no key " + key + " in bucket " + bucket_name
                               + "so a file cannot be downloaded from it.")
-        log_metric({'download_duration': time() - start_time})
+        log_metric({'download_duration': time() - start_time, 'time': time()})
 
     def upload_log(self, clean):
         temporary_copy = config.DEFAULT_LOG_FILE + '_copy.log'

@@ -5,8 +5,10 @@ import json
 import asyncio
 from abc import abstractmethod
 from typing import List
+import logging
 
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
+from aws.resourcemanager.resourcemanager import log_heartbeat
 
 HOST = '0.0.0.0'
 PORT_IM = 8080
@@ -92,11 +94,11 @@ class MultiConnectionServer:
                 await writer.drain()
                 await asyncio.sleep(2)
         except ConnectionResetError:
-            print("Client {} forcibly closed its connection.".format(addr))
+            logging.error("Client {} forcibly closed its connection.".format(addr))
         except TypeError as excep:
-            print(excep)
+            logging.error(excep)
         finally:
-            print("Closed connection of client: {}".format(addr))
+            logging.info("Closed connection of client: {}".format(addr))
             writer.close()
 
 
@@ -111,7 +113,7 @@ class MultiConnectionClient:
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
-        print("Added to buffer for [{}:{}]: {}".format(self.host, self.port, message))
+        ("Added to buffer for [{}:{}]: {}".format(self.host, self.port, message))
 
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
