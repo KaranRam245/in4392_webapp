@@ -6,6 +6,7 @@ import asyncio
 from abc import abstractmethod
 from typing import List
 
+from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
 
 HOST = '0.0.0.0'

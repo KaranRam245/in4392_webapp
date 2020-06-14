@@ -245,7 +245,7 @@ class NodeScheduler:
         """
         if isinstance(instance_ids, str):
             instance_ids = [instance_ids]  # If not already a list, convert to a single-item list.
-        self.boto.ec2.stop_instances(id=instance_ids)
+        self.boto.ec2.stop_instances(InstanceIds=instance_ids)
         if instance_types:
             if isinstance(instance_types, str):
                 instance_types = instance_types * len(instance_ids)
