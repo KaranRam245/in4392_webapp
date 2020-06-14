@@ -20,6 +20,7 @@ from aws.utils.state import InstanceState
 # Boolean indicating if the logging is initialized.
 INITIALIZED = False
 
+
 def log_metric(metric: dict):
     logging.info("METRIC{}".format(metric))
 
@@ -118,7 +119,8 @@ class ResourceManagerCore(Observable):
         :param key: Name of the key to download from.
         :param file_path: Path of the file to download to.
         """
-        if not self.bucket_name:
+        start_time = time()
+        if not bucket_name:
             error_message = "Could not download file with key: {}, as the bucket permissions are wrong!".format(key)
             logging.error(error_message)
             raise FileNotFoundError(error_message)
@@ -133,6 +135,7 @@ class ResourceManagerCore(Observable):
             except DataNotFoundError:
                 logging.error("There is no key " + key + " in bucket " + bucket_name
                               + "so a file cannot be downloaded from it.")
+        log_metric({'download_duration': time() - start_time})
 
     def upload_log(self, clean):
         temporary_copy = config.DEFAULT_LOG_FILE + '_copy.log'

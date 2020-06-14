@@ -63,7 +63,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         return hb  # This value is returned to the worker client.
 
     def process_command(self, command: CommandPacket):
-        print("A client send me a command: {}".format(command))
+        logging.info("A client send me a command: {}".format(command))
 
 
 class TaskPoolMonitor(Listener, con.MultiConnectionClient):
@@ -78,10 +78,10 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def event(self, message):
         self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
-        logging.info("Message sent to Instance Manager: ")
+        logging.info("Message sent to Instance Manager: " + str(message))
 
     def process_command(self, command):
-        print("Need help with command: {}".format(command))
+        logging.info("Need help with command: {}".format(command))
 
 
 def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=con.PORT_IM,

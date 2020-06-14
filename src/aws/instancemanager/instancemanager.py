@@ -333,6 +333,7 @@ class NodeScheduler:
         if self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
             if instance not in self.instances.start_retry:
+                logging.info("No start/timedout signal sent to {}".format(instance))
                 print("No start/timedout signal sent to {}".format(instance))
                 send_start = True
             else:
