@@ -102,12 +102,13 @@ class MultiConnectionServer:
 
 class MultiConnectionClient:
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, sleep_time=config.CLIENT_SEND_SLEEP):
         self.host = host
         self.port = port
         self.send_buffer: List[Packet] = []
         self.received_packets: List[Packet] = []
         self.running = True
+        self._sleep_time = sleep_time
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
@@ -143,7 +144,7 @@ class MultiConnectionClient:
                     self.received_packets.append(packet_received)
                     # TODO: process the received messages.
 
-                await asyncio.sleep(1)
+                await asyncio.sleep(self._sleep_time)
         except KeyboardInterrupt:
             pass
         finally:

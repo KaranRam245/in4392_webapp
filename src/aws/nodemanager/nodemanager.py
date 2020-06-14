@@ -30,7 +30,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
             pass
 

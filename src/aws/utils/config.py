@@ -11,10 +11,16 @@ INSTANCE_START_CONFIGURE_TIMEOUT = 5
 START_SIGNAL_TIMEOUT = 30
 
 # The amount of seconds a server is allowed to sleep until the same client sends again.
-SERVER_SLEEP_TIME = 2
+SERVER_SLEEP_TIME = 1
 
-# How many seconds should be between heartbeats? Must be greater than SERVER_SLEEP_TIME.
-HEART_BEAT_INTERVAL = 3
+# Time to sleep for the send protocol of a client.
+CLIENT_SEND_SLEEP = 0.1
+
+# How many seconds should be between heartbeats for NM? Must be greater than SERVER_SLEEP_TIME.
+HEART_BEAT_INTERVAL_NODE_MANAGER = 2
+
+# How many seconds should be between heartbeats for workers? Must be greater than SERVER_SLEEP_TIME.
+HEART_BEAT_INTERVAL_WORKER = 3
 
 # How many seconds until a program is deemed dead? Max wait time until heartbeats?
 HEART_BEAT_TIMEOUT = 30

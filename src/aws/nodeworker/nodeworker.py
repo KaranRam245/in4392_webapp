@@ -40,7 +40,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL_WORKER)
         except KeyboardInterrupt:
             pass
 
@@ -60,7 +60,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
                     # self.send_message(message)
                     self.current_task = None
-                await asyncio.sleep(1)
+                await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
             pass
 

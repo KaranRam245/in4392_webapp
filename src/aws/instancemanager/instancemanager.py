@@ -276,7 +276,7 @@ class NodeScheduler:
 
     async def run(self):
         print("Running NodeScheduler..")
-        sleep_time = 1
+        sleep_time = config.SERVER_SLEEP_TIME
         update_counter = config.BOTO_UPDATE_SEC
         try:
             initialized = self.initialize_nodes()
