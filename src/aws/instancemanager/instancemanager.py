@@ -342,15 +342,15 @@ class NodeScheduler:
                     del self.instances.start_retry[instance]
         elif not send_start and heartbeat and heartbeat_timedout:
             # The IM has not received a heartbeat for too long.
-            # self.logger.log_error("No/timedout heartbeat recorded "
-            #       "for instance {}: {}".format(instance,
-            #                                    self.instances.get_last_heartbeat(instance)))
+            self.logger.log_error("No/timedout heartbeat recorded "
+                  "for instance {}: {}".format(instance,
+                                               self.instances.get_last_heartbeat(instance)))
             print("No/timedout heartbeat recorded "
                   "for instance {}: {}".format(instance,
                                                self.instances.get_last_heartbeat(instance)))
             send_start = True
         if send_start:  # Send a new start signal to the instance.
-            # self.logger.log_info("Sent start command to instance {}".format(instance))
+            self.logger.log_info("Sent start command to instance {}".format(instance))
             print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
 
