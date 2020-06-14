@@ -41,7 +41,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         try:
             while True:
                 self.generate_heartbeat()
-                await asyncio.sleep(config.HEART_BEAT_INTERVAL)
+                await asyncio.sleep(config.HEART_BEAT_INTERVAL_WORKER)
         except KeyboardInterrupt:
             pass
 
@@ -63,7 +63,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
                     # self.send_message(message)
                     self.current_task = None
-                await asyncio.sleep(1)
+                await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
             pass
 
@@ -71,7 +71,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='worker',
                                     instance_state=self._instance_state,
-                                    program_state=self._program_state)
+                                    program_state=self._program_state,
+                                    queue_size=len(self._task_queue))
         # self.send_message(message=heartbeat)
         if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)
