@@ -36,19 +36,27 @@ def initialize_logging():
     INITIALIZED = True
 
 
-def log_info(message: str):
+def log_info(message):
+    if not isinstance(message, str):
+        message = json.dumps(message)
     logging.info(json.dumps(message))
 
 
-def log_warning(message: str):
+def log_warning(message):
+    if not isinstance(message, str):
+        message = json.dumps(message)
     logging.warning(json.dumps(message))
 
 
-def log_error(message: str):
+def log_error(message):
+    if not isinstance(message, str):
+        message = json.dumps(message)
     logging.error(json.dumps(message))
 
 
-def log_exception(message: str):
+def log_exception(message):
+    if not isinstance(message, str):
+        message = json.dumps(message)
     logging.exception(json.dumps(message))
 
 
