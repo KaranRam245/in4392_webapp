@@ -88,8 +88,8 @@ class MultiConnectionServer:
                     break
                 packet_received = decode_packet(data)
                 packet_reponse = self.process_packet(packet_received, addr)
-                print("+ Received {} from {}".format(packet_received, addr))
-                log_info("+ Received {} from {}".format(packet_received, addr))
+                print("+ Received: {} from {}".format(packet_received, addr))
+                log_info("+ Received: {} from {}".format(packet_received, addr))
 
                 print("- Sent: {}".format(packet_reponse))
                 log_info("- Sent: {}".format(packet_reponse))
@@ -155,6 +155,8 @@ class MultiConnectionClient:
                     writer.write(encode_packet(packet_send))
 
                     data_received = await reader.read(1024)
+                    if data_received == b"":  # EOF passed.
+                        break
                     packet_received = decode_packet(data_received)
                     print('+ Received: {}'.format(packet_received))
                     log_info('+ Received: {}'.format(packet_received))
