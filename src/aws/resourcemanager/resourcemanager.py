@@ -6,6 +6,7 @@ import json
 import logging
 import shutil
 import os
+import traceback
 from datetime import datetime
 from pytz import timezone
 from time import time
@@ -122,8 +123,10 @@ class ResourceManagerCore(Observable):
             print("Bucket " + bucket_name + " does not exist, so a file cannot be uploaded to this bucket.")
         else:
             try:
-                print("Uploading file to bucket {}: {}".format(bucket_name, file_path))
-                self.s3.upload_file(file_path, bucket_name, key)
+                print("Uploading file to bucket {}: {} with {}".format(bucket_name, file_path, key))
+                uploaded = self.s3.upload_file(file_path, bucket_name, key)
+                if not uploaded:
+                    print('Could not upload key {} to {}. ClientError(?)'.format(key, bucket_name))
             except DataNotFoundError:
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
         log_metric({'upload_duration': time() - start_time})
@@ -168,6 +171,8 @@ class ResourceManagerCore(Observable):
             os.remove(temporary_copy)
         except FileNotFoundError:
             print("There were no more logs to report to S3. Temporary.log was not found.")
+        except Exception as exc:
+            print("Could not upload logs to S3 due to {} with: {}".format(exc, traceback.print_exc()))
 
     async def period_upload_log(self):
         while True:
