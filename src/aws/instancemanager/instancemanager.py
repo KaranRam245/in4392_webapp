@@ -437,7 +437,6 @@ class NodeMonitor(con.MultiConnectionServer):
 
     def __init__(self, nodescheduler, host=con.HOST, port=con.PORT_IM):
         self._ns = nodescheduler
-        self.keep_running = True
         super().__init__(host, port)
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
@@ -593,11 +592,13 @@ def start_instance(debug=False, git_pull=False):
         resource_manager.upload_log(clean=False)  # Make sure everything is logged before shutdown.
         if not scheduler.cleaned_up:
             scheduler.cancel_all()
-        tasks = [t for t in asyncio.Task.all_tasks() if t is not
-                 asyncio.Task.current_task()]
+        tasks = asyncio.Task.all_tasks(loop=loop)
         for task in tasks:
             task.cancel()
             log_info("Cancelled task {}".format(task))
+        with suppress(asyncio.CancelledError):
+            group = asyncio.gather(*tasks, return_exceptions=True)
+            loop.run_until_complete(group)
         resource_manager.upload_log(clean=True)  # Clean the last logs.
         loop.close()
 
