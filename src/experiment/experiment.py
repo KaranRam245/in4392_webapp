@@ -1,4 +1,5 @@
 import json
+import matplotlib.pyplot as plt
 
 
 class Parser:
@@ -13,7 +14,7 @@ class Parser:
         metric_lines = self._extract_metrics(content)
         grouped_metrics = self.group_metrics(metric_lines)
         corrected_times = self.correct_time(grouped_metrics)
-        print(corrected_times)
+        return corrected_times
 
     @staticmethod
     def _extract_metrics(content: list):
@@ -47,9 +48,18 @@ class Parser:
             metrics[metric] = [(time - min_time, value) for (time, value) in metric_values]
         return metrics
 
+    @staticmethod
+    def plot_metrics(metrics):
+        for metric, values in metrics.items():
+            plt.plot(*zip(*values), linestyle='-', marker='o')
+            plt.title(metric)
+            plt.show()
+
 
 def main():
-    Parser().parse('example.log')
+    parser = Parser()
+    metrics = parser.parse('example.log')
+    parser.plot_metrics(metrics)
 
 
 if __name__ == "__main__":
