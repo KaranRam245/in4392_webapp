@@ -569,7 +569,6 @@ def start_instance(debug=False, git_pull=False):
     account_id = client.get_caller_identity()["Account"]
     resource_manager = ResourceManagerCore(account_id=account_id, instance_id='instance_manager')
     log_info("Starting Node Scheduler..")
-    resource_manager.upload_log(clean=True)  # Clean the last logs.
     scheduler = NodeScheduler(debug=debug, git_pull=git_pull, account_id=account_id)
     monitor = NodeMonitor(scheduler)
 
