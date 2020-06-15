@@ -282,6 +282,8 @@ class NodeScheduler:
                 self.instances.set_state(instance_id, instance_types[idx],
                                          InstanceState(InstanceState.STOPPING))
                 self.instances.clear_time(instance_id)
+        else:
+            log_warning("No instance_types specified for {}. Could not properly kill.".format(instance_ids))
         for idx, instance_id in enumerate(instance_ids):
             if instance_id in self.instances.charge_time:
                 log_metric(
@@ -361,7 +363,7 @@ class NodeScheduler:
             pass
         except Exception as exc:
             log_error("The following exception {}"
-                      " occured during run: {}".format(exc, traceback.print_exc()))
+                      " occurred during run: {}".format(exc, traceback.print_exc()))
 
     def check_all_living(self):
         """
