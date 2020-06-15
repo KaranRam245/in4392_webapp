@@ -122,5 +122,4 @@ To run the application, simply run `python src/main.py instance_manager`. Other 
 3. Then do `aws s3 sync s3://bucketname /logs`.
 4. Finally do `tar -zcvf logs.tar.gz /logs`
 
-For all you Windows users, these files can be found in `\\wsl$\Ubuntu\home`.
-
+For all you Windows users, these files can be found in `\\wsl$\Ubuntu\home`.s
