@@ -61,10 +61,10 @@ class Instances:
     def set_state(self, instance_id, instance_type, state):
         nodes = self.get_nodes(instance_type)
         nodes[instance_id] = state
-        log_info("State of instance " + instance_id + " set to " + str(state) + ".")
+        log_info("State of instance {} set to {}.".format(instance_id, state))
 
     def set_ip(self, instance_id, ip_address):
-        log_info("IP address of " + instance_id + " set to " + ip_address + ".")
+        log_info("IP address of {} set to {}.".format(instance_id, ip_address))
         self.ip_addresses[instance_id] = ip_address
 
     def get_ip(self, instance_id):
