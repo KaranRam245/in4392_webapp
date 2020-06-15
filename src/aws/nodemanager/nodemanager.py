@@ -130,6 +130,8 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
         loop.run_forever()
     except KeyboardInterrupt:
         pass
+    except ConnectionRefusedError as exc:
+        print("Could not connect to server {}".format(exc))
     finally:
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
