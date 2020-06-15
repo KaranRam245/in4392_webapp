@@ -126,7 +126,7 @@ class ResourceManagerCore(Observable):
         else:
             try:
                 print("Uploading file to bucket {}: {} with {}".format(bucket_name, file_path, key))
-                bucket.upload_file(file_path, bucket_name, key)
+                bucket.upload_file(file_path, key)
             except DataNotFoundError:
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
             except S3UploadFailedError as exc:
