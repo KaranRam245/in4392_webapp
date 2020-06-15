@@ -295,6 +295,7 @@ class NodeScheduler:
             if instance_types and instance_types[idx] == 'worker':
                 self.workers -= 1
                 log_metric({'workers': self.workers})
+            self.timewindow.delete_instance(instance_id)
 
     def running_instances(self):
         """
@@ -506,6 +507,11 @@ class TimeWindow:
             else:
                 window[worker_heartbeat['instance_id']] = [current_metric]
 
+    def delete_instance(self, instance_id):
+        self.cpu_window.pop(instance_id, None)
+        self.mem_window.pop(instance_id, None)
+        self.queue_window.pop(instance_id, None)
+
     def get_overloaded(self, sort=False) -> list:
         """
         Get a list of overloaded workers.
@@ -584,6 +590,7 @@ def start_instance(debug=False, git_pull=False):
     except KeyboardInterrupt:
         pass
     finally:
+        resource_manager.upload_log(clean=False)  # Make sure everything is logged before shutdown.
         if not scheduler.cleaned_up:
             scheduler.cancel_all()
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
