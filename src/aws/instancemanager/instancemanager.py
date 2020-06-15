@@ -336,10 +336,6 @@ class NodeScheduler:
                     else:
                         pass  # Everything is doing fine! Do nothing.
 
-                # Check if new worker is needed.
-                # TODO: Create workers when more needed
-                # TODO: Kill workers if not needed anymore.
-
                 update_counter -= sleep_time
                 await asyncio.sleep(sleep_time)
         except KeyboardInterrupt:
