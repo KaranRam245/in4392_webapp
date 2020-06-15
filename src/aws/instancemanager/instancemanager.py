@@ -141,7 +141,6 @@ class Instances:
         signal_time = self._start_signal.get(instance_id, None)
         if not signal_time:
             return True
-        print("{} - {} = {}".format(round(time()), round(signal_time), (time() - signal_time) >= config.START_SIGNAL_TIMEOUT))
         return (time() - signal_time) >= config.START_SIGNAL_TIMEOUT
 
     def set_last_start_signal(self, instance_id):
