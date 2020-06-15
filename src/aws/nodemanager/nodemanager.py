@@ -88,8 +88,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp = taskpool
 
     def event(self, message):
-        self.send_message(message)
-        log_info("Message sent to Instance Manager: " + str(message))
+        pass  # Do something with the heartbeat from the worker.
 
     def process_command(self, command):
         log_info("Need help with command: {}".format(command))
