@@ -2,10 +2,12 @@
 Module for the Node Manager.
 """
 import asyncio
+import logging
 from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -73,13 +75,14 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
     This class is used to monitor the TaskPool and to send heartbeats to the IM.
     """
 
-    def __init__(self, taskpool, host, port):
+    def __init__(self, taskpool, host, port, instance_id):
         Listener.__init__(self)
         con.MultiConnectionClient.__init__(self, host, port)
         self._tp = taskpool
 
     def event(self, message):
         self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
+        log_info("Message sent to Instance Manager: ")
 
     def process_command(self, command):
         print("Need help with command: {}".format(command))
@@ -88,19 +91,21 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp.available_workers = heartbeat['available_workers']
 
 
-def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
+def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=con.PORT_IM,
                    nm_port=con.PORT_NM):
     """
-    Function to start the Node Scheduler, which is the heart of the Instance Manager.
+    Function to start the TaskPool, which is the heart of the Node Manager.
     """
+    log_info("Starting TaskPool with ID: " + instance_id + ".")
+    resource_manager = ResourceManagerCore(instance_id=instance_id, account_id=account_id)
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
-    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
+    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port, instance_id=instance_id)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
     server_core = asyncio.start_server(taskpool.run, nm_host, nm_port, loop=loop)
 
-    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run()])
+    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run(), resource_manager.period_upload_log()])
     loop.run_until_complete(procs)
 
     try:
@@ -114,8 +119,5 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
             task.cancel()
             with suppress(asyncio.CancelledError):
                 loop.run_until_complete(task)
+        resource_manager.upload_log(clean=True)
         loop.close()
-
-
-if __name__ == "__main__":
-    start_instance('localhost', 8080)
