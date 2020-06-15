@@ -13,6 +13,7 @@ from time import time
 
 import boto3
 from botocore.exceptions import ClientError, DataNotFoundError
+from boto3.exceptions import S3UploadFailedError
 
 import aws.utils.config as config
 from aws.utils.monitor import Observable
@@ -127,8 +128,10 @@ class ResourceManagerCore(Observable):
                 self.s3.upload_file(file_path, bucket_name, key)
             except DataNotFoundError:
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
-            except ClientError as exc:
+            except S3UploadFailedError as exc:
                 print("There was a ClientError during uploading to S3: {}".format(exc))
+            except ValueError as exc:
+                print("Wrong value passed to S3 upload_file {}: {}".format(exc, traceback.print_exc()))
             except Exception as exc:
                 print("Could not upload file due to exception {}: {}".format(exc, traceback.print_exc()))
         log_metric({'upload_duration': time() - start_time})
