@@ -60,8 +60,8 @@ class Instances:
 
     def set_state(self, instance_id, instance_type, state: InstanceState):
         nodes = self.get_nodes(instance_type)
-        old_state = nodes[instance_id]
-        if state.is_state(old_state):
+        old_state = nodes.get(instance_id, None)
+        if not old_state or not state.is_state(old_state):
             nodes[instance_id] = state
             log_info("State of instance {} set to {}.".format(instance_id, state))
 
