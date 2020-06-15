@@ -20,8 +20,6 @@ from aws.utils.state import InstanceState
 
 
 class Instances:
-    NAMES = ('node_manager', 'workers')
-
     # Instance example:
     # <instance_id>:  <InstanceState>
 
@@ -238,7 +236,7 @@ class NodeScheduler:
             log_info("No more worker instances can be started.")
             return None
         log_info("Initializing worker.")
-        self._init_instance(workers[0], instance_type='workers', wait=False)
+        self._init_instance(workers[0], instance_type='worker', wait=False)
         return workers[0]
 
     def _init_instance(self, instance_id, instance_type: str, wait=False):
