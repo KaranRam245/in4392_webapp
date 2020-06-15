@@ -15,8 +15,7 @@ from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.packets import Packet, HeartBeatPacket
 from aws.utils.state import InstanceState
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import log_metric, log_info, log_warning, log_error, log_exception, \
-    ResourceManagerCore
+from aws.resourcemanager.resourcemanager import *
 
 
 class Instances:
@@ -25,7 +24,7 @@ class Instances:
     # Instance example:
     # <instance_id>:  <InstanceState>
 
-    def __init__(self, instance_id):
+    def __init__(self):
         self._node_managers = {}
         self._workers = {}
         self._last_heartbeat = {}
@@ -132,22 +131,27 @@ class Instances:
         print("Last heartbeats: {}".format(self._last_heartbeat))
         log_info("Last heartbeats: {}".format(self._last_heartbeat))
 
-    def heart_beat_timedout(self, heartbeat_time):
+    @staticmethod
+    def heart_beat_timedout(heartbeat_time):
         if not heartbeat_time:
             return True
         heartbeat_time = round(heartbeat_time)
-        current_time_sec = round(time.time())
+        current_time_sec = round(time())
         return (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
 
     def start_signal_timedout(self, instance_id):
         signal_time = self._start_signal.get(instance_id, None)
         if not signal_time:
             return True
-        current_time_sec = round(time.time())
+        current_time_sec = round(time())
         return (current_time_sec - signal_time) >= config.START_SIGNAL_TIMEOUT
 
     def set_last_start_signal(self, instance_id):
-        self._start_signal[instance_id] = round(time.time())
+        """
+
+        :param instance_id:
+        """
+        self._start_signal[instance_id] = round(time())
 
     def clear_time(self, instance_id):
         self._last_heartbeat.pop(instance_id, None)
@@ -161,7 +165,7 @@ class NodeScheduler:
 
     def __init__(self, debug, git_pull, account_id):
         self.instance_id = ec2_metadata.instance_id
-        self.instances = Instances(self.instance_id)
+        self.instances = Instances()
         self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
         self.boto = BotoInstanceReader()
@@ -201,7 +205,8 @@ class NodeScheduler:
     def _send_start_command(self, instance_type, instance_id):
         try:
             command = [config.DEFAULT_DIRECTORY,
-                       config.DEFAULT_MAIN_CALL.format(instance_type, self.ipv4, instance_id, self.account_id)]
+                       config.DEFAULT_MAIN_CALL.format(instance_type, self.ipv4, instance_id,
+                                                       self.account_id)]
             if instance_type == 'worker':
                 node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
                 # If there are more node managers, one could use a smarter method to divide workers.
@@ -218,10 +223,10 @@ class NodeScheduler:
             )
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
-        except Exception as e:
+        except Exception as exc:
             log_exception("The following exception has occurred while trying"
-                          + " to send a command: " + str(e))
-            print(Exception, e, "Retry later")
+                          + " to send a command: " + str(exc))
+            print(Exception, exc, "Retry later")
 
     def start_node_manager(self):
         if not self.instances.has('node_manager', [InstanceState.RUNNING, InstanceState.PENDING]):
@@ -385,7 +390,8 @@ class NodeScheduler:
         heartbeat = self.instances.get_last_heartbeat(instance)
         heartbeat_timedout = self.instances.heart_beat_timedout(heartbeat)
         if heartbeat and not heartbeat_timedout:
-            self.instances.set_state(instance_id=instance, instance_type=instance_type, state=InstanceState.RUNNING)
+            self.instances.set_state(instance_id=instance, instance_type=instance_type,
+                                     state=InstanceState.RUNNING)
             return  # The instance is perfectly fine.
         if not heartbeat and self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
