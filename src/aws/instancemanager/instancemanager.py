@@ -63,7 +63,7 @@ class Instances:
         old_state = nodes.get(instance_id, None)
         if not old_state or not state.is_state(old_state):
             nodes[instance_id] = state
-            log_info("State of instance {} set to {}.".format(instance_id, state))
+            log_info("State of instance {} set from {} to {}.".format(instance_id, old_state, state))
 
     def set_ip(self, instance_id, ip_address):
         log_info("IP address of {} set to {}.".format(instance_id, ip_address))

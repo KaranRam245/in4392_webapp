@@ -19,7 +19,9 @@ class State(ABC):
     def set_state(self, state):
         self._state = state
 
-    def is_state(self, state: int) -> bool:
+    def is_state(self, state) -> bool:
+        if isinstance(state, InstanceState):
+            return self._state == state._state
         return self._state == state
 
     def is_any(self, states: Iterable[int]) -> bool:
