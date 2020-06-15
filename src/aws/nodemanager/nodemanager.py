@@ -124,9 +124,9 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
 
     procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run(),
                           resource_manager.period_upload_log()])
-    loop.run_until_complete(procs)
-
     try:
+        loop.run_until_complete(procs)
+
         loop.run_forever()
     except KeyboardInterrupt:
         pass
