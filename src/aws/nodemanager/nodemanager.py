@@ -137,7 +137,6 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
                  asyncio.Task.current_task()]
         for task in tasks:
             task.cancel()
-            with suppress(asyncio.CancelledError):
-                loop.run_until_complete(task)
+            log_info("Cancelled task {}".format(task))
         resource_manager.upload_log(clean=True)
         loop.close()
