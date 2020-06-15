@@ -18,19 +18,9 @@ from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
 
 
-# Boolean indicating if the logging is initialized.
-INITIALIZED = False
-
-
 def log_metric(metric: dict):
     metric['time'] = time()
     logging.info("METRIC{}".format(json.dumps(metric)))
-
-
-def initialize_logging():
-    global INITIALIZED
-    logging.basicConfig(filename=config.DEFAULT_LOG_FILE + '.log', level=logging.INFO)
-    INITIALIZED = True
 
 
 def log_info(message):
@@ -61,13 +51,14 @@ def log_exception(message):
     logging.exception(message)
 
 
+# Initialize the logger.
+logging.basicConfig(filename=config.DEFAULT_LOG_FILE + '.log', level=logging.INFO)
+
+
 class ResourceManagerCore(Observable):
 
     def __init__(self, instance_id, account_id):
-        global INITIALIZED
         super().__init__()
-        if not INITIALIZED:
-            initialize_logging()
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self.s3 = boto3.client('s3')
         self.s3_resource = boto3.resource('s3')
