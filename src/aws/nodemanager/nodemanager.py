@@ -8,7 +8,7 @@ import aws.utils.connection as con
 import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
-from aws.utils.state import InstanceState
+from aws.utils.state import InstanceState, TaskState
 
 
 class TaskPool(Observable, con.MultiConnectionServer):
@@ -109,6 +109,25 @@ def start_instance(instance_id, im_host, nm_host=con.HOST, im_port=con.PORT_IM,
                 loop.run_until_complete(task)
         loop.close()
 
+class Task:
+    '''Task contains all information with regards to a tasks in the TaskPool'''
+
+    TEXT=0
+    CSV=1
+
+    def __init__(self, data, dataType):
+        self.data = data
+        self.taskType = dataType
+        self.state = TaskState.UPLOADING
+
+    def get_task_type(self):
+        return self.taskType
+
+    def get_task_data(self):
+        return self.data
+
+    def get_task_state(self):
+        return self.state
 
 if __name__ == "__main__":
     start_instance('localhost', 8080)

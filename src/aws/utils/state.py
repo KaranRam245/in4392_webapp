@@ -114,3 +114,20 @@ class InstanceState(State):
                 return key
         raise Exception(
             "This state does not seem to exist for InstanceState: {}".format(state_to_map))
+
+class TaskState(State):
+    '''
+    Class for the indication of the current state of a task
+    '''
+    UPLOADING=0
+    READY=1
+    RUNNING=2
+    DONE=3
+
+    def __init__(self, state):
+        """
+        Initialize a State object indicating the current state of a task.
+        :param state: Initiger indicating the current state.
+        """
+        assert 0 <= state <= 3
+        super().__init__(state)

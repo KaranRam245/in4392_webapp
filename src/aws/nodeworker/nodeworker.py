@@ -6,9 +6,9 @@ from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
-from models.Senti import Senti
-from data.Glove import Glove
-from data import Tokenize
+from src.models.Senti import Senti
+from src.data.Glove import Glove
+from src.data import Tokenize
 from tensorflow.keras.models import load_model
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
@@ -16,6 +16,7 @@ from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
 from src.aws.utils.state import TaskState
 from src.aws.nodemanager.nodemanager import Task
+import os
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
@@ -62,11 +63,13 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
-                    input_sequences= Tokenize.tokenize_text(tokenizer_path,file)
-                    model=load_model(model_path)
+                    with open(file) as f:
+                        input_data=f.readlines()
+                    input_sequences= Tokenize.tokenize_text(os.path.join("models","tokenizer_20000.pickle"),input_data)
+                    model=load_model(os.path.join("models","Senti.h5"))
                     labels=model.predict(input_sequences)
 
-                    # self.send_message(message)
+                    self.send_message(message)
                     self.current_task = None
                 await asyncio.sleep(1)
         except KeyboardInterrupt:
