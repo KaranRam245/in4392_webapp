@@ -364,8 +364,8 @@ class NodeScheduler:
         except asyncio.CancelledError:
             pass
         except Exception as exc:
-            print(Exception, exc)
-            print(traceback.print_exc())
+            log_error("The following exception {}"
+                      " occured during run: {}".format(exc, traceback.print_exc()))
 
     def check_all_living(self):
         """
