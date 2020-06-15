@@ -137,7 +137,7 @@ class Instances:
     def start_signal_timedout(self, instance_id):
         signal_time = self._start_signal.get(instance_id, None)
         current_time = time()
-        diff = signal_time - current_time if signal_time else 999
+        diff = current_time - signal_time if signal_time else 999
         log_info('Last signal_time:{}, time:{}, subtract:{}, {}'.format(signal_time, current_time,
                                                                         diff,
                                                                         diff >= config.START_SIGNAL_TIMEOUT))
