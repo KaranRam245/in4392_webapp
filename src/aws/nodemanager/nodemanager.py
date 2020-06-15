@@ -7,7 +7,7 @@ from contextlib import suppress
 import aws.utils.connection as con
 import aws.utils.config as config
 from aws.resourcemanager.resourcemanager import log_info, log_warning, log_metric, \
-    ResourceManagerCore
+    log_error, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -131,7 +131,7 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
     except KeyboardInterrupt:
         pass
     except ConnectionRefusedError as exc:
-        print("Could not connect to server {}".format(exc))
+        log_error("Could not connect to server {}".format(exc))
     finally:
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
