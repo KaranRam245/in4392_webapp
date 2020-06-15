@@ -77,7 +77,7 @@ class ResourceManagerCore(Observable):
             bucket_list = self.s3.list_buckets()["Buckets"]
         except ClientError:
             log_error("You should add the AmazonS3ReadOnlyAccess and AmazonS3FullAccess "
-                  "permission to the user")
+                      "permission to the user")
             return None
 
     def create_bucket(self, bucket_name):
@@ -101,9 +101,7 @@ class ResourceManagerCore(Observable):
         :param bucket_name: Name of the bucket to be deleted.
         """
         if self.s3_resource.Bucket(bucket_name).creation_date is None:
-            log_error("Bucket " + bucket_name + " does not exist, so it"
-                                                    " cannot be deleted.")
-            print("Bucket " + bucket_name + " does not exist")
+            print("Bucket {} does not exist, so it cannot be deleted.".format(bucket_name))
         else:
             log_info("Deleting bucket with bucket_name: " + bucket_name)
             bucket = self.s3_resource.Bucket(bucket_name)
@@ -121,15 +119,13 @@ class ResourceManagerCore(Observable):
         """
         start_time = time()
         if self.s3_resource.Bucket(bucket_name).creation_date is None:
-            log_error("Bucket " + bucket_name + " does not exist, so a"
-                                                    " file cannot be uploaded to this bucket.")
+            print("Bucket " + bucket_name + " does not exist, so a file cannot be uploaded to this bucket.")
         else:
             try:
-                log_info("Uploading file to bucket " + bucket_name + ": " + file_path)
+                print("Uploading file to bucket {}: {}".format(bucket_name, file_path))
                 self.s3.upload_file(file_path, bucket_name, key)
             except DataNotFoundError:
-                log_error("There is no file with file_path " + file_path +
-                              ", so the file cannot be uploaded")
+                print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
         log_metric({'upload_duration': time() - start_time})
 
     def download_file(self, bucket_name, key, file_path):
@@ -143,19 +139,17 @@ class ResourceManagerCore(Observable):
         start_time = time()
         if not bucket_name:
             error_message = "Could not download file with key: {}, as the bucket permissions are wrong!".format(key)
-            log_error(error_message)
+            print(error_message)
             raise FileNotFoundError(error_message)
         if self.s3_resource.Bucket(bucket_name).creation_date is None:
-            log_error("Bucket " + bucket_name + " does not exist, "
-                                                    "so a file cannot be downloaded from it.")
+            print("Bucket " + bucket_name + " does not exist, so a file cannot be downloaded from it.")
         else:
             try:
                 self.s3.download_file(bucket_name, key, file_path)
-                log_info("Downloading file " + file_path + " from the bucket"
-                             + bucket_name + ".")
+                log_info("Downloading file {} from the bucket {}.".format(file_path, bucket_name))
             except DataNotFoundError:
-                log_error("There is no key " + key + " in bucket " + bucket_name
-                              + "so a file cannot be downloaded from it.")
+                log_error(
+                    "There is no key {} in bucket {} so a file cannot be downloaded from it.".format(key, bucket_name))
         log_metric({'download_duration': time() - start_time})
 
     def upload_log(self, clean):
