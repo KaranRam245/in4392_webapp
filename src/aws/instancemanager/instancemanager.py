@@ -213,13 +213,13 @@ class NodeScheduler:
                 command.insert(1, 'git pull')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
             log_info("Sending start command: [{}]: {}.".format(instance_id, command))
+            self.instances.set_last_start_signal(instance_id)
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
                 DocumentName='AWS-RunShellScript',
                 Parameters={'commands': [' ; '.join(command)]}
             )
             self.commands.append(response['Command']['CommandId'])
-            self.instances.set_last_start_signal(instance_id)
         except self.boto.ssm.exceptions.InvalidInstanceId:
             log_info("Instance {} [{}] not yet running. Retry later.".format(instance_type, instance_id))
         except Exception as exc:
