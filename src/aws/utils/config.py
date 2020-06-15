@@ -11,7 +11,7 @@ START_SIGNAL_TIMEOUT = 20
 SERVER_SLEEP_TIME = 1
 
 # Time to sleep for the send protocol of a client.
-CLIENT_SEND_SLEEP = 0.1
+CLIENT_SEND_SLEEP = 1
 
 # How many seconds should be between heartbeats for NM? Must be greater than SERVER_SLEEP_TIME.
 HEART_BEAT_INTERVAL_NODE_MANAGER = 2
