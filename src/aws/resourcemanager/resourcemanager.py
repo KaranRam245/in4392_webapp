@@ -124,9 +124,7 @@ class ResourceManagerCore(Observable):
         else:
             try:
                 print("Uploading file to bucket {}: {} with {}".format(bucket_name, file_path, key))
-                uploaded = self.s3.upload_file(file_path, bucket_name, key)
-                if not uploaded:
-                    print('Could not upload key {} to {}. ClientError(?): {}'.format(key, bucket_name, uploaded))
+                self.s3.upload_file(file_path, bucket_name, key)
             except DataNotFoundError:
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
             except ClientError as exc:
@@ -166,8 +164,7 @@ class ResourceManagerCore(Observable):
             if clean:  # If clean, do not keep the log.
                 os.remove(config.DEFAULT_LOG_FILE + '.log')
             else:  # If not clean, clear the original.
-                with open(config.DEFAULT_LOG_FILE + '.log') as f:
-                    f.close()
+                open(config.DEFAULT_LOG_FILE + '.log', 'w').close()
             key = '{}_{}.log'.format(self._instance_id,
                                      datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'))
             self.upload_file(file_path=temporary_copy, key=key,
