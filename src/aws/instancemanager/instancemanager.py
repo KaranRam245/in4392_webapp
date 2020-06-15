@@ -218,10 +218,11 @@ class NodeScheduler:
             )
             self.commands.append(response['Command']['CommandId'])
             self.instances.set_last_start_signal(instance_id)
+        except self.boto.ssm.exceptions.InvalidInstanceId:
+            log_info("Instance {} [{}] not yet running. Retry later.".format(instance_type, instance_id))
         except Exception as exc:
             log_exception("The following exception has occurred while trying"
                           + " to send a command: " + str(exc))
-            print(Exception, exc, "Retry later")
 
     def start_node_manager(self):
         if not self.instances.has('node_manager', [InstanceState.RUNNING, InstanceState.PENDING]):
