@@ -5,7 +5,7 @@ Module containing default values for the general program.
 BOTO_UPDATE_SEC = 60
 
 # How many seconds should the program wait until a script should give life?
-START_SIGNAL_TIMEOUT = 10
+START_SIGNAL_TIMEOUT = 20
 
 # The amount of seconds a server is allowed to sleep until the same client sends again.
 SERVER_SLEEP_TIME = 1
