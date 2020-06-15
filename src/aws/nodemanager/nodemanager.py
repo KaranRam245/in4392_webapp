@@ -88,7 +88,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp = taskpool
 
     def event(self, message):
-        pass  # Currently, the nodemanager only receives heartbeats from the 
+        pass  # Currently, the nodemanager only receives heartbeats from the
 
     def process_command(self, command):
         log_info("Need help with command: {}".format(command))

@@ -135,16 +135,14 @@ class Instances:
     def heart_beat_timedout(heartbeat_time):
         if not heartbeat_time:
             return True
-        heartbeat_time = round(heartbeat_time)
-        current_time_sec = round(time())
-        return (current_time_sec - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
+        return (time() - heartbeat_time) >= config.HEART_BEAT_TIMEOUT
 
     def start_signal_timedout(self, instance_id):
         signal_time = self._start_signal.get(instance_id, None)
         if not signal_time:
             return True
-        current_time_sec = round(time())
-        return (current_time_sec - signal_time) >= config.START_SIGNAL_TIMEOUT
+        print("{} - {} = {}".format(round(time()), round(signal_time), (time() - signal_time) >= config.START_SIGNAL_TIMEOUT))
+        return (time() - signal_time) >= config.START_SIGNAL_TIMEOUT
 
     def set_last_start_signal(self, instance_id):
         """
