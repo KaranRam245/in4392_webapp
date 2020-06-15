@@ -120,7 +120,7 @@ class ResourceManagerCore(Observable):
         :param bucket_name: The name of the bucket to upload to.
         """
         start_time = time()
-        if s3_resource.Bucket(bucket_name).creation_date is None:
+        if self.s3_resource.Bucket(bucket_name).creation_date is None:
             print("Bucket " + bucket_name + " does not exist, so a file cannot be uploaded to this bucket.")
         else:
             try:

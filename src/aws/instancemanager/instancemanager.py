@@ -565,34 +565,36 @@ def start_instance(debug=False, git_pull=False):
     """
     Function to start the Node Scheduler, which is the heart of the Instance Manager.
     """
-    client = boto3.client("sts")
-    account_id = client.get_caller_identity()["Account"]
-    resource_manager = ResourceManagerCore(account_id=account_id, instance_id='instance_manager')
+    # client = boto3.client("sts")
+    # account_id = client.get_caller_identity()["Account"]
+    resource_manager = ResourceManagerCore(account_id='944685923006', instance_id='instance_manager')
+    # resource_manager = ResourceManagerCore(account_id=account_id, instance_id='instance_manager')
     log_info("Starting Node Scheduler..")
-    scheduler = NodeScheduler(debug=debug, git_pull=git_pull, account_id=account_id)
-    monitor = NodeMonitor(scheduler)
-
-    loop = asyncio.get_event_loop()
-    server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT_IM, loop=loop)
-
-    procs = asyncio.wait([server_core, scheduler.run(), resource_manager.period_upload_log()])
-
-    try:
-        loop.run_until_complete(procs)
-
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        if not scheduler.cleaned_up:
-            scheduler.cancel_all()
-        tasks = [t for t in asyncio.Task.all_tasks() if t is not
-                 asyncio.Task.current_task()]
-        for task in tasks:
-            task.cancel()
-            log_info("Cancelled task {}".format(task))
-        resource_manager.upload_log(clean=True, im=True)  # Clean the last logs.
-        loop.close()
+    resource_manager.upload_log(clean=True, im=True)  # Clean the last logs.
+    # scheduler = NodeScheduler(debug=debug, git_pull=git_pull, account_id=account_id)
+    # monitor = NodeMonitor(scheduler)
+    #
+    # loop = asyncio.get_event_loop()
+    # server_core = asyncio.start_server(monitor.run, con.HOST, con.PORT_IM, loop=loop)
+    #
+    # procs = asyncio.wait([server_core, scheduler.run(), resource_manager.period_upload_log()])
+    #
+    # try:
+    #     loop.run_until_complete(procs)
+    #
+    #     loop.run_forever()
+    # except KeyboardInterrupt:
+    #     pass
+    # finally:
+    #     if not scheduler.cleaned_up:
+    #         scheduler.cancel_all()
+    #     tasks = [t for t in asyncio.Task.all_tasks() if t is not
+    #              asyncio.Task.current_task()]
+    #     for task in tasks:
+    #         task.cancel()
+    #         log_info("Cancelled task {}".format(task))
+    #     resource_manager.upload_log(clean=True, im=True)  # Clean the last logs.
+    #     loop.close()
 
 
 # Main function to start the InstanceManager
