@@ -437,10 +437,6 @@ class NodeMonitor(con.MultiConnectionServer):
         if heartbeat['instance_type'] == 'worker':
             self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
         self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
-        log_metric({'heartbeat': heartbeat,
-                    'im_heartbeat': HeartBeatPacket(instance_id='instance_manager',
-                                                    instance_state=InstanceState.RUNNING,
-                                                    instance_type='instance_manager')})
         return heartbeat
 
     def _generate_nm_response(self, heartbeat):
@@ -451,6 +447,9 @@ class NodeMonitor(con.MultiConnectionServer):
                                    instance_type='instance_manager',
                                    workers_running=workers_running,
                                    workers_pending=workers_pending)
+        log_metric({'im_heartbeat': HeartBeatPacket(instance_id='instance_manager',
+                                                    instance_state=InstanceState.RUNNING,
+                                                    instance_type='instance_manager')})
         return response
 
 

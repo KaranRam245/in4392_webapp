@@ -88,8 +88,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp = taskpool
 
     def event(self, message):
-        self.send_message(message)
-        log_info("Message sent to Instance Manager: " + str(message))
+        pass  # Currently, the nodemanager only receives heartbeats from the 
 
     def process_command(self, command):
         log_info("Need help with command: {}".format(command))
