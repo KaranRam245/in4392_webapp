@@ -82,7 +82,7 @@ class BotoInstance:
         return name.lower().replace(' ', '_')
 
     def is_running(self) -> bool:
-        return self.state == 'running'
+        return self.state.is_state(InstanceState.RUNNING)
 
     def is_worker(self) -> bool:
         return self.name == 'worker'

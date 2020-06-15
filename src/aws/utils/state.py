@@ -19,7 +19,7 @@ class State(ABC):
     def set_state(self, state):
         self._state = state
 
-    def is_state(self, state) -> bool:
+    def is_state(self, state: int) -> bool:
         return self._state == state
 
     def is_any(self, states: Iterable[int]) -> bool:

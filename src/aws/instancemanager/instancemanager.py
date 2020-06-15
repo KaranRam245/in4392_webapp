@@ -58,7 +58,7 @@ class Instances:
             return False
         return instance.is_state(state)
 
-    def set_state(self, instance_id, instance_type, state):
+    def set_state(self, instance_id, instance_type, state: InstanceState):
         nodes = self.get_nodes(instance_type)
         nodes[instance_id] = state
         log_info("State of instance " + instance_id + " set to " + str(state) + ".")
@@ -379,7 +379,7 @@ class NodeScheduler:
         heartbeat_timedout = self.instances.heart_beat_timedout(heartbeat)
         if heartbeat and not heartbeat_timedout:
             self.instances.set_state(instance_id=instance, instance_type=instance_type,
-                                     state=InstanceState.RUNNING)
+                                     state=InstanceState(InstanceState.RUNNING))
             return  # The instance is perfectly fine.
         if not heartbeat and self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
