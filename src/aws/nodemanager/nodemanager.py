@@ -3,11 +3,13 @@ Module for the Node Manager.
 """
 import asyncio
 import logging
+import os
 from contextlib import suppress
 import pandas as pd
 import aws.utils.connection as con
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, \
+    ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState, TaskState
@@ -25,15 +27,22 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
         self.available_workers = []
-    
-    def create_full_taskpool(self):
-        imported_csv=pd.read_csv(os.path.join("src","data","Input.csv"))
+
+    async def create_full_taskpool(self):
+        imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
+        benchmark_tasks = []
         for row in imported_csv.iterrows():
-            task=Task(row["Input"],0)
-            time=row["Time"]
-            self._tasks.append((task,time))
-        
-        
+            task = Task(row["Input"], 0)
+            time = int(row["Time"])  # Convert time to int.
+            benchmark_tasks.append((time, task))
+        benchmark_tasks = sorted(benchmark_tasks, key=lambda x: x[0])  # Sort on time.
+        current_time = 0
+        while benchmark_tasks:  # While there are tasks.
+            while benchmark_tasks[0] == current_time:
+                time, task = benchmark_tasks.pop(0)
+                self._tasks.append(task)  # Append task to the taskpool on given time.
+            current_time += 1
+            await asyncio.sleep(1)
 
     async def run_task_pool(self):
         """
@@ -42,6 +51,18 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
+
+                # TODO: divide the tasks here. @Karan (see below)
+                """
+                Send them to workers. The available workers are in 
+                self.available_workers. You may need to create a list of divided work where you
+                keep track of the divided work and keep track of tasks that are actuall divided
+                or still waiting for a heartbeat of a worker to give the task.
+                
+                in process_heartbeat you can then actuall send the task to the worker with a
+                CommandPacket.
+                """
+
                 await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
             pass
@@ -108,13 +129,15 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
     log_info("Starting TaskPool with ID: " + instance_id + ".")
     resource_manager = ResourceManagerCore(instance_id=instance_id, account_id=account_id)
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
-    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port, instance_id=instance_id)
+    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port,
+                              instance_id=instance_id)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
     server_core = asyncio.start_server(taskpool.run, nm_host, nm_port, loop=loop)
 
-    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run(), resource_manager.period_upload_log()])
+    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run(),
+                          resource_manager.period_upload_log(), taskpool.create_full_taskpool()])
     loop.run_until_complete(procs)
 
     try:
@@ -135,8 +158,8 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
 class Task:
     '''Task contains all information with regards to a tasks in the TaskPool'''
 
-    TEXT=0
-    CSV=1
+    TEXT = 0
+    CSV = 1
 
     def __init__(self, data, dataType):
         self.data = data
@@ -151,7 +174,4 @@ class Task:
 
     def get_task_state(self):
         return self.state
-
-if __name__ == "__main__":
-    start_instance('localhost', 8080)
 
