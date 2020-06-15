@@ -3,6 +3,7 @@ Module for connections.
 """
 import json
 import asyncio
+import traceback
 from abc import abstractmethod
 from typing import List
 
@@ -39,14 +40,10 @@ def decode_packet(data) -> Packet:
     value = data.decode(ENCODING)
     try:
         packet_dict = json.loads(value)
+        return PacketTranslator.translate(packet_dict)
     except json.JSONDecodeError as e:
-        print("JsonDecodeError on: {}".format(value))
-        log_error("JsonDecodeError on: {}".format(value))
-        print(e)
+        log_error("JsonDecodeError on: {} with {}: {}".format(value, e, traceback.print_exc()))
         raise e
-    str(packet_dict)
-    return PacketTranslator.translate(packet_dict)
-
 
 class MultiConnectionServer:
     """
@@ -57,7 +54,6 @@ class MultiConnectionServer:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        print("Serving on {}:{}..".format(self.host, self.port))
         log_info("Serving on {}:{}..".format(self.host, self.port))
 
     def process_packet(self, message, source) -> Packet:
@@ -88,17 +84,14 @@ class MultiConnectionServer:
                     break
                 packet_received = decode_packet(data)
                 packet_reponse = self.process_packet(packet_received, addr)
-                print("+ Received: {} from {}".format(packet_received, addr))
                 log_info("+ Received: {} from {}".format(packet_received, addr))
 
-                print("- Sent: {}".format(packet_reponse))
                 log_info("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
                 await asyncio.sleep(config.SERVER_SLEEP_TIME)
         except ConnectionResetError:
-            print("Client {} forcibly closed its connection.".format(addr))
             log_exception("Client {} forcibly closed its connection.".format(addr))
         except TypeError as excep:
             log_exception(str(excep))
@@ -125,23 +118,19 @@ class MultiConnectionClient:
         if isinstance(packet, CommandPacket):
             self.process_command(packet['command'])
         elif isinstance(packet, HeartBeatPacket):
-            print("Acknowledge on my heartbeat. No additional action to take.")
             log_info("Acknowledge on my heartbeat. No additional action to take.")
             self.process_heartbeat(packet)
         else:
-            print("I do not know this packet type: {}".format(packet['packet_type']))
             log_error("I do not know this packet type: {}".format(packet['packet_type']))
 
     def process_heartbeat(self, hearbeat: HeartBeatPacket):
         log_info("Acknowledge on my heartbeat. No additional action to take.")
-        print("Acknowledge on my heartbeat. No additional action to take.")
 
     @abstractmethod
     def process_command(self, command: CommandPacket):
         raise NotImplementedError("Client has not yet implemented process_command.")
 
     async def run(self):
-        print('Attempting to connect to {}:{}'.format(self.host, self.port))
         log_info('Attempting to connect to {}:{}'.format(self.host, self.port))
         reader, writer = await asyncio.open_connection(self.host, self.port)
 
@@ -150,7 +139,6 @@ class MultiConnectionClient:
                 while self.send_buffer:
                     packet_send: Packet = self.send_buffer.pop(0)
 
-                    print('- Sent: {}'.format(packet_send))
                     log_info('- Sent: {}'.format(packet_send))
                     writer.write(encode_packet(packet_send))
 
@@ -158,7 +146,6 @@ class MultiConnectionClient:
                     if data_received == b"":  # EOF passed.
                         break
                     packet_received = decode_packet(data_received)
-                    print('+ Received: {}'.format(packet_received))
                     log_info('+ Received: {}'.format(packet_received))
                     self.received_packets.append(packet_received)
                     # TODO: process the received messages.
@@ -167,7 +154,6 @@ class MultiConnectionClient:
         except KeyboardInterrupt:
             pass
         finally:
-            print('Close the socket')
             log_info('Close the socket')
             writer.close()
 

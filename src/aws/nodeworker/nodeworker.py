@@ -102,7 +102,6 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
             log_error("Command 'kill' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [kill].")
         log_error("Received unknown command: {}.".format(command['command']))
-        print('Received unknown command: {}'.format(command['command']))
 
 
 def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM, port_nm=con.PORT_NM):
