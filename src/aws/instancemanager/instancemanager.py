@@ -444,12 +444,13 @@ class NodeMonitor(con.MultiConnectionServer):
         return heartbeat
 
     def _generate_nm_response(self, heartbeat):
-        workers = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING,
-                                                                     InstanceState.PENDING])
+        workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
+        workers_pending = self._ns.instances.get_all('worker', filter_state=[InstanceState.PENDING])
         response = HeartBeatPacket(instance_id=heartbeat['instance_id'],
                                    instance_state=InstanceState.RUNNING,
                                    instance_type='instance_manager',
-                                   available_workers=workers)
+                                   workers_running=workers_running,
+                                   workers_pending=workers_pending)
         return response
 
 
