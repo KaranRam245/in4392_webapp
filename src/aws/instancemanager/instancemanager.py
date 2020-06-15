@@ -590,10 +590,7 @@ def start_instance(debug=False, git_pull=False):
                  asyncio.Task.current_task()]
         for task in tasks:
             task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                log_info("Cancelled task {}".format(task))
+            log_info("Cancelled task {}".format(task))
         resource_manager.upload_log(clean=True)  # Clean the last logs.
         loop.close()
 
