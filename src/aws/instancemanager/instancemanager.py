@@ -438,7 +438,9 @@ class NodeMonitor(con.MultiConnectionServer):
             self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
             return self._generate_nm_response(heartbeat)
         elif heartbeat['instance_type'] == 'worker':
-            self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
+            state = self._ns.instances.get_nodes('worker')[heartbeat['instance_id']]
+            if state.is_state(InstanceState.RUNNING):
+                self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
             return heartbeat
 
     def _generate_nm_response(self, heartbeat):
@@ -532,7 +534,7 @@ class TimeWindow:
         if self.nm_task_window['tasks_waiting']:
             return []  # There are tasks that need to be divided before one can be underloaded.
         for instance in self.queue_window:
-            if len(self.queue_window[instance]) > 0 and sum(self.queue_window[instance]) == 0:
+            if len(self.queue_window[instance]) == config.WINDOW_SIZE and sum(self.queue_window[instance]) == 0:
                 underloaded.append(instance)
         return underloaded
 
@@ -553,7 +555,7 @@ class TimeWindow:
         :return: Boolean indicating if the worker is overloaded.
         """
         window_size = len(self.queue_window[instance])
-        if window_size == 0:  # No measurements yet. Likely it is still starting.
+        if window_size < config.WINDOW_SIZE:  # Not enough measurements yet. Likely it is still starting.
             return False
         return sum(self.queue_window[instance]) / window_size >= config.MAX_JOBS_PER_WORKER
 

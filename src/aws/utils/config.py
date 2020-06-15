@@ -44,7 +44,7 @@ Parameters for Load balancing.
 """
 # Size of a time window to check overload metrics on.
 # The time span checked is WINDOW_SIZE*HEART_BEAT_INTERVAL seconds.
-WINDOW_SIZE = 2
+WINDOW_SIZE = 3
 
 # Percentage 0-100 for which a CPU is deemed to overload.
 CPU_OVERLOAD_PERCENTAGE = 99
