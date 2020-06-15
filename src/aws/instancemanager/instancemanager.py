@@ -60,8 +60,10 @@ class Instances:
 
     def set_state(self, instance_id, instance_type, state: InstanceState):
         nodes = self.get_nodes(instance_type)
-        nodes[instance_id] = state
-        log_info("State of instance " + instance_id + " set to " + str(state) + ".")
+        old_state = nodes[instance_id]
+        if state.is_state(old_state):
+            nodes[instance_id] = state
+            log_info("State of instance " + instance_id + " set to " + str(state) + ".")
 
     def set_ip(self, instance_id, ip_address):
         log_info("IP address of " + instance_id + " set to " + ip_address + ".")
@@ -448,7 +450,7 @@ class NodeMonitor(con.MultiConnectionServer):
         workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
         workers_pending = self._ns.instances.get_all('worker', filter_state=[InstanceState.PENDING])
         response = HeartBeatPacket(instance_id=heartbeat['instance_id'],
-                                   instance_state=InstanceState.RUNNING,
+                                   instance_state=InstanceState(InstanceState.RUNNING),
                                    instance_type='instance_manager',
                                    workers_running=workers_running,
                                    workers_pending=workers_pending)
