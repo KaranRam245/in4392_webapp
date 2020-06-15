@@ -59,12 +59,11 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
-                    file = self.storage_connector.download_file(
-                        file_path=self.current_task.file_path,
-                        key=self.current_task.key
-                    )
-                    with open(file) as f:
-                        input_data=f.readlines()
+                    # file = self.storage_connector.download_file(
+                    #     file_path=self.current_task.file_path,
+                    #     key=self.current_task.key
+                    # )
+                    input_data=self.current_task(0).get_task_data()
                     input_sequences= Tokenize.tokenize_text(os.path.join("models","tokenizer_20000.pickle"),input_data)
                     model=load_model(os.path.join("models","Senti.h5"))
                     labels=model.predict(input_sequences)

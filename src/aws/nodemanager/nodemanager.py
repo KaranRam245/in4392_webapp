@@ -3,7 +3,7 @@ Module for the Node Manager.
 """
 import asyncio
 from contextlib import suppress
-
+import pandas as pd
 import aws.utils.connection as con
 import aws.utils.config as config
 from aws.utils.monitor import Listener, Observable
@@ -22,6 +22,14 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._tasks = []
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+    
+    def create_full_taskpool(self):
+        imported_csv=pd.read_csv(os.path.join("src","data","Input.csv"))
+        for row in imported_csv.iterrows():
+            task=Task(row["Input"],0)
+            time=row["Time"]
+            self._tasks.append((task,time))
+        
 
     async def run_task_pool(self):
         """
