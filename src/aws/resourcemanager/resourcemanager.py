@@ -26,10 +26,6 @@ def log_metric(metric: dict):
     logging.info("METRIC{}".format(json.dumps(metric)))
 
 
-def log_heartbeat(heartbeat: dict):
-    logging.info("HEARTBEAT{}".format(json.dumps(heartbeat)))
-
-
 def initialize_logging():
     global INITIALIZED
     logging.basicConfig(filename=config.DEFAULT_LOG_FILE + '.log', level=logging.INFO)
@@ -39,25 +35,25 @@ def initialize_logging():
 def log_info(message):
     if not isinstance(message, str):
         message = json.dumps(message)
-    logging.info(json.dumps(message))
+    logging.info(message)
 
 
 def log_warning(message):
     if not isinstance(message, str):
         message = json.dumps(message)
-    logging.warning(json.dumps(message))
+    logging.warning(message)
 
 
 def log_error(message):
     if not isinstance(message, str):
         message = json.dumps(message)
-    logging.error(json.dumps(message))
+    logging.error(message)
 
 
 def log_exception(message):
     if not isinstance(message, str):
         message = json.dumps(message)
-    logging.exception(json.dumps(message))
+    logging.exception(message)
 
 
 class ResourceManagerCore(Observable):

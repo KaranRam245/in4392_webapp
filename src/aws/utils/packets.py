@@ -1,3 +1,4 @@
+import json
 import time as timepackage
 
 import psutil
@@ -11,6 +12,9 @@ class Packet(dict):
             if value.__class__.__module__ != 'builtins':
                 kwargs[key] = str(value)
         super().__init__(packet_type=packet_type, time=time, **kwargs)
+
+    def __str__(self):
+        return json.dumps(self)
 
 
 class HeartBeatPacket(Packet):
@@ -53,7 +57,4 @@ class PacketTranslator:
             return HeartBeatPacket(**packet)
         if packet['packet_type'] == 'Command':
             return CommandPacket(**packet)
-        if packet['packet_type'] == 'Metric':
-            return MetricPacket(**packet)
         raise Exception('Unknown packet provided: {}'.format(packet['packet_type']))
-
