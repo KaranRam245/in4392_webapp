@@ -444,13 +444,13 @@ class NodeMonitor(con.MultiConnectionServer):
     def _generate_nm_response(self, heartbeat):
         workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
         workers_pending = self._ns.instances.get_all('worker', filter_state=[InstanceState.PENDING])
-        response = HeartBeatPacket(instance_id=heartbeat['instance_id'],
+        response = HeartBeatPacket(instance_id='instance_manager',
                                    instance_state=InstanceState(InstanceState.RUNNING),
                                    instance_type='instance_manager',
                                    workers_running=workers_running,
                                    workers_pending=workers_pending)
         log_metric({'im_heartbeat': HeartBeatPacket(instance_id='instance_manager',
-                                                    instance_state=InstanceState.RUNNING,
+                                                    instance_state=InstanceState(InstanceState.RUNNING),
                                                     instance_type='instance_manager')})
         return response
 
