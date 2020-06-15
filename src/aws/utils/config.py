@@ -27,7 +27,8 @@ DEBUG_INIT_RETRY = 5
 
 # Default parts of the commands.
 DEFAULT_DIRECTORY = 'cd /tmp/in4392_webapp/'
-DEFAULT_MAIN_CALL = 'python3 src/main.py {} {} {}'
+# Example: python3 src/main.py node_manager/worker im_ip instance_id account_id (workers add nm_ip).
+DEFAULT_MAIN_CALL = 'python3 src/main.py {} {} {} {}'
 
 # Time in seconds to wait for the logger to upload to S3.
 LOGGING_INTERVAL = 60

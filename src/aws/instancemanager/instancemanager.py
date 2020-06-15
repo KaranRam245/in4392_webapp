@@ -159,7 +159,7 @@ class NodeScheduler:
     The main class of the Instance Manager, responsible for the life-time of other instances.
     """
 
-    def __init__(self, debug, git_pull):
+    def __init__(self, debug, git_pull, account_id):
         self.instance_id = ec2_metadata.instance_id
         self.instances = Instances(self.instance_id)
         self.ipv4 = ec2_metadata.public_ipv4
@@ -172,6 +172,7 @@ class NodeScheduler:
         self.node_manager_running = False
         self.timewindow = TimeWindow()
         self.workers = 0
+        self.account_id = account_id
         super().__init__()
 
     def initialize_nodes(self, retry=False):
@@ -200,7 +201,7 @@ class NodeScheduler:
     def _send_start_command(self, instance_type, instance_id):
         try:
             command = [config.DEFAULT_DIRECTORY,
-                       config.DEFAULT_MAIN_CALL.format(instance_type, self.ipv4, instance_id)]
+                       config.DEFAULT_MAIN_CALL.format(instance_type, self.ipv4, instance_id, self.account_id)]
             if instance_type == 'worker':
                 node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
                 # If there are more node managers, one could use a smarter method to divide workers.
@@ -573,7 +574,7 @@ def start_instance(debug=False, git_pull=False):
     account_id = client.get_caller_identity()["Account"]
     resource_manager = ResourceManagerCore(account_id=account_id, instance_id='instance_manager')
     log_info("Starting Node Scheduler..")
-    scheduler = NodeScheduler(debug=debug, git_pull=git_pull)
+    scheduler = NodeScheduler(debug=debug, git_pull=git_pull, account_id=account_id)
     monitor = NodeMonitor(scheduler)
 
     loop = asyncio.get_event_loop()
