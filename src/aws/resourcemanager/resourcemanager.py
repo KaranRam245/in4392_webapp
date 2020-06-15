@@ -123,8 +123,8 @@ class ResourceManagerCore(Observable):
             print("Bucket " + bucket_name + " does not exist, so a file cannot be uploaded to this bucket.")
         else:
             try:
-                print("Uploading file to bucket {}: {} with {}".format(bucket_name, file_path, key))
                 self.s3.upload_file(file_path, bucket_name, key)
+                print("Uploading file to bucket {}: {} with {}".format(bucket_name, file_path, key))
             except DataNotFoundError:
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
             except ClientError as exc:
