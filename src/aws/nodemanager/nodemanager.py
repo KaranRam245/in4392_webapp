@@ -6,7 +6,7 @@ from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import log_info, ResourceManagerCore
+from aws.resourcemanager.resourcemanager import log_info, log_metric, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -53,6 +53,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
                                     instance_state=self._instance_state,
                                     tasks_waiting=len(self._tasks),
                                     tasks_running=len(self._tasks))
+        log_metric({'tasks_waiting': heartbeat['tasks_waiting'], 'tasks_running': heartbeat['tasks_running'],
+                    'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
         # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
         if notify:
             self.notify(message=heartbeat)

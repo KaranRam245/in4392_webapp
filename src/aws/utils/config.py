@@ -4,11 +4,8 @@ Module containing default values for the general program.
 # How many seconds should the program wait with syncing instance states with boto?
 BOTO_UPDATE_SEC = 60
 
-# Instance configuring retry timeout
-INSTANCE_START_CONFIGURE_TIMEOUT = 5
-
 # How many seconds should the program wait until a script should give life?
-START_SIGNAL_TIMEOUT = 30
+START_SIGNAL_TIMEOUT = 10
 
 # The amount of seconds a server is allowed to sleep until the same client sends again.
 SERVER_SLEEP_TIME = 1
@@ -23,7 +20,7 @@ HEART_BEAT_INTERVAL_NODE_MANAGER = 2
 HEART_BEAT_INTERVAL_WORKER = 3
 
 # How many seconds until a program is deemed dead? Max wait time until heartbeats?
-HEART_BEAT_TIMEOUT = 30
+HEART_BEAT_TIMEOUT = 10
 
 # Seconds until a retry is made for initialize when in debugging mode.
 DEBUG_INIT_RETRY = 5
