@@ -172,7 +172,7 @@ class ResourceManagerCore(Observable):
             key = '{}_{}.log'.format(self._instance_id,
                                      datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'))
             self.upload_file(file_path=temporary_copy, key=key,
-                             bucket_name=(self.account_id + '-logging'))
+                             bucket_name=(str(self.account_id) + '-logging'))
             if not im:
                 os.remove(temporary_copy)
         except FileNotFoundError:
