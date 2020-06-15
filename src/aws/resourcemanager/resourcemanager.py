@@ -133,6 +133,8 @@ class ResourceManagerCore(Observable):
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
             except ClientError as exc:
                 print("There was a ClientError during uploading to S3: {}".format(exc))
+            except Exception as exc:
+                print("Could not upload file due to exception {}: {}".format(exc, traceback.print_exc()))
         log_metric({'upload_duration': time() - start_time})
 
     def download_file(self, bucket_name, key, file_path):
