@@ -126,7 +126,6 @@ class Instances:
     def set_last_heartbeat(self, heartbeat):
         instance_id = heartbeat['instance_id']
         self._last_heartbeat[instance_id] = heartbeat['time']
-        log_info("Last heartbeats: {}".format(self._last_heartbeat))
 
     @staticmethod
     def heart_beat_timedout(heartbeat_time):
@@ -433,14 +432,14 @@ class NodeMonitor(con.MultiConnectionServer):
         super().__init__(host, port)
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
+        self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
             self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
             return self._generate_nm_response(heartbeat)
-        if heartbeat['instance_type'] == 'worker':
+        elif heartbeat['instance_type'] == 'worker':
             self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
-        self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
-        return heartbeat
+            return heartbeat
 
     def _generate_nm_response(self, heartbeat):
         workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
