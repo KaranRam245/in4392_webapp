@@ -127,8 +127,6 @@ class ResourceManagerCore(Observable):
                 uploaded = self.s3.upload_file(file_path, bucket_name, key)
                 if not uploaded:
                     print('Could not upload key {} to {}. ClientError(?): {}'.format(key, bucket_name, uploaded))
-                    with open(config.DEFAULT_LOG_FILE + '.log', 'r') as file:
-                        print(file.readline())
             except DataNotFoundError:
                 print("There is no file with file_path {}, so the file cannot be uploaded.".format(file_path))
             except ClientError as exc:
