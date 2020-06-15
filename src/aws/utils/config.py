@@ -33,6 +33,9 @@ DEFAULT_MAIN_CALL = 'python3 src/main.py {} {} {} {}'
 # Time in seconds to wait for the logger to upload to S3.
 LOGGING_INTERVAL = 60
 
+# Time in seconds to wait for the first log.
+LOGGING_START_INTERVAL = LOGGING_INTERVAL
+
 # Default name for the log file.
 DEFAULT_LOG_FILE = '/tmp/temporary'
 

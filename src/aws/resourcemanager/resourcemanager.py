@@ -168,8 +168,9 @@ class ResourceManagerCore(Observable):
                 os.remove(config.DEFAULT_LOG_FILE + '.log')
             else:  # If not clean, clear the original.
                 open(config.DEFAULT_LOG_FILE + '.log', 'w').close()
-            key = '{}_{}.log'.format(self._instance_id,
-                                     datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'))
+            key = '{}_{}{}.log'.format(self._instance_id,
+                                       datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'),
+                                       '_clean' if clean else '')
             self.upload_file(file_path=temporary_copy, key=key,
                              bucket_name=(str(self.account_id) + '-logging'))
             os.remove(temporary_copy)
@@ -179,6 +180,7 @@ class ResourceManagerCore(Observable):
             print("Could not upload logs to S3 due to {} with: {}".format(exc, traceback.print_exc()))
 
     async def period_upload_log(self):
+        await asyncio.sleep(config.LOGGING_START_INTERVAL)
         while True:
             self.upload_log(clean=False)
             await asyncio.sleep(config.LOGGING_INTERVAL)
