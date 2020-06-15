@@ -6,10 +6,16 @@ from contextlib import suppress
 
 import aws.utils.connection as con
 import aws.utils.config as config
+from models.Senti import Senti
+from data.Glove import Glove
+from data import Tokenize
+from tensorflow.keras.models import load_model
 from aws.resourcemanager.resourcemanager import ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
+from src.aws.utils.state import TaskState
+from src.aws.nodemanager.nodemanager import Task
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
@@ -56,7 +62,9 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
-                    # TODO: Process the file! @Karan
+                    input_sequences= Tokenize.tokenize_text(tokenizer_path,file)
+                    model=load_model(model_path)
+                    labels=model.predict(input_sequences)
 
                     # self.send_message(message)
                     self.current_task = None

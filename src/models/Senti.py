@@ -1,12 +1,13 @@
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Embedding, Bidirectional, GlobalMaxPool1D, Dense, LSTM
 from tensorflow.keras.activations import relu, sigmoid
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 
-class LSTMBuild(Model):
+class Senti(Model):
 
     def __init__(self):
-        super(LSTMBuild, self).__init__()
+        super(Senti, self).__init__()
         self.embedding = Embedding(10, 1)
         self.BiLSTM1 = Bidirectional(LSTM(15, return_sequences=True))
         self.globalMaxPool1 = GlobalMaxPool1D()
