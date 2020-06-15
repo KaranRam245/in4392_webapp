@@ -168,18 +168,21 @@ class ResourceManagerCore(Observable):
         log_metric({'download_duration': time() - start_time})
 
     def upload_log(self, clean):
-        temporary_copy = config.DEFAULT_LOG_FILE + '_copy.log'
-        shutil.copy(config.DEFAULT_LOG_FILE + '.log', temporary_copy)
-        if clean:  # If clean, do not keep the log.
-            os.remove(config.DEFAULT_LOG_FILE + '.log')
-        else:  # If not clean, clear the original.
-            with open(config.DEFAULT_LOG_FILE + '.log') as f:
-                f.close()
-        key = '{}_{}.log'.format(self._instance_id,
-                                 datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'))
-        self.upload_file(file_path=temporary_copy, key=key,
-                         bucket_name=(self.account_id + '-logging'))
-        os.remove(temporary_copy)
+        try:
+            temporary_copy = config.DEFAULT_LOG_FILE + '_copy.log'
+            shutil.copy(config.DEFAULT_LOG_FILE + '.log', temporary_copy)
+            if clean:  # If clean, do not keep the log.
+                os.remove(config.DEFAULT_LOG_FILE + '.log')
+            else:  # If not clean, clear the original.
+                with open(config.DEFAULT_LOG_FILE + '.log') as f:
+                    f.close()
+            key = '{}_{}.log'.format(self._instance_id,
+                                     datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'))
+            self.upload_file(file_path=temporary_copy, key=key,
+                             bucket_name=(self.account_id + '-logging'))
+            os.remove(temporary_copy)
+        except FileNotFoundError:
+            print("There were no more logs to report to S3. Temporary.log was not found.")
 
     async def period_upload_log(self):
         while True:
