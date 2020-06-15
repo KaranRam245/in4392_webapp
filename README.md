@@ -114,4 +114,12 @@ For this step, we assume you have done the previous steps successfully.
 5. To enable for connections to the streamlit, create a new inbound rule in your security group for TCP access with the right port. Default is `8502`.
 
 ### Run the applications
-To run the application, simply run `python src/main.py instance_manager`. Other instances can be called with `python src/main.py <instance_type> <ip>` where `instance_type` is `resource_manager`, `worker`, or `resource_manager` and `ip` is the public ipv4-address of the instance manager.
+To run the application, simply run `python src/main.py instance_manager`. Other instances can be called with `python src/main.py <instance_type> <ip> <Account id>` where `instance_type` is `resource_manager`, `worker`, or `resource_manager`, `ip` is the public ipv4-address of the instance manager, and `Account id` is the id of your AWS account found at https://console.aws.amazon.com/billing/home?#/account.
+
+### Sync logs to own filesystem.
+1. Connect with AWS (do not forget the `aws configure`).
+2. If AWS is not yet installed, do `aws apt-get install awscli`.
+3. Then do `aws s3 sync s3://bucketname /logs`.
+4. Finally do `tar -zcvf logs.tar.gz /logs`
+
+For all you Windows users, these files can be found in `\\wsl$\Ubuntu\home`.

@@ -38,6 +38,7 @@ __pycache__/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+src/aws/utils/bucketname.py
 
 # Generated files
 .idea/**/contentModel.xml
