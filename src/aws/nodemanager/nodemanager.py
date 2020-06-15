@@ -64,7 +64,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
     def process_heartbeat(self, hb, source) -> Packet:
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
-        self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
 
         # TODO: process the heartbeat and take actions which task to send where @Karan.
         # In the heartbeat you could indicate how far the job is, if it is done, etc.
@@ -88,7 +87,8 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         self._tp = taskpool
 
     def event(self, message):
-        pass  # Do something with the heartbeat from the worker.
+        self.send_message(message)
+        log_info("Message sent to Instance Manager: {}".format(message))
 
     def process_command(self, command):
         log_info("Need help with command: {}".format(command))
