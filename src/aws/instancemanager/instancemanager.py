@@ -136,16 +136,21 @@ class Instances:
 
     def start_signal_timedout(self, instance_id):
         signal_time = self._start_signal.get(instance_id, None)
+        current_time = time()
+        diff = signal_time - current_time if signal_time else 999
+        log_info('Last signal_time:{}, time:{}, subtract:{}, {}'.format(signal_time, current_time,
+                                                                        diff,
+                                                                        diff >= config.START_SIGNAL_TIMEOUT))
         if not signal_time:
             return True
-        return (time() - signal_time) >= config.START_SIGNAL_TIMEOUT
+        return (current_time - signal_time) >= config.START_SIGNAL_TIMEOUT
 
     def set_last_start_signal(self, instance_id):
         """
 
         :param instance_id:
         """
-        self._start_signal[instance_id] = round(time())
+        self._start_signal[instance_id] = time()
 
     def clear_time(self, instance_id):
         self._last_heartbeat.pop(instance_id, None)
