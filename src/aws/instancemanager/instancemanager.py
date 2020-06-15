@@ -281,10 +281,13 @@ class NodeScheduler:
                                          InstanceState(InstanceState.STOPPING))
                 self.instances.clear_time(instance_id)
         for idx, instance_id in enumerate(instance_ids):
-            log_metric(
-                {'charged_time': {'instance_id': instance_id,
-                                  'charged': time() - self.instances.charge_time[instance_id]}})
-            del self.instances.charge_time[instance_id]
+            if instance_id in self.instances.charge_time:
+                log_metric(
+                    {'charged_time': {'instance_id': instance_id,
+                                      'charged': time() - self.instances.charge_time[instance_id]}})
+                del self.instances.charge_time[instance_id]
+            else:
+                log_warning("No charge_time available for {}".format(instance_id))
             if instance_types and instance_types[idx] == 'worker':
                 self.workers -= 1
                 log_metric({'workers': self.workers})
