@@ -256,6 +256,7 @@ class NodeScheduler:
             self.instances.set_state(instance_id, instance_type,
                                      InstanceState(InstanceState.PENDING))
         self.instances.charge_time[instance_id] = time()
+        log_info("Charge_time: {}".format(self.instances.charge_time))
         if instance_type == 'worker':
             self.workers += 1
             log_metric({'workers': self.workers})
@@ -303,7 +304,7 @@ class NodeScheduler:
         log_info("Updated instance states from AWS state.")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
-        log_info(self.instances)
+        log_info(str(self.instances))
 
     async def run(self):
         log_info("Running NodeScheduler..")
