@@ -129,7 +129,6 @@ class Instances:
     def set_last_heartbeat(self, heartbeat):
         instance_id = heartbeat['instance_id']
         self._last_heartbeat[instance_id] = heartbeat['time']
-        print("Last heartbeats: {}".format(self._last_heartbeat))
         log_info("Last heartbeats: {}".format(self._last_heartbeat))
 
     def heart_beat_timedout(self, heartbeat_time):
@@ -183,18 +182,14 @@ class NodeScheduler:
             self.update_instances(check=False)
         if self.debug and not self.node_manager_running:
             log_info("Debugging waiting for node manager to start running.")
-            print("Debugging waiting for node manager to start running.")
             return False
         log_info("Initializing nodes..")
-        print("Initializing nodes..")
         if self.instances.has_instance_not_running(instance_type='node_manager'):
             log_info("No node manager running. Initializing startup protocol..")
-            print("No node manager running. Initializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
         if self.instances.has_instance_not_running(instance_type='worker'):
             log_info("No single worker running. Initializing startup protocol..")
-            print("No single worker running. Initializing startup protocol..")
             self.start_worker()  # Require at least one worker.
         return True
 
@@ -210,7 +205,6 @@ class NodeScheduler:
                 command.insert(1, 'git pull')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
             log_info("Sending start command: [{}]: {}.".format(instance_id, command))
-            print("Sending start command: [{}]: {}".format(instance_id, command))
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
                 DocumentName='AWS-RunShellScript',
@@ -239,7 +233,6 @@ class NodeScheduler:
         workers = self.boto.read_ids(self.instance_id, filters=['is_worker', ('is_running', False)])
         if not workers:
             log_info("No more worker instances can be started.")
-            print('No more worker instances can be started.')
             return None
         log_info("Initializing worker.")
         self._init_instance(workers[0], instance_type='workers', wait=False)
@@ -247,7 +240,6 @@ class NodeScheduler:
 
     def _init_instance(self, instance_id, instance_type: str, wait=False):
         log_info("Starting {} instance {}".format(instance_type, instance_id))
-        print("Starting {} instance {}".format(instance_type, instance_id))
         self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
             waiter = self.boto.ec2.get_waiter('instance_running')
@@ -303,14 +295,12 @@ class NodeScheduler:
                 self.instances.has('worker', states) or self.instances.has('node_manager', states)):
             return
         log_info("Updated instance states from AWS state.")
-        print("Updated instance states from AWS state")
         boto_response = self.boto.read(self.instance_id)
         self.instances.update_instance_all(boto_response=boto_response)
-        print(self.instances)
+        log_info(self.instances)
 
     async def run(self):
         log_info("Running NodeScheduler..")
-        print("Running NodeScheduler..")
         sleep_time = config.SERVER_SLEEP_TIME
         update_counter = config.BOTO_UPDATE_SEC
         try:
@@ -319,8 +309,6 @@ class NodeScheduler:
                 log_warning(
                     "Debug enabled and no node manager started yet. "
                     "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
-                print("Debug enabled and no node manager started yet. "
-                      "Waiting {} seconds to retry.".format(config.DEBUG_INIT_RETRY))
                 await asyncio.sleep(config.DEBUG_INIT_RETRY)
                 initialized = self.initialize_nodes(retry=True)
 
@@ -329,14 +317,13 @@ class NodeScheduler:
                 if update_counter <= 0:
                     self.update_instances()
                     update_counter = config.BOTO_UPDATE_SEC
-                    print(self.instances)
 
                 self.check_all_living()
 
                 # Check if some worker is underloaded or overloaded.
                 underloaded = self.timewindow.get_underloaded()
                 overloaded = self.timewindow.get_overloaded()
-                print("Overloaded: {}, Underloaded: {}".format(overloaded, underloaded))
+                log_info("Overloaded: {}, Underloaded: {}".format(overloaded, underloaded))
                 if underloaded:
                     if overloaded:
                         pass  # The workload should be balanced. IM should do nothing.
@@ -390,18 +377,13 @@ class NodeScheduler:
         if not heartbeat and self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
             log_info("No start/timedout signal sent to {}".format(instance))
-            print("No start/timedout signal sent to {}".format(instance))
             log_info("Sent start command to instance {}".format(instance))
-            print("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
         elif heartbeat:
             # The IM has not received a heartbeat for too long.
             log_error("No/timedout heartbeat recorded "
                       "for instance {}: {}".format(instance,
                                                    self.instances.get_last_heartbeat(instance)))
-            print("No/timedout heartbeat recorded "
-                  "for instance {}: {}".format(instance,
-                                               self.instances.get_last_heartbeat(instance)))
             log_metric(
                 {'charged_time': {'instance_id': instance,
                                   'charged': time() - self.instances.charge_time[instance]}})
@@ -424,11 +406,9 @@ class NodeScheduler:
             running_instances = self.running_instances()
         if running_instances:
             log_info("Killing all instances: {}".format(running_instances))
-            print("Killing all instances: {}".format(running_instances))
             self._kill_instance(running_instances, instance_types={})
 
         log_info("Cancelling all commands..")
-        print("Cancelling all commands..")
         for command in self.commands:
             self.boto.ssm.cancel_command(CommandId=command)
         self.cleaned_up = True
