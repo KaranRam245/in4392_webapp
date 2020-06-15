@@ -123,5 +123,3 @@ To run the application, simply run `python src/main.py instance_manager`. Other 
 4. Finally do `tar -zcvf logs.tar.gz /logs`
 
 For all you Windows users, these files can be found in `\\wsl$\Ubuntu\home`.
-
->>>>>>> master
