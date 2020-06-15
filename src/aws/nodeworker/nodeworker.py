@@ -91,7 +91,7 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
-        log_info("Sending message: " + message + ".")
+        log_info("Sending message: {}.".format(message))
         self.send_message(message)
 
     def process_command(self, command: CommandPacket):

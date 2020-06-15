@@ -58,10 +58,12 @@ class Instances:
             return False
         return instance.is_state(state)
 
-    def set_state(self, instance_id, instance_type, state):
+    def set_state(self, instance_id, instance_type, state: InstanceState):
         nodes = self.get_nodes(instance_type)
-        nodes[instance_id] = state
-        log_info("State of instance {} set to {}.".format(instance_id, state))
+        old_state = nodes[instance_id]
+        if state.is_state(old_state):
+            nodes[instance_id] = state
+            log_info("State of instance {} set to {}.".format(instance_id, state))
 
     def set_ip(self, instance_id, ip_address):
         log_info("IP address of {} set to {}.".format(instance_id, ip_address))
@@ -213,13 +215,13 @@ class NodeScheduler:
                 command.insert(1, 'git pull')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
             log_info("Sending start command: [{}]: {}.".format(instance_id, command))
+            self.instances.set_last_start_signal(instance_id)
             response = self.boto.ssm.send_command(
                 InstanceIds=[instance_id],
                 DocumentName='AWS-RunShellScript',
                 Parameters={'commands': [' ; '.join(command)]}
             )
             self.commands.append(response['Command']['CommandId'])
-            self.instances.set_last_start_signal(instance_id)
         except self.boto.ssm.exceptions.InvalidInstanceId:
             log_info("Instance {} [{}] not yet running. Retry later.".format(instance_type, instance_id))
         except Exception as exc:
@@ -281,10 +283,13 @@ class NodeScheduler:
                                          InstanceState(InstanceState.STOPPING))
                 self.instances.clear_time(instance_id)
         for idx, instance_id in enumerate(instance_ids):
-            log_metric(
-                {'charged_time': {'instance_id': instance_id,
-                                  'charged': time() - self.instances.charge_time[instance_id]}})
-            del self.instances.charge_time[instance_id]
+            if instance_id in self.instances.charge_time:
+                log_metric(
+                    {'charged_time': {'instance_id': instance_id,
+                                      'charged': time() - self.instances.charge_time[instance_id]}})
+                del self.instances.charge_time[instance_id]
+            else:
+                log_warning("No charge_time available for {}".format(instance_id))
             if instance_types and instance_types[idx] == 'worker':
                 self.workers -= 1
                 log_metric({'workers': self.workers})
@@ -379,7 +384,7 @@ class NodeScheduler:
         heartbeat_timedout = self.instances.heart_beat_timedout(heartbeat)
         if heartbeat and not heartbeat_timedout:
             self.instances.set_state(instance_id=instance, instance_type=instance_type,
-                                     state=InstanceState.RUNNING)
+                                     state=InstanceState(InstanceState.RUNNING))
             return  # The instance is perfectly fine.
         if not heartbeat and self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
@@ -445,7 +450,7 @@ class NodeMonitor(con.MultiConnectionServer):
         workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
         workers_pending = self._ns.instances.get_all('worker', filter_state=[InstanceState.PENDING])
         response = HeartBeatPacket(instance_id=heartbeat['instance_id'],
-                                   instance_state=InstanceState.RUNNING,
+                                   instance_state=InstanceState(InstanceState.RUNNING),
                                    instance_type='instance_manager',
                                    workers_running=workers_running,
                                    workers_pending=workers_pending)
