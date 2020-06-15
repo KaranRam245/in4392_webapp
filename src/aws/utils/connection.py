@@ -8,7 +8,7 @@ from typing import List
 
 from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
-from aws.resourcemanager.resourcemanager import log_heartbeat, log_info, log_error, log_exception
+from aws.resourcemanager.resourcemanager import log_info, log_error, log_exception
 
 HOST = '0.0.0.0'
 PORT_IM = 8080
