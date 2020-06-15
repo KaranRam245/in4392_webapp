@@ -157,19 +157,21 @@ class ResourceManagerCore(Observable):
                     "There is no key {} in bucket {} so a file cannot be downloaded from it.".format(key, bucket_name))
         log_metric({'download_duration': time() - start_time})
 
-    def upload_log(self, clean):
+    def upload_log(self, clean, im=False):
         try:
             temporary_copy = config.DEFAULT_LOG_FILE + '_copy.log'
             shutil.copy(config.DEFAULT_LOG_FILE + '.log', temporary_copy)
             if clean:  # If clean, do not keep the log.
-                os.remove(config.DEFAULT_LOG_FILE + '.log')
+                if not im:
+                    os.remove(config.DEFAULT_LOG_FILE + '.log')
             else:  # If not clean, clear the original.
                 open(config.DEFAULT_LOG_FILE + '.log', 'w').close()
             key = '{}_{}.log'.format(self._instance_id,
                                      datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'))
             self.upload_file(file_path=temporary_copy, key=key,
                              bucket_name=(self.account_id + '-logging'))
-            os.remove(temporary_copy)
+            if not im:
+                os.remove(temporary_copy)
         except FileNotFoundError:
             print("There were no more logs to report to S3. Temporary.log was not found.")
         except Exception as exc:

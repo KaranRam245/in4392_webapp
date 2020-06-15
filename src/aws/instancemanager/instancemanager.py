@@ -591,7 +591,7 @@ def start_instance(debug=False, git_pull=False):
         for task in tasks:
             task.cancel()
             log_info("Cancelled task {}".format(task))
-        resource_manager.upload_log(clean=True)  # Clean the last logs.
+        resource_manager.upload_log(clean=True, im=True)  # Clean the last logs.
         loop.close()
 
 
