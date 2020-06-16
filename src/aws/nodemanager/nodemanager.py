@@ -105,7 +105,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
             current_task=self._tasks.pop(0)
             packet["task_data"]= current_task.get_task_data()
             current_task.state=TaskState.RUNNING
-            self._running_tasks.append(current_task)
+            self._tasks_running.append(current_task)
             return packet
         else:
             return hb #In case there are no more commands send hb           
@@ -124,7 +124,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
                 current_task=self._tasks.pop(0)
                 packet["task_data"]= current_task.get_task_data()
                 current_task.state=TaskState.RUNNING
-                self._running_tasks.append(current_task)
+                self._tasks_running.append(current_task)
                 return packet
 
 
