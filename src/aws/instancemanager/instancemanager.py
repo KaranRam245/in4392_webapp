@@ -2,7 +2,6 @@
 Module for the Instance Manager.
 """
 import asyncio
-import logging
 import time
 import traceback
 from contextlib import suppress
@@ -12,10 +11,11 @@ from ec2_metadata import ec2_metadata
 
 import aws.utils.config as config
 import aws.utils.connection as con
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, \
+    ResourceManagerCore
 from aws.utils.botoutils import BotoInstanceReader
 from aws.utils.packets import Packet, HeartBeatPacket
 from aws.utils.state import InstanceState
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
 
 
 class Instances:
@@ -424,6 +424,11 @@ class NodeMonitor(con.MultiConnectionServer):
         self._ns = nodescheduler
         self.keep_running = True
         super().__init__(host, port)
+
+    def process_command(self, command, source) -> Packet:
+        log_warning("IM received a command {} from {}. "
+                    "This should not happen!".format(command, source))
+        return command  # The IM should not receive commands.
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
         if heartbeat['instance_type'] == 'node_manager':

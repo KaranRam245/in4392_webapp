@@ -4,18 +4,17 @@ Module for the Resource Manager.
 import asyncio
 import json
 import logging
-import shutil
 import os
+import shutil
 from datetime import datetime
-from pytz import timezone
 
 import boto3
 from botocore.exceptions import ClientError, DataNotFoundError
+from pytz import timezone
 
 import aws.utils.config as config
 from aws.utils.monitor import Observable
 from aws.utils.state import InstanceState
-
 
 # Boolean indicating if the logging is initialized.
 INITIALIZED = False

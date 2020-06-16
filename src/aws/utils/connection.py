@@ -1,14 +1,14 @@
 """
 Module for connections.
 """
-import json
 import asyncio
+import json
 from abc import abstractmethod
 from typing import List
 
+from aws.resourcemanager.resourcemanager import log_info, log_error, log_exception
 from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception
 
 HOST = '0.0.0.0'
 PORT_IM = 8080
@@ -67,7 +67,7 @@ class MultiConnectionServer:
         """
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
-            raise NotImplementedError()  # The server currently does not take commands.
+            return self.process_command(packet, source)
         if isinstance(packet, HeartBeatPacket):
             return self.process_heartbeat(packet, source)
         raise TypeError("Unknown packet found: {}".format(packet['packet_type']))
@@ -75,6 +75,10 @@ class MultiConnectionServer:
     @abstractmethod
     def process_heartbeat(self, heartbeat, source) -> Packet:
         raise NotImplementedError("Server process_heartbeat not implemented yet.")
+
+    @abstractmethod
+    def process_command(self, command, source) -> Packet:
+        raise NotImplementedError("Server process_command not implemented yet.")
 
     async def run(self, reader, writer):
         addr = writer.get_extra_info('peername')
