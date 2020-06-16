@@ -13,11 +13,10 @@ class Parser:
         :return:
         """
         content = []
-        with tarfile.open(filename, 'r', encoding='utf-8') as tar:
+        with tarfile.open(filename, 'r') as tar:
             for member in tar.getmembers():
                 file = tar.extractfile(member)
-                content += file.readlines()
-                print(type(content[0]))
+                content += [line.decode('utf-8') for line in file.readlines()]
         return content
 
     def parse(self, filename):
@@ -27,8 +26,8 @@ class Parser:
         :return: Metrics with corrected times.
         """
         content = self._read_file(filename)
-        with open('test.txt', 'w') as f:
-            f.writelines(content)
+        with open('total_log.txt', 'w') as file:
+            file.writelines(content)
         metric_lines = self._extract_metrics(content)
         grouped_metrics = self.group_metrics(metric_lines)
         corrected_times = self.correct_time(grouped_metrics)
