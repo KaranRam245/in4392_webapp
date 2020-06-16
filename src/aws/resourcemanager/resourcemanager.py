@@ -168,7 +168,7 @@ class ResourceManagerCore(Observable):
                 os.remove(config.DEFAULT_LOG_FILE + '.log')
             else:  # If not clean, clear the original.
                 open(config.DEFAULT_LOG_FILE + '.log', 'w').close()
-            key = '{}_{}{}.log'.format(self._instance_id,
+            key = '{}/{}{}.log'.format(self._instance_id,
                                        datetime.now(timezone('Europe/Amsterdam')).strftime('%Y%m%d%H%M%S'),
                                        '_clean' if clean else '')
             self.upload_file(file_path=temporary_copy, key=key,
