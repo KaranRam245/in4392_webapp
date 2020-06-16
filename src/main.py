@@ -7,7 +7,7 @@ sys.path.append('./src')
 import aws.instancemanager.instancemanager as im
 import aws.nodemanager.nodemanager as nm
 import aws.nodeworker.nodeworker as nw
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception
+from aws.resourcemanager.resourcemanager import log_info, log_error
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
                 print("[ERROR] node managers need the following arguments:\n"
                       "python src/main.py node_manager [IM ip] [NM_instance_id] [account_id]")
                 log_error("Node managers need the following arguments:\n"
-                      "python src/main.py node_manager [IM ip] [NM_instance_id] [account_id]")
+                      "python src/main.py node_manager [IM ip] [NM_instance_id] [account_id]\nOn:{}".format(args))
                 return
             nm.start_instance(im_host=args[2], instance_id=args[3], account_id=args[4])
         elif args[1] == 'worker' or args[0] == 'node_worker':
@@ -51,17 +51,17 @@ def main():
             if len(args) < 6:
                 print("[ERROR] workers need an host address of the Node Manager\n"
                       "and an account_id of the user:\n"
-                      "python src/main.py worker [IM ip] [worker_instance_id] [NM ip] [account_id]")
+                      "python src/main.py worker [IM ip] [worker_instance_id] [account_id] [NM ip]")
                 log_error("Workers need an host address of the Node Manager\n"
                       "and an account_id of the user:\n"
-                      "python src/main.py worker [IM ip] [worker_instance_id] [NM ip] [account_id]")
+                      "python src/main.py worker [IM ip] [worker_instance_id] [account_id] [NM ip]\nOn:{}".format(args))
                 return
-            nw.start_instance(host_im=args[2], host_nm=args[4], instance_id=args[3], account_id=args[5])
+            nw.start_instance(host_im=args[2], instance_id=args[3], account_id=args[4], host_nm=args[5])
         else:
             print('[ERROR] Unknown argument passed to program {}\n'
                   'Expected "instance_manager", "node_manager", or "worker"'.format(args[1]))
             log_error('Unknown argument passed to program {}\n'
-                  'Expected "instance_manager", "node_manager", or "worker"'.format(args[1]))
+                  'Expected "instance_manager", "node_manager", or "worker"\nOn: {}'.format(args[1], args))
     else:
         print(
             'Not enough arguments provided. '

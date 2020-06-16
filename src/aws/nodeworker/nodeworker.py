@@ -4,8 +4,8 @@ Module for the Node Worker.
 import asyncio
 from contextlib import suppress
 
-import aws.utils.config as config
 import aws.utils.connection as con
+import aws.utils.config as config
 from aws.resourcemanager.resourcemanager import log_info, log_error, ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
@@ -91,7 +91,7 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
-        log_info("Sending message: " + message + ".")
+        log_info("Sending message: {}.".format(message))
         self.send_message(message)
 
     def process_command(self, command: CommandPacket):
@@ -102,7 +102,6 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
             log_error("Command 'kill' is not yet implemented.")
             raise NotImplementedError("Client has not yet implemented [kill].")
         log_error("Received unknown command: {}.".format(command['command']))
-        print('Received unknown command: {}'.format(command['command']))
 
 
 def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM, port_nm=con.PORT_NM):

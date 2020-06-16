@@ -4,9 +4,10 @@ Module for the Node Manager.
 import asyncio
 from contextlib import suppress
 
-import aws.utils.config as config
 import aws.utils.connection as con
-from aws.resourcemanager.resourcemanager import log_info, log_warning, ResourceManagerCore
+import aws.utils.config as config
+from aws.resourcemanager.resourcemanager import log_info, log_warning, log_metric, \
+    log_error, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState
@@ -24,7 +25,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._tasks_running = []  # Tasks running.
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
-        self.available_workers = []
+        self.workers_running = []
+        self.workers_pending = []
 
     async def run_task_pool(self):
         """
@@ -59,19 +61,27 @@ class TaskPool(Observable, con.MultiConnectionServer):
                                     instance_state=self._instance_state,
                                     tasks_waiting=len(self._tasks),
                                     tasks_running=len(self._tasks_running))
+        log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
+                    'tasks_running': heartbeat['tasks_running'],
+                    'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
+        # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
+
         if notify:
             self.notify(message=heartbeat)
 
     def process_heartbeat(self, hb, source) -> Packet:
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
-        self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
 
         # TODO: process the heartbeat and take actions which task to send where @Karan.
+        # In the heartbeat you could indicate how far the job is, if it is done, etc.
+        # Based on this task 'state', you could assign new tasks, check if a new task should be
+        # assigned to the worker, if a task should be stolen from the worker, etc.
 
         # TODO: replace the hb below with command packet is work stealing, or new work is assigned.
         return hb  # This value is returned to the worker client.
 
-    def process_command(self, command: CommandPacket):
+    def process_command(self, command: CommandPacket, source):
+        log_info("A client {} send me a command: {}".format(source, command))
         return command # TODO: replace this return. This is called when work is completed by worker.
 
 
@@ -80,23 +90,34 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
     This class is used to monitor the TaskPool and to send heartbeats to the IM.
     """
 
-    def __init__(self, taskpool, host, port, instance_id):
+    def __init__(self, taskpool, host, port):
         Listener.__init__(self)
         con.MultiConnectionClient.__init__(self, host, port)
         self._tp = taskpool
 
     def event(self, message):
-        self.send_message(message)  # TODO process heartbeats and send metrics to IM @Sander.
-        log_info("Message sent to Instance Manager: ")
+        self.send_message(message)
+        log_info("Message sent to Instance Manager: {}".format(message))
 
-    def process_command(self, command):
+    def process_command(self, command) -> Packet:
         log_warning(
-            "TaskPoolMonitor received a command {} from {}. "
-            "This should not happen!".format(command, source))
+            "TaskPoolMonitor received a command {}. "
+            "This should not happen!".format(command))
         return command
 
     def process_heartbeat(self, heartbeat: HeartBeatPacket):
-        self._tp.available_workers = heartbeat['available_workers']
+        if heartbeat['instance_type'] == 'instance_manager':
+            workers_stopped = [worker for worker in
+                               self._tp.workers_running if
+                               worker not in heartbeat['workers_running']]
+            # TODO do something with the workers_stopped. These workers were running before. @Karan.
+            self._tp.workers_running = heartbeat['workers_running']
+            self._tp.workers_pending = heartbeat['workers_pending']
+        else:
+            log_warning(
+                'I received a heartbeat from {} [{}] '
+                'but I do not know what to do with it. HB: {}'.format(
+                    heartbeat['instance_type'], heartbeat['instance_id'], heartbeat))
 
 
 def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=con.PORT_IM,
@@ -107,25 +128,27 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
     log_info("Starting TaskPool with ID: " + instance_id + ".")
     resource_manager = ResourceManagerCore(instance_id=instance_id, account_id=account_id)
     taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
-    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port, instance_id=instance_id)
+    monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
     taskpool.add_listener(monitor)
 
     loop = asyncio.get_event_loop()
     server_core = asyncio.start_server(taskpool.run, nm_host, nm_port, loop=loop)
 
-    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run(), resource_manager.period_upload_log()])
-    loop.run_until_complete(procs)
-
+    procs = asyncio.wait([server_core, taskpool.run_task_pool(), monitor.run(),
+                          resource_manager.period_upload_log()])
     try:
+        loop.run_until_complete(procs)
+
         loop.run_forever()
     except KeyboardInterrupt:
         pass
+    except ConnectionRefusedError as exc:
+        log_error("Could not connect to server {}".format(exc))
     finally:
         tasks = [t for t in asyncio.Task.all_tasks() if t is not
                  asyncio.Task.current_task()]
         for task in tasks:
             task.cancel()
-            with suppress(asyncio.CancelledError):
-                loop.run_until_complete(task)
+            log_info("Cancelled task {}".format(task))
         resource_manager.upload_log(clean=True)
         loop.close()
