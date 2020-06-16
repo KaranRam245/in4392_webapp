@@ -1,6 +1,9 @@
 import json
+import statistics
 import tarfile
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Parser:
@@ -82,28 +85,117 @@ class Parser:
         return metrics
 
     @staticmethod
-    def plot_metrics(metrics):
+    def plot_metrics(metrics, **kwargs):
         """
         Plot the metrics on a graph.
         :param metrics: Metrics to plot.
         """
         for metric, values in metrics.items():
-            plt.plot(*zip(*values), linestyle='-', marker='o')
-            plt.title(metric)
-            plt.show()
+            x_values, y_values = zip(*values)
+            Parser._plot(x_values, y_values, title=metric, **kwargs)
 
     @staticmethod
-    def process(metrics, keys: tuple, func, **kwargs):
+    def _plot(x_values, y_values, title='', xlabel='', ylabel='', int_yticks=False):
+        plt.plot(x_values, y_values, linestyle='-', marker='o')
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        if int_yticks:
+            rnge = range(0, max(y_values) + 1)
+            plt.yticks(ticks=rnge, labels=list(rnge))
+        plt.show()
+
+    @staticmethod
+    def statistics(metrics, rounding=2):
+        for metric, values in metrics.items():
+            _, y_values = zip(*values)
+            print(
+                """Statistics report [{}]:
+                    - Min    : {}
+                    - Q1     : {}
+                    - Average: {}
+                    - Median : {}
+                    - Q3     : {}
+                    - Max    : {}
+                """.format(metric,
+                           round(min(y_values), rounding),
+                           round(np.percentile(y_values, 25), rounding),
+                           round(statistics.mean(y_values), rounding),
+                           round(statistics.median(y_values), rounding),
+                           round(np.percentile(y_values, 75), rounding),
+                           round(max(y_values), rounding)
+                           )
+            )
+
+    @staticmethod
+    def charge_time(metrics, rounding=2):
+        for _, values in metrics.items():
+            _, y_values = zip(*values)
+            charge_times = {}
+            for y_value in y_values:
+                instance_id = y_value['instance_id']
+                charged = y_value['charged']
+                charge_times[instance_id] = charge_times.get(instance_id, 0) + charged
+            total_time = round(sum(charge_times.values()), rounding)
+            charge_times = {key: round(value, rounding) for key, value in charge_times.items()}
+            print("Charge time:\n  - Total: {} seconds\n  - Individual: {}".format(total_time,
+                                                                                   charge_times))
+
+    @staticmethod
+    def plot_heartbeats(metrics, hb_keys, ylabels):
+        for _, values in metrics.items():  # This loop always runs once (metrics=['heartbeat']).
+            _, heartbeats = zip(*values)
+            heartbeats = [(heartbeat['time'], heartbeat['instance_id'], heartbeat) for heartbeat in
+                          heartbeats]
+            heartbeat_dict = {}  # Heartbeats grouped per instance.
+            for time, instance_id, heartbeat in heartbeats:
+                heartbeat_dict.setdefault(instance_id, []).append((time, heartbeat))
+
+            for idx, key in enumerate(hb_keys):
+                lines = []
+                for instance_id, values in heartbeat_dict.items():
+                    metric_values = [(time, heartbeat[key]) for time, heartbeat in values]
+                    lines.append((instance_id, metric_values))
+                Parser._heartbeat_lines(lines, title=key, ylabel=ylabels[idx])
+
+    @staticmethod
+    def _heartbeat_lines(lines, title='', ylabel=''):
+        for instance_id, values in lines:
+            times, y_values = zip(*values)
+            plt.plot(times, y_values, linestyle='-', marker='o', label=instance_id)
+        plt.title(title)
+        plt.xlabel("Time (in seconds)")
+        plt.ylabel(ylabel)
+        plt.legend()
+        plt.show()
+
+    @staticmethod
+    def process(metrics, keys: list, func, **kwargs):
+        global PROCESSED
         metrics = {key: value for key, value in metrics.items() if key in keys}
+        func(metrics, **kwargs)
+        for key in keys:
+            PROCESSED[key] = True
+
+
+PROCESSED = {}
 
 
 def main():
+    global PROCESSED
     parser = Parser()
     metrics = parser.parse('instance_manager.tgz')
     # pprint.PrettyPrinter(indent=4).pprint(metrics)
-    to_process = dict.fromkeys(list(metrics.keys()), False)
-    print("Metrics processed: {}".format(to_process))
-    parser.plot_metrics(metrics)
+    PROCESSED = dict.fromkeys(list(metrics.keys()), False)
+    # parser.process(metrics, ['workers'], parser.plot_metrics,
+    #                xlabel='Time (in seconds)', ylabel='Workers running',
+    #                int_yticks=True)
+    # parser.process(metrics, ['upload_duration'], parser.statistics)
+    # parser.process(metrics, ['charged_time'], parser.charge_time)
+    parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
+                   hb_keys=['cpu_usage', 'mem_usage'],
+                   ylabels=['CPU usage (in %)', 'RAM usage (in %)'])
+    print("Metrics processed: {}".format(PROCESSED))
 
 
 if __name__ == "__main__":
