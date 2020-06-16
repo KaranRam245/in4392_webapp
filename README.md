@@ -120,6 +120,6 @@ To run the application, simply run `python src/main.py instance_manager`. Other 
 1. Connect with AWS (do not forget the `aws configure`).
 2. If AWS is not yet installed, do `aws apt-get install awscli`.
 3. Then do `aws s3 sync s3://bucketname /logs`.
-4. Finally do `tar -zcvf logs.tar.gz /logs`
+4. Finally do `tar -zcvf logs.tgz /logs/*`
 
 For all you Windows users, these files can be found in `\\wsl$\Ubuntu\home`.

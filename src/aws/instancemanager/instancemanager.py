@@ -430,6 +430,11 @@ class NodeMonitor(con.MultiConnectionServer):
         self._ns = nodescheduler
         super().__init__(host, port)
 
+    def process_command(self, command, source) -> Packet:
+        log_warning("IM received a command {} from {}. "
+                    "This should not happen!".format(command, source))
+        return command  # The IM should not receive commands.
+
     def process_heartbeat(self, heartbeat, source) -> Packet:
         self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
         if heartbeat['instance_type'] == 'node_manager':
