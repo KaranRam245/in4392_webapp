@@ -7,14 +7,14 @@ Create an AWS account and verify your account. After that we create an instance 
 ### Connect to an AWS instance
 1. Create a security group with the following inboud rules. The distinction `Anywhere/Your IP` should in this development phase be `Your IP`.
 
-| HTTP       | TCP | 80   | Source           | HTTP anywhere |
-|------------|-----|------|------------------|---------------|
-| HTTP       | TCP | 80   | Anywhere/Your IP         | HTTP anywhere |
-| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP | Streamlit TCP |
-| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP | Streamlit TCP |
-| Custom TCP | TCP | 8080 | Public IPv4 of each instance | Connection to IM |
-| Custom TCP | TCP | 8081 | Public IPv4 of each instance | Connection to NM |
-| SSH        | TCP | 22   | Your IP          | SSH access    |
+| HTTP       | TCP | 80        | Source                       | HTTP anywhere    |
+|:-----------|:----|:----------|:-----------------------------|:-----------------|
+| HTTP       | TCP | 80        | Anywhere/Your IP             | HTTP anywhere    |
+| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP             | Streamlit TCP    |
+| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP             | Streamlit TCP    |
+| Custom TCP | TCP | 8080      | Public IPv4 of each instance | Connection to IM |
+| Custom TCP | TCP | 8081      | Public IPv4 of each instance | Connection to NM |
+| SSH        | TCP | 22        | Your IP                      | SSH access       |
 
 2. (Optional) Create an Elastic IP to remove the need for a long DNS name.
 3. Create an SSH key pair and save it on a secure location.
