@@ -1,5 +1,4 @@
 import json
-import pprint
 import tarfile
 import matplotlib.pyplot as plt
 
