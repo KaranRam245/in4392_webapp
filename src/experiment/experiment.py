@@ -1,4 +1,5 @@
 import json
+import pprint
 import tarfile
 import matplotlib.pyplot as plt
 
@@ -92,11 +93,17 @@ class Parser:
             plt.title(metric)
             plt.show()
 
+    @staticmethod
+    def process(metrics, keys: tuple, func, **kwargs):
+        metrics = {key: value for key, value in metrics.items() if key in keys}
+
 
 def main():
     parser = Parser()
     metrics = parser.parse('instance_manager.tgz')
-    print(metrics)
+    # pprint.PrettyPrinter(indent=4).pprint(metrics)
+    to_process = dict.fromkeys(list(metrics.keys()), False)
+    print("Metrics processed: {}".format(to_process))
     parser.plot_metrics(metrics)
 
 
