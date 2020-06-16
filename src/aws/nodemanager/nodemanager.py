@@ -20,15 +20,18 @@ class TaskPool(Observable, con.MultiConnectionServer):
         Observable.__init__(self)
         con.MultiConnectionServer.__init__(self, host, port)
         self._tasks = []
+        self._running_tasks=[]
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
     
     def create_full_taskpool(self):
         imported_csv=pd.read_csv(os.path.join("src","data","Input.csv"))
         for row in imported_csv.iterrows():
+            packet= CommandPacket()
             task=Task(row["Input"],0)
-            time=row["Time"]
-            self._tasks.append((task,time))
+            #time=row["Time"]     #!Is de time nog nodig in dit geval
+            task.state=TaskState.READY
+            self._tasks.append(task)
         
 
     async def run_task_pool(self):
@@ -63,13 +66,30 @@ class TaskPool(Observable, con.MultiConnectionServer):
     def process_heartbeat(self, hb, source) -> Packet:
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
         self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
-
+        if len(self._tasks)>0:  #If there are tasks in the taskpool send a new command to the worker
+            packet=CommandPacket(command="task")
+            current_task=self._tasks.pop(0)
+            packet["task_data"]= current_task.get_task_data()
+            current_task.state=TaskState.RUNNING
+            self._running_tasks.append(current_task)
+            return packet
+        else:
+            return hb #In case there are no more commands send hb           
         # TODO: process the heartbeat and take actions which task to send where @Karan.
 
-        return hb  # This value is returned to the worker client.
+        # This value is returned to the worker client.
 
     def process_command(self, command: CommandPacket):
-        print("A client send me a command: {}".format(command))
+        if command["command"]=="done":
+            
+            if len(self._tasks)>0:  #If there are tasks in the taskpool send a new command to the worker
+                packet=CommandPacket(command="task")
+                current_task=self._tasks.pop(0)
+                packet["task_data"]= current_task.get_task_data()
+                current_task.state=TaskState.RUNNING
+                self._running_tasks.append(current_task)
+                return packet
+
 
 
 class TaskPoolMonitor(Listener, con.MultiConnectionClient):

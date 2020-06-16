@@ -54,6 +54,10 @@ class WorkerCore(Observable, con.MultiConnectionClient):
     async def process(self):
         """
         Start function for the WorkerCore.
+
+        return:
+            np.array
+                Binary 1x6 Numpy array containing the results of the prediction i.e. [0,1,1,0,1,1]
         """
         try:
             while True:
@@ -63,11 +67,13 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     #     file_path=self.current_task.file_path,
                     #     key=self.current_task.key
                     # )
-                    input_data=self.current_task(0).get_task_data()
-                    input_sequences= Tokenize.tokenize_text(os.path.join("models","tokenizer_20000.pickle"),input_data)
-                    model=load_model(os.path.join("models","Senti.h5"))
-                    labels=model.predict(input_sequences)
+                    input_data=self.current_task["task_data"]
+                    input_sequences= Tokenize.tokenize_text(os.path.join("src","aws","nodeworker","tokenizer_20000.pickle"),input_data) 
+                    model=load_model(os.path.join("src","aws","nodeworker","Senti.h5")) 
+                    labels=model.predict(input_sequences) 
 
+                    message=CommandPacket(command="done")
+                    message["labels"]=labels
                     self.send_message(message)
                     self.current_task = None
                 await asyncio.sleep(1)
