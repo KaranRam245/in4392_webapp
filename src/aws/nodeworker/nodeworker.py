@@ -2,14 +2,18 @@
 Module for the Node Worker.
 """
 import asyncio
+import os
 from contextlib import suppress
 
-import aws.utils.connection as con
+from tensorflow.keras.models import load_model
+
 import aws.utils.config as config
+import aws.utils.connection as con
 from aws.resourcemanager.resourcemanager import log_info, log_error, ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
+from src.data import Tokenize
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
@@ -47,20 +51,38 @@ class WorkerCore(Observable, con.MultiConnectionClient):
     async def process(self):
         """
         Start function for the WorkerCore.
+
+        return:
+            np.array
+                Binary 1x6 Numpy array containing the results of the prediction i.e. [0,1,1,0,1,1]
         """
         try:
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
+
                     log_info("Downloading File " + self.current_task.file_path + ".")
                     file = self.storage_connector.download_file(
                         file_path=self.current_task.file_path,
                         key=self.current_task.key
                     )
                     log_info("Downloaded file " + self.current_task.file_path + ".")
+                    # file = self.storage_connector.download_file(
+                    #     file_path=self.current_task.file_path,
+                    #     key=self.current_task.key
+                    # )
+                    input_data=self.current_task["task_data"]
+                    input_sequences= Tokenize.tokenize_text(os.path.join("src","aws","nodeworker","tokenizer_20000.pickle"),input_data) 
+                    model=load_model(os.path.join("src","aws","nodeworker","Senti.h5")) 
+                    labels=model.predict(input_sequences) 
+
+                    message=CommandPacket(command="done")
+                    message["labels"]=labels
+                    self.send_message(message)
                     # TODO: Process the file! @Karan
 
                     # self.send_message(message)
+
                     self.current_task = None
                 await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
@@ -104,7 +126,8 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         log_error("Received unknown command: {}.".format(command['command']))
 
 
-def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM, port_nm=con.PORT_NM):
+def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM,
+                   port_nm=con.PORT_NM):
     task_queue = []
     storage_connector = ResourceManagerCore(account_id=account_id, instance_id=instance_id)
     log_info("Starting WorkerCore with instance id:" + instance_id + ".")
