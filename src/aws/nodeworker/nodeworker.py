@@ -61,23 +61,23 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
 
-                    log_info("Downloading File " + self.current_task.file_path + ".")
-                    file = self.storage_connector.download_file(
-                        file_path=self.current_task.file_path,
-                        key=self.current_task.key
-                    )
-                    log_info("Downloaded file " + self.current_task.file_path + ".")
+                    # log_info("Downloading File " + self.current_task.file_path + ".")
                     # file = self.storage_connector.download_file(
                     #     file_path=self.current_task.file_path,
                     #     key=self.current_task.key
                     # )
-                    input_data=self.current_task["task_data"]
+                    # log_info("Downloaded file " + self.current_task.file_path + ".")
+                    input_data=self.current_task["task"].get_task_data()
                     input_sequences= Tokenize.tokenize_text(os.path.join("src","aws","nodeworker","tokenizer_20000.pickle"),input_data) 
                     model=load_model(os.path.join("src","aws","nodeworker","Senti.h5")) 
                     labels=model.predict(input_sequences) 
 
+                    # Send command with completed task, results and instance id completed
                     message=CommandPacket(command="done")
                     message["labels"]=labels
+                    message["instance_id"]=self._instance_id
+                    message['task']=current_task["task"]
+
                     self.send_message(message)
                     # TODO: Process the file! @Karan
 
