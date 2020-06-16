@@ -156,12 +156,15 @@ class Parser:
                 for instance_id, values in heartbeat_dict.items():
                     metric_values = [(time, heartbeat[key]) for time, heartbeat in values]
                     lines.append((instance_id, metric_values))
-                Parser._heartbeat_lines(lines, title=key, ylabel=ylabels[idx])
+                flat_lines = [item for sublist in [line for _, line in lines] for item in sublist]
+                min_time = min([time for time, _ in flat_lines])
+                Parser._heartbeat_lines(lines, min_time=min_time, title=key, ylabel=ylabels[idx])
 
     @staticmethod
-    def _heartbeat_lines(lines, title='', ylabel=''):
+    def _heartbeat_lines(lines, min_time, title='', ylabel=''):
         for instance_id, values in lines:
             times, y_values = zip(*values)
+            times = [time - min_time for time in times]
             plt.plot(times, y_values, linestyle='-', marker='o', label=instance_id)
         plt.title(title)
         plt.xlabel("Time (in seconds)")
