@@ -2,23 +2,18 @@
 Module for the Node Worker.
 """
 import asyncio
-import logging
+import os
 from contextlib import suppress
 
-import aws.utils.connection as con
-import aws.utils.config as config
-
-from src.models.Senti import Senti
-from src.data.Glove import Glove
-from src.data import Tokenize
 from tensorflow.keras.models import load_model
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
+
+import aws.utils.config as config
+import aws.utils.connection as con
+from aws.resourcemanager.resourcemanager import log_info, log_error, ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
-from src.aws.utils.state import TaskState
-from src.aws.nodemanager.nodemanager import Task
-import os
+from src.data import Tokenize
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
@@ -61,7 +56,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.pop(0)
-                    
+
                     log_info("Downloading File " + self.current_task.file_path + ".")
                     file = self.storage_connector.download_file(
                         file_path=self.current_task.file_path,
@@ -72,10 +67,11 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     #     file_path=self.current_task.file_path,
                     #     key=self.current_task.key
                     # )
-                    input_data=self.current_task(0).get_task_data()
-                    input_sequences= Tokenize.tokenize_text(os.path.join("models","tokenizer_20000.pickle"),input_data)
-                    model=load_model(os.path.join("models","Senti.h5"))
-                    labels=model.predict(input_sequences)
+                    input_data = self.current_task(0).get_task_data()
+                    input_sequences = Tokenize.tokenize_text(
+                        os.path.join("models", "tokenizer_20000.pickle"), input_data)
+                    model = load_model(os.path.join("models", "Senti.h5"))
+                    labels = model.predict(input_sequences)
 
                     self.send_message(message)
                     # TODO: Process the file! @Karan
@@ -126,7 +122,8 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         print('Received unknown command: {}'.format(command['command']))
 
 
-def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM, port_nm=con.PORT_NM):
+def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM,
+                   port_nm=con.PORT_NM):
     task_queue = []
     storage_connector = ResourceManagerCore(account_id=account_id, instance_id=instance_id)
     log_info("Starting WorkerCore with instance id:" + instance_id + ".")

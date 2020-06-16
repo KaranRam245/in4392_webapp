@@ -1,7 +1,6 @@
 from tensorflow.keras import Model
+from tensorflow.keras.activations import sigmoid
 from tensorflow.keras.layers import Embedding, Bidirectional, GlobalMaxPool1D, Dense, LSTM
-from tensorflow.keras.activations import relu, sigmoid
-from tensorflow.keras.callbacks import ModelCheckpoint
 
 
 class Senti(Model):

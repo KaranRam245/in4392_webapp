@@ -1,7 +1,7 @@
 import os
-import numpy as np
-import pandas as pd
 import pickle
+
+import pandas as pd
 from tensorflow.keras.preprocessing import text, sequence
 
 
@@ -23,9 +23,9 @@ def train_tokenizer(filePath, maxVocabSize, maxSequenceLength):
 
     return data, targets, tokenizer.word_index
 
-def tokenize_text(tokenizer_path,text):
 
+def tokenize_text(tokenizer_path, text):
     with open(tokenizer_path) as handle:
-        tokenizer=pickle.load(tokenizer_path)
-        sequences=tokenizer.texts_to_sequences(text)
-        padded_sequences=sequence.pad_sequences(sequences,100)
+        tokenizer = pickle.load(tokenizer_path)
+        sequences = tokenizer.texts_to_sequences(text)
+        padded_sequences = sequence.pad_sequences(sequences, 100)
