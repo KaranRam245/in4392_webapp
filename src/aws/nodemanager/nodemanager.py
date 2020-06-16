@@ -156,7 +156,9 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
 
 
 class Task:
-    '''Task contains all information with regards to a tasks in the TaskPool'''
+    """
+    Task contains all information with regards to a tasks in the TaskPool
+    """
 
     TEXT = 0
     CSV = 1
