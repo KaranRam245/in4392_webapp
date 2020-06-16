@@ -7,14 +7,14 @@ Create an AWS account and verify your account. After that we create an instance 
 ### Connect to an AWS instance
 1. Create a security group with the following inboud rules. The distinction `Anywhere/Your IP` should in this development phase be `Your IP`.
 
-| HTTP       | TCP | 80   | Source           | HTTP anywhere |
-|------------|-----|------|------------------|---------------|
-| HTTP       | TCP | 80   | Anywhere/Your IP         | HTTP anywhere |
-| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP | Streamlit TCP |
-| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP | Streamlit TCP |
-| Custom TCP | TCP | 8080 | Public IPv4 of each instance | Connection to IM |
-| Custom TCP | TCP | 8081 | Public IPv4 of each instance | Connection to NM |
-| SSH        | TCP | 22   | Your IP          | SSH access    |
+| HTTP       | TCP | 80        | Source                       | HTTP anywhere    |
+|:-----------|:----|:----------|:-----------------------------|:-----------------|
+| HTTP       | TCP | 80        | Anywhere/Your IP             | HTTP anywhere    |
+| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP             | Streamlit TCP    |
+| Custom TCP | TCP | 8501/8502 | Anywhere/Your IP             | Streamlit TCP    |
+| Custom TCP | TCP | 8080      | Public IPv4 of each instance | Connection to IM |
+| Custom TCP | TCP | 8081      | Public IPv4 of each instance | Connection to NM |
+| SSH        | TCP | 22        | Your IP                      | SSH access       |
 
 2. (Optional) Create an Elastic IP to remove the need for a long DNS name.
 3. Create an SSH key pair and save it on a secure location.
@@ -114,4 +114,12 @@ For this step, we assume you have done the previous steps successfully.
 5. To enable for connections to the streamlit, create a new inbound rule in your security group for TCP access with the right port. Default is `8502`.
 
 ### Run the applications
-To run the application, simply run `python src/main.py instance_manager`. Other instances can be called with `python src/main.py <instance_type> <ip>` where `instance_type` is `resource_manager`, `worker`, or `resource_manager` and `ip` is the public ipv4-address of the instance manager.
+To run the application, simply run `python src/main.py instance_manager`. Other instances can be called with `python src/main.py <instance_type> <ip> <Account id>` where `instance_type` is `resource_manager`, `worker`, or `resource_manager`, `ip` is the public ipv4-address of the instance manager, and `Account id` is the id of your AWS account found at https://console.aws.amazon.com/billing/home?#/account.
+
+### Sync logs to own filesystem.
+1. Connect with AWS (do not forget the `aws configure`).
+2. If AWS is not yet installed, do `aws apt-get install awscli`.
+3. Then do `aws s3 sync s3://bucketname /logs`.
+4. Finally do `tar -zcvf logs.tgz /logs/*`
+
+For all you Windows users, these files can be found in `\\wsl$\Ubuntu\home`.

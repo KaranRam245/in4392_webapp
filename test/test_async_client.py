@@ -1,8 +1,11 @@
 import asyncio
 import sys
 
+import boto3
 from aws.utils.packets import HeartBeatPacket
 from aws.utils.connection import encode_packet, decode_packet
+import logging
+import ResourceManagerCore
 
 
 class EchoClient:
@@ -49,14 +52,21 @@ class EchoClient:
     def close_client(self):
         self.keep_running = False
 
-
-if __name__ == "__main__":
+def main():
     args = list(sys.argv)
     if len(args) < 2:
         print(args)
         args.append('127.0.0.1')
+    logging.basicConfig(filename='example.log', level=logging.DEBUG)
+    logging.debug('This message should go to the log file')
+    logging.info('So should this')
+    logging.warning('And this, too')
     loop = asyncio.get_event_loop()
     echoclient = EchoClient(args[1], 8080)
     procs = asyncio.wait([echoclient.tcp_echo_client(), echoclient.keep_doing_stuff()])
     loop.run_until_complete(procs)
     loop.close()
+
+
+if __name__ == "__main__":
+    main()

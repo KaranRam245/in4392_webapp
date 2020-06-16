@@ -20,6 +20,8 @@ class State(ABC):
         self._state = state
 
     def is_state(self, state) -> bool:
+        if isinstance(state, InstanceState):
+            return self._state == state._state
         return self._state == state
 
     def is_any(self, states: Iterable[int]) -> bool:
@@ -115,14 +117,15 @@ class InstanceState(State):
         raise Exception(
             "This state does not seem to exist for InstanceState: {}".format(state_to_map))
 
+
 class TaskState(State):
     '''
     Class for the indication of the current state of a task
     '''
-    UPLOADING=0
-    READY=1
-    RUNNING=2
-    DONE=3
+    UPLOADING = 0
+    READY = 1
+    RUNNING = 2
+    DONE = 3
 
     def __init__(self, state):
         """
