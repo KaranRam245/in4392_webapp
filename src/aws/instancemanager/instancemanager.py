@@ -118,7 +118,7 @@ class Instances:
         return instance_id in nodes
 
     def __str__(self):
-        return "All instances:\n" \
+        return "All instances:" \
                "  node_managers: {}" \
                "  workers: {}".format(str(self._node_managers), str(self._workers))
 
