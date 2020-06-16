@@ -2,12 +2,11 @@
 Module for the Node Manager.
 """
 import asyncio
-import logging
 from contextlib import suppress
 
-import aws.utils.connection as con
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
+import aws.utils.connection as con
+from aws.resourcemanager.resourcemanager import log_info, log_warning, ResourceManagerCore
 from aws.utils.monitor import Listener, Observable
 from aws.utils.packets import HeartBeatPacket, CommandPacket, Packet
 from aws.utils.state import InstanceState

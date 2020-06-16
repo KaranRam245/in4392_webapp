@@ -2,12 +2,11 @@
 Module for the Node Worker.
 """
 import asyncio
-import logging
 from contextlib import suppress
 
-import aws.utils.connection as con
 import aws.utils.config as config
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception, ResourceManagerCore
+import aws.utils.connection as con
+from aws.resourcemanager.resourcemanager import log_info, log_error, ResourceManagerCore
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState

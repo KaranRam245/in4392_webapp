@@ -1,14 +1,14 @@
 """
 Module for connections.
 """
-import json
 import asyncio
+import json
 from abc import abstractmethod
 from typing import List
 
+from aws.resourcemanager.resourcemanager import log_info, log_error, log_exception
 from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
-from aws.resourcemanager.resourcemanager import log_info, log_warning, log_error, log_exception
 
 HOST = '0.0.0.0'
 PORT_IM = 8080
