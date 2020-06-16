@@ -437,20 +437,18 @@ class NodeMonitor(con.MultiConnectionServer):
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
         self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
+        log_metric({'heartbeat': heartbeat})
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
             self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
-            log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
-                        'tasks_running': heartbeat['tasks_running'],
-                        'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
-            return self._generate_nm_response(heartbeat)
-        elif heartbeat['instance_type'] == 'worker':
+            return self._generate_nm_response()
+        if heartbeat['instance_type'] == 'worker':
             state = self._ns.instances.get_nodes('worker')[heartbeat['instance_id']]
             if state.is_state(InstanceState.RUNNING):
                 self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
             return heartbeat
 
-    def _generate_nm_response(self, heartbeat):
+    def _generate_nm_response(self):
         workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
         workers_pending = self._ns.instances.get_all('worker', filter_state=[InstanceState.PENDING])
         response = HeartBeatPacket(instance_id='instance_manager',
@@ -458,9 +456,10 @@ class NodeMonitor(con.MultiConnectionServer):
                                    instance_type='instance_manager',
                                    workers_running=workers_running,
                                    workers_pending=workers_pending)
-        log_metric({'im_heartbeat': HeartBeatPacket(instance_id='instance_manager',
-                                                    instance_state=InstanceState(InstanceState.RUNNING),
-                                                    instance_type='instance_manager')})
+        log_metric({'heartbeat':
+                        HeartBeatPacket(instance_id='instance_manager',
+                                        instance_state=InstanceState(InstanceState.RUNNING),
+                                        instance_type='instance_manager')})
         return response
 
 
