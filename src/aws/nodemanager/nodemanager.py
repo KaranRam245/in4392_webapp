@@ -21,7 +21,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
     def __init__(self, instance_id, host, port):
         Observable.__init__(self)
         con.MultiConnectionServer.__init__(self, host, port)
-        self._tasks = []
+        self._tasks = []  # Available tasks.
+        self._tasks_running = []  # Tasks running.
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
         self.available_workers = []
@@ -33,6 +34,11 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
+
+                # TODO: process for keeping track of work.
+                # Based on a buffer, decisions can be made. Whenever the process_heartbeat comes
+                # in from the desired worker, the task can be assigned/stolen.
+
                 await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
             pass
@@ -53,8 +59,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
                                     instance_type='node_manager',
                                     instance_state=self._instance_state,
                                     tasks_waiting=len(self._tasks),
-                                    tasks_running=len(self._tasks))
-        # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
+                                    tasks_running=len(self._tasks_running))
         if notify:
             self.notify(message=heartbeat)
 
@@ -64,10 +69,11 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
         # TODO: process the heartbeat and take actions which task to send where @Karan.
 
+        # TODO: replace the hb below with command packet is work stealing, or new work is assigned.
         return hb  # This value is returned to the worker client.
 
     def process_command(self, command: CommandPacket):
-        print("A client send me a command: {}".format(command))
+        return command # TODO: replace this return. This is called when work is completed by worker.
 
 
 class TaskPoolMonitor(Listener, con.MultiConnectionClient):
@@ -85,7 +91,10 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
         log_info("Message sent to Instance Manager: ")
 
     def process_command(self, command):
-        print("Need help with command: {}".format(command))
+        log_warning(
+            "TaskPoolMonitor received a command {} from {}. "
+            "This should not happen!".format(command, source))
+        return command
 
     def process_heartbeat(self, heartbeat: HeartBeatPacket):
         self._tp.available_workers = heartbeat['available_workers']

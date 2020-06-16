@@ -425,6 +425,11 @@ class NodeMonitor(con.MultiConnectionServer):
         self.keep_running = True
         super().__init__(host, port)
 
+    def process_command(self, command, source) -> Packet:
+        log_warning("IM received a command {} from {}. "
+                    "This should not happen!".format(command, source))
+        return command  # The IM should not receive commands.
+
     def process_heartbeat(self, heartbeat, source) -> Packet:
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
