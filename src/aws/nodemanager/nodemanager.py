@@ -24,10 +24,11 @@ class TaskPool(Observable, con.MultiConnectionServer):
         Observable.__init__(self)
         con.MultiConnectionServer.__init__(self, host, port)
         self._tasks = []  # Available tasks.
-        self._tasks_running = []  # Tasks running.
+        self._tasks_running = [] # Tasks running.
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
         self._task_assignment={}
+        self._task_processing={}
         self.workers_running = []
         self.workers_pending = []
 
@@ -61,7 +62,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
                 remainders_added=0
                 for worker in self.available_workers:
                     if remaining_tasks != remainders_added:
-                        self._task_assignment[worker]=self._tasks[first_assignment:first_assignment+task_per_worker+1]
+                        self._task_assignment[worker]={self._tasks[first_assignment:first_assignment+task_per_worker+1]}
                         first_assignment+=task_per_worker+1
                         remainders_added+=1
                     else:
@@ -91,6 +92,15 @@ class TaskPool(Observable, con.MultiConnectionServer):
         :return:
         """
         raise NotImplementedError()
+    
+    def task_steal_contender(self):
+        """Returns the worker from which a task can be stolen"""
+        assignments=[]
+        for worker in self._task_assignment.keys():
+            assignments.append(len(self._task_assignment[worker]))
+        
+        return self._task_assignment.keys()[assignments.index(max(assignments))]
+
 
     def generate_heartbeat(self, notify=True):
         """
@@ -113,15 +123,35 @@ class TaskPool(Observable, con.MultiConnectionServer):
     def process_heartbeat(self, hb, source) -> Packet:
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
         self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
+        if hb['instance_id'] in self._task_assignment.keys():
+            packet=CommandPacket(command="task")
+            new_task=self._task_assignment[hb['instance_id']].pop(0)
+            packet["task_data"]= new_task.get_task_data()
+            new_task.state=TaskState.RUNNING
+            self._task_processing[hb['instance_id']]=new_task
+            return packet
+       
+        elif not hb['instance_id'] in self._task_assignment.keys():
+
+            packet=CommandPacket(command="task")
+            stolen_task=self._task_assignment[hb[self.task_steal_contender()]].pop(0)
+            self._task_assignment[hb['instance_id']]=[stolen_task]
+            packet["task_data"]= stolen_task.get_task_data()
+            new_task.state=TaskState.RUNNING
+            self._task_processing[hb['instance_id']]=stolen_task
+            return packet
+
         if len(self._tasks)>0:  #If there are tasks in the taskpool send a new command to the worker
             packet=CommandPacket(command="task")
             current_task=self._tasks.pop(0)
             packet["task_data"]= current_task.get_task_data()
             current_task.state=TaskState.RUNNING
-            self._tasks_running.append(current_task)
+            self._task_processing.append(current_task)
             return packet
         else:
-            return hb #In case there are no more commands send hb           
+            return hb 
+            
+            #In case there are no more commands send hb           
         # TODO: process the heartbeat and take actions which task to send where @Karan.
         # In the heartbeat you could indicate how far the job is, if it is done, etc.
         # Based on this task 'state', you could assign new tasks, check if a new task should be
