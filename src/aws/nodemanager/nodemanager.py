@@ -27,6 +27,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._tasks_running = []  # Tasks running.
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+        self._task_assignment={}
         self.workers_running = []
         self.workers_pending = []
 
@@ -53,7 +54,19 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
-
+                number_of_workers=len(self.available_workers)
+                remaining_tasks=len(self._tasks)%number_of_workers
+                task_per_worker=round((len(self._tasks)-remaining_tasks)/number_of_workers)
+                first_assignment=0
+                remainders_added=0
+                for worker in self.available_workers:
+                    if remaining_tasks != remainders_added:
+                        self._task_assignment[worker]=self._tasks[first_assignment:first_assignment+task_per_worker+1]
+                        first_assignment+=task_per_worker+1
+                        remainders_added+=1
+                    else:
+                        self._task_assignment[worker]=self._tasks[first_assignment:first_assignment+task_per_worker]
+                        first_assignment+=task_per_worker
                 # TODO: divide the tasks here. @Karan (see below)
                 """
                 Send them to workers. The available workers are in 
