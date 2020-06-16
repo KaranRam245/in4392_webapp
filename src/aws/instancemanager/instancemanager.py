@@ -202,7 +202,7 @@ class NodeScheduler:
                 # If there are more node managers, one could use a smarter method to divide workers.
                 command[1] += ' {}'.format(self.instances.get_ip(node_manager_ids[0]))
             if self.git_pull:
-                command.insert(1, 'git fetch origin')
+                command.insert(1, 'git fetch --all')
                 command.insert(2, 'git checkout {}'.format(self.git_pull))
                 command.insert(3, 'git pull')
             log_info("Sending start command: [{}]: {}.".format(instance_id, command))
