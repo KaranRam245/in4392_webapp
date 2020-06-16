@@ -435,6 +435,9 @@ class NodeMonitor(con.MultiConnectionServer):
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
             self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
+            log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
+                        'tasks_running': heartbeat['tasks_running'],
+                        'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
             return self._generate_nm_response(heartbeat)
         elif heartbeat['instance_type'] == 'worker':
             state = self._ns.instances.get_nodes('worker')[heartbeat['instance_id']]
