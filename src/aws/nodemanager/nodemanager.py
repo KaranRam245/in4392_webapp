@@ -60,6 +60,9 @@ class TaskPool(Observable, con.MultiConnectionServer):
                 self.generate_heartbeat()
 
                 while self.tasks:
+                    if not (self._workers_running + self._workers_pending):
+                        log_info("Currently, there are no workers to give work to.")
+                        break  # If there are currently no workers to give work to, wait.
                     task_per_worker = {key: len(value) for key, value in
                                        self.task_assignment.items()}
 
@@ -71,13 +74,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
                 await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
             pass
-
-    def add_task(self, task):
-        """
-        Add a new task to the TaskPool.
-        :return:
-        """
-        raise NotImplementedError()
 
     def steal_task(self):
         """
