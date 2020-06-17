@@ -484,9 +484,12 @@ class TimeWindow:
         Update the state of the node manager in the time window.
         :param nm_heartbeat: The heartbeat from the Node manager.
         """
-        self.mean_total_tasks.append(
-            (nm_heartbeat['tasks_waiting'] + nm_heartbeat['tasks_running']) / len(
-                nm_heartbeat['worker_allocation']))
+        num_workers = len(nm_heartbeat['worker_allocation'])
+        if num_workers > 0:
+            self.mean_total_tasks.append(
+                (nm_heartbeat['tasks_waiting'] + nm_heartbeat['tasks_running']) / num_workers)
+        else:
+            self.mean_total_tasks.append(0)
         self.worker_allocation = nm_heartbeat['worker_allocation']
         if len(self.mean_total_tasks) > config.WINDOW_SIZE:
             self.mean_total_tasks.popleft()
