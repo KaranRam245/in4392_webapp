@@ -38,7 +38,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
             benchmark_tasks = []
-            for row in imported_csv.iterrows():
+            for _, row in imported_csv.iterrows():
                 task = Task(row["Input"], 0)
                 time = int(row["Time"])  # Convert time to int.
                 benchmark_tasks.append((time, task))
