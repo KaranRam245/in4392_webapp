@@ -611,3 +611,4 @@ MigrationBackup/
 
 # Disable all .idea files.
 .idea/
+*.tgz
