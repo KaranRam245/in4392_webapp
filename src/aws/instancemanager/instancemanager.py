@@ -381,7 +381,6 @@ class NodeScheduler:
         if not heartbeat and self.instances.start_signal_timedout(instance):
             # No start signal is sent, or it takes too long to start.
             log_info("No start/timedout signal sent to {}".format(instance))
-            log_info("Sent start command to instance {}".format(instance))
             self._send_start_command(instance_type=instance_type, instance_id=instance)
         elif heartbeat:
             # The IM has not received a heartbeat for too long.
@@ -505,7 +504,7 @@ class TimeWindow:
         mean_task_per_worker = self._mean(self.mean_total_tasks)
 
         # Check if there are underloaded workers.
-        if config.MIN_JOBS_PER_WORKER < mean_task_per_worker:
+        if config.MIN_JOBS_PER_WORKER > mean_task_per_worker:
             if self.mean_total_tasks[-1] > 0 and number_of_workers == 1:
                 return {}  # If there is still work and only one worker to do it.
             if current_workers < number_of_workers:
