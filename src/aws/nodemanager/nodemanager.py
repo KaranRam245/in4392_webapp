@@ -3,6 +3,7 @@ Module for the Node Manager.
 """
 import asyncio
 import os
+import traceback
 from collections import Counter, deque
 
 import pandas as pd
@@ -34,20 +35,25 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._workers_pending = []
 
     async def create_full_taskpool(self):
-        imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
-        benchmark_tasks = []
-        for row in imported_csv.iterrows():
-            task = Task(row["Input"], 0)
-            time = int(row["Time"])  # Convert time to int.
-            benchmark_tasks.append((time, task))
-        benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
-        current_time = 0
-        while benchmark_tasks:  # While there are tasks.
-            while benchmark_tasks[0] == current_time:
-                time, task = benchmark_tasks.popleft()
-                self.tasks.append(task)  # Append task to the taskpool on given time.
-            current_time += 1
-            await asyncio.sleep(1)
+        try:
+            imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
+            benchmark_tasks = []
+            for row in imported_csv.iterrows():
+                task = Task(row["Input"], 0)
+                time = int(row["Time"])  # Convert time to int.
+                benchmark_tasks.append((time, task))
+            benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
+            current_time = 0
+
+            while benchmark_tasks:  # While there are tasks.
+                while benchmark_tasks[0] == current_time:
+                    time, task = benchmark_tasks.popleft()
+                    self.tasks.append(task)  # Append task to the taskpool on given time.
+                current_time += 1
+                await asyncio.sleep(1)
+        except Exception as exc:
+            log_error("Could not read benchmark file {}: {}".format(exc, traceback.format_exc()))
+            raise exc
 
     async def run_task_pool(self):
         """
