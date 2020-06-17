@@ -434,20 +434,24 @@ class NodeMonitor(con.MultiConnectionServer):
         return command  # The IM should not receive commands.
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
-        self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
-        log_metric({'heartbeat': heartbeat})
-        if heartbeat['instance_type'] == 'node_manager':
-            self._ns.node_manager_running = True
-            self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
-            log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
-                        'tasks_running': heartbeat['tasks_running'],
-                        'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running'],
-                        'worker_allocation': heartbeat['worker_allocation']})
-            return self._generate_nm_response()
-        if heartbeat['instance_type'] == 'worker':
+        try:
+            self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
+            log_metric({'heartbeat': heartbeat})
+            if heartbeat['instance_type'] == 'node_manager':
+                self._ns.node_manager_running = True
+                self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
+                log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
+                            'tasks_running': heartbeat['tasks_running'],
+                            'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running'],
+                            'worker_allocation': heartbeat['worker_allocation']})
+                return self._generate_nm_response()
+            if heartbeat['instance_type'] == 'worker':
+                return heartbeat
+            log_warning("Received a heartbeat from an instance type I do not know: {}".format(heartbeat))
             return heartbeat
-        log_warning("Received a heartbeat from an instance type I do not know: {}".format(heartbeat))
-        return heartbeat
+        except Exception as exc:
+            log_error("Error on process_heartbeat {}: {}".format(exc, traceback.format_exc()))
+            raise exc
 
     def _generate_nm_response(self):
         workers_running = self._ns.instances.get_all('worker',
