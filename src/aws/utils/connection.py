@@ -5,6 +5,7 @@ import json
 import asyncio
 import traceback
 from abc import abstractmethod
+from collections import deque
 from typing import List
 
 from aws.utils import config
@@ -109,7 +110,7 @@ class MultiConnectionClient:
     def __init__(self, host, port, sleep_time=config.CLIENT_SEND_SLEEP):
         self.host = host
         self.port = port
-        self.send_buffer: List[Packet] = []
+        self.send_buffer: deque[Packet] = deque()
         self.running = True
         self._sleep_time = sleep_time
 
@@ -119,9 +120,13 @@ class MultiConnectionClient:
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
+            log_info("Processing command..")
             self.process_command(packet['command'])
+            log_info("Done command..")
         elif isinstance(packet, HeartBeatPacket):
+            log_info("Processing heartbeat..")
             self.process_heartbeat(packet)
+            log_info("Done heartbeat..")
         else:
             log_error("I do not know this packet type: {}".format(packet['packet_type']))
 
@@ -139,7 +144,7 @@ class MultiConnectionClient:
         try:
             while self.running:
                 while self.send_buffer:
-                    packet_send: Packet = self.send_buffer.pop(0)
+                    packet_send: Packet = self.send_buffer.popleft()
 
                     log_info('- Sent: {}'.format(packet_send))
                     writer.write(encode_packet(packet_send))
@@ -157,7 +162,7 @@ class MultiConnectionClient:
         except Exception as exc:
             log_exception("Socket closed due to an exception {}: {}".format(exc, traceback.format_exc()))
         finally:
-            log_info('Close the socket')
+            log_info('Close the socket [{}:{}]'.format(self.host, self.port))
             writer.close()
 
     def close(self):

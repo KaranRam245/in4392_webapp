@@ -35,8 +35,10 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
+        log_info("Will add a command for ya.")
         if command['command'] == 'task':
             self._task_queue.append(command)
+        log_info("Just added a command for you.")
         # Skip if command == done (this is an acknowledge).
 
     async def heartbeat(self):
