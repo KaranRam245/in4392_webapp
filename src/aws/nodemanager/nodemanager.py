@@ -169,7 +169,6 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def event(self, message):
         self.send_message(message)
-        log_info("Message sent to Instance Manager: {}".format(message))
 
     def process_command(self, command) -> Packet:
         log_warning(
