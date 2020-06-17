@@ -494,7 +494,7 @@ class TimeWindow:
         if len(self.mean_total_tasks) > config.WINDOW_SIZE:
             self.mean_total_tasks.popleft()
 
-    def get_action(self, current_workers: dict, max_workers: int):
+    def get_action(self, current_workers: list, max_workers: int):
         number_of_workers = len(self.worker_allocation)
         if not self.mean_total_tasks:  # We first need a heartbeat from the Node manager.
             return {}
@@ -514,7 +514,7 @@ class TimeWindow:
             log_info("[LB] The instance with the least tasks will be killed.")
             if number_of_workers:
                 return {'kill': min(self.worker_allocation, key=self.worker_allocation.get)}
-            return {'kill': list(current_workers.keys())[0]}
+            return {'kill': current_workers[0]}
 
         # Check if there are overloaded workers.
         if mean_task_per_worker > config.MAX_JOBS_PER_WORKER:
