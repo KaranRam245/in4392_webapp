@@ -34,7 +34,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
         if command['command'] == 'task':
-            self._task_queue.put(command)
+            self._task_queue.append(command)
 
     async def heartbeat(self):
         """
