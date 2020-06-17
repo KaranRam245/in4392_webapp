@@ -189,9 +189,6 @@ class NodeScheduler:
             log_info("No node manager running. Initializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
-        if self.instances.has_instance_not_running(instance_type='worker'):
-            log_info("No single worker running. Initializing startup protocol..")
-            self.start_worker()  # Require at least one worker.
         return True
 
     def _send_start_command(self, instance_type, instance_id):
@@ -506,6 +503,8 @@ class TimeWindow:
 
         # Check if there are underloaded workers.
         if config.MIN_JOBS_PER_WORKER > mean_task_per_worker:
+            if len(current_workers) == 0:
+                return {}  # There is no worker to kill.
             if self.mean_total_tasks[-1] > 0 and number_of_workers == 1:
                 return {}  # If there is still work and only one worker to do it.
             if len(current_workers) < number_of_workers:
