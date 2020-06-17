@@ -189,9 +189,6 @@ class NodeScheduler:
             log_info("No node manager running. Initializing startup protocol..")
             self.start_node_manager()  # Start the node manager if not already done.
             self.node_manager_running = True
-        if self.instances.has_instance_not_running(instance_type='worker'):
-            log_info("No single worker running. Initializing startup protocol..")
-            self.start_worker()  # Require at least one worker.
         return True
 
     def _send_start_command(self, instance_type, instance_id):
