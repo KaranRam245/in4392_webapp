@@ -28,4 +28,4 @@ def tokenize_text(tokenizer_path, text):
     with open(tokenizer_path) as handle:
         tokenizer = pickle.load(tokenizer_path)
         sequences = tokenizer.texts_to_sequences(text)
-        padded_sequences = sequence.pad_sequences(sequences, 100)
+        return sequence.pad_sequences(sequences, 100)

@@ -35,7 +35,6 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         # Enqueue for worker here!
         if command['command'] == 'task':
             self._task_queue.put(command)
-        # TODO: process more commands.
 
     async def heartbeat(self):
         """
@@ -78,7 +77,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     message = CommandPacket(command="done")
                     message["labels"] = labels
                     message["instance_id"] = self._instance_id
-                    message['task'] = current_task["task"]
+                    message['task'] = self.current_task["task"]
 
                     self.send_message(message)
                     # TODO: Process the file! @Karan
