@@ -34,8 +34,6 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self.current_task = None
 
     def process_command(self, command: CommandPacket):
-        log_info("HIER : {} : {}".format(type(command), command))
-        log_info("XOOO {}".format(command['command']))
         # Enqueue for worker here!
         if command['command'] == 'task':
             self._task_queue.append(command)
