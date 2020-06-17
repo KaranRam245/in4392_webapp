@@ -30,7 +30,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector: ResourceManagerCore = storage_connector
-        self._task_queue = []
+        self._task_queue = deque()
         self.current_task = None
 
     def process_command(self, command: CommandPacket):
@@ -61,7 +61,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         try:
             while True:
                 if not self.current_task and self._task_queue:
-                    self.current_task = self._task_queue.pop(0)
+                    self.current_task = self._task_queue.popleft()
 
                     # log_info("Downloading File " + self.current_task.file_path + ".")
                     # file = self.storage_connector.download_file(
