@@ -121,9 +121,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
             self.notify(message=heartbeat)
 
     def process_heartbeat(self, hb, source) -> Packet:
-        hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
-        self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
-
         # If the worker has an assigned task, but is done processing. Give a new task from assigned.
         if hb['instance_id'] in self.task_assignment and \
                 not hb['instance_id'] in self.task_processing:
