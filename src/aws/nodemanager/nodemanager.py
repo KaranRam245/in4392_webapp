@@ -265,24 +265,19 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
         loop.close()
 
 
-class Task:
+class Task(dict):
     """
     Task contains all information with regards to a tasks in the TaskPool
     """
 
-    TEXT = 0
-    CSV = 1
-
     def __init__(self, data, dataType):
-        self.data = data
-        self.taskType = dataType
-        self.state = TaskState.UPLOADING
+        super().__init__(data=data, taskType=dataType, state=TaskState.UPLOADING)
 
     def get_task_type(self):
-        return self.taskType
+        return self['taskType']
 
     def get_task_data(self):
-        return self.data
+        return self['data']
 
     def get_task_state(self):
-        return self.state
+        return self['state']

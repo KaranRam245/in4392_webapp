@@ -66,7 +66,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     #     key=self.current_task.key
                     # )
                     # log_info("Downloaded file " + self.current_task.file_path + ".")
-                    input_data = self.current_task["task"].get_task_data()
+                    input_data = self.current_task["task"]["data"]
                     input_sequences = Tokenize.tokenize_text(
                         os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
                         input_data)
