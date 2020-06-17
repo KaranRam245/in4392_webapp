@@ -6,7 +6,6 @@ import asyncio
 import traceback
 from abc import abstractmethod
 from collections import deque
-from typing import List
 
 from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet

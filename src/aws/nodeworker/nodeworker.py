@@ -4,8 +4,8 @@ Module for the Node Worker.
 import asyncio
 import os
 import traceback
+from collections import deque
 from contextlib import suppress
-import sys
 
 from tensorflow.keras.models import load_model
 
