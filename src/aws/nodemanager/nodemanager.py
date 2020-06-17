@@ -3,6 +3,7 @@ Module for the Node Manager.
 """
 import asyncio
 import os
+from collections import Counter
 
 import pandas as pd
 
@@ -77,22 +78,27 @@ class TaskPool(Observable, con.MultiConnectionServer):
         raise NotImplementedError()
 
     def steal_task(self):
-        """Steals a task from the worker with the most number of tasks"""
-
+        """
+        Steals a task from the worker with the most number of tasks
+        """
         assignments = {key: len(value) for key, value in self.task_assignment.items()}
         victim_worker = max(assignments, key=assignments.get)
         if assignments[victim_worker] >= 2:
             return self.task_assignment[victim_worker].pop()
         return None
 
-    def worker_change(self, previous_workers):
+    def worker_change(self, running, pending):
         """
         Based on the new running and pending workers provided by the IM. Finds stopped or
         newly created workers
         """
-        total_workers = self._workers_running + self._workers_pending
-        stopped_workers = [worker for worker in previous_workers if worker not in total_workers]
-        new_workers = [worker for worker in total_workers if worker not in previous_workers]
+        previous_workers = self._workers_running + self._workers_pending
+        total_current = running + pending
+        stopped_workers = [worker for worker in previous_workers if worker not in total_current]
+        new_workers = [worker for worker in total_current if worker not in previous_workers]
+
+        self._workers_running = running
+        self._workers_pending = pending
 
         return stopped_workers, new_workers
 
@@ -101,11 +107,14 @@ class TaskPool(Observable, con.MultiConnectionServer):
         Generate a heartbeat that is send to the TaskPoolMonitor.
         :param notify: If notify is true, send to the listeners. Here it should always be true.
         """
+        assignments = Counter({key: len(value) for key, value in self.task_assignment.items()})
+        processing = Counter({key: len(value) for key, value in self.task_processing.items()})
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='node_manager',
                                     instance_state=self._instance_state,
                                     tasks_waiting=self.all_assigned_tasks + len(self.tasks),
-                                    tasks_running=len(list(self.task_processing.keys())))
+                                    tasks_running=len(list(self.task_processing.keys())),
+                                    worker_allocation=dict(assignments + processing))
         log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
                     'tasks_running': heartbeat['tasks_running'],
                     'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
@@ -139,8 +148,11 @@ class TaskPool(Observable, con.MultiConnectionServer):
                 self.task_processing[command['instance_id']] = [packet['task']]
             else:
                 stolen_task = self.steal_task()
-                self.task_processing[command['instance_id']] = [stolen_task]
-                packet["task"] = stolen_task
+                if stolen_task:
+                    self.task_processing[command['instance_id']] = [stolen_task]
+                    packet["task"] = stolen_task
+                else:
+                    return command
             return packet
         return command
 
@@ -167,10 +179,9 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def process_heartbeat(self, heartbeat: HeartBeatPacket):
         if heartbeat['instance_type'] == 'instance_manager':
-            previous_available_workers = self._tp.workers_running + self._tp.workers_pending
-            self._tp.workers_running = heartbeat['workers_running']
-            self._tp.workers_pending = heartbeat['workers_pending']
-            stopped_workers, new_workers = self._tp.worker_change(previous_available_workers)
+            stopped_workers, new_workers = self._tp.worker_change(
+                running=heartbeat['workers_running'],
+                pending=heartbeat['workers_pending'])
 
             # Add all tasks remaining in stopped worker assignments back to the taskpool
             for worker in stopped_workers:
