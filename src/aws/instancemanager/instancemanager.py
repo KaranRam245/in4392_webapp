@@ -489,6 +489,8 @@ class TimeWindow:
 
     def get_action(self, current_workers: int, max_workers: int):
         number_of_workers = len(self.worker_allocation)
+        if not self.mean_total_tasks:  # We first need a heartbeat from the Node manager.
+            return {}
         if self.mean_total_tasks[-1] > 0 and number_of_workers == 0:
             log_info("[LB] There was no worker, but there is work to do.")
             return {'create': 1}  # There was no worker, but there is work to do.
