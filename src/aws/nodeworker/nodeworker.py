@@ -83,9 +83,6 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     message['task'] = self.current_task["task"]
 
                     self.send_message(message)
-                    # TODO: Process the file! @Karan
-
-                    # self.send_message(message)
 
                     self.current_task = None
                 await asyncio.sleep(1)  # Pause from task processing.
@@ -93,8 +90,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             pass
         except Exception as exc:
             log_error("Worker process crashed {}: {}".format(exc, traceback.format_exc()))
-            self.storage_connector.upload_log(clean=True)
-            sys.exit(0)
+            self.storage_connector.upload_log(clean=False)
 
     def generate_heartbeat(self, notify=True):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,

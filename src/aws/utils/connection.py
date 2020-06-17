@@ -125,7 +125,7 @@ class MultiConnectionClient:
         else:
             log_error("I do not know this packet type: {}".format(packet['packet_type']))
 
-    def process_heartbeat(self, hearbeat: HeartBeatPacket):
+    def process_heartbeat(self, heartbeat: HeartBeatPacket):
         log_info("Acknowledge on my heartbeat. No additional action to take.")
 
     @abstractmethod
@@ -150,11 +150,12 @@ class MultiConnectionClient:
                     packet_received = decode_packet(data_received)
                     log_info('+ Received: {}'.format(packet_received))
                     self.process_message(packet_received)
-                    # TODO: process the received messages.
 
                 await asyncio.sleep(self._sleep_time)
         except KeyboardInterrupt:
             pass
+        except Exception as exc:
+            log_exception("Socket closed due to an exception {}: {}".format(exc, traceback.format_exc()))
         finally:
             log_info('Close the socket')
             writer.close()

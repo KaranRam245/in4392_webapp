@@ -400,9 +400,7 @@ class NodeScheduler:
         When the debug mode is enabled, the node manager is not killed.
         """
         if self.debug:
-            running_instances = self.running_instances()
-            running_instances = [kill for kill in running_instances if
-                                 self.instances.is_type(kill, 'worker')]
+            running_instances = self.instances.get_nodes('worker')
         else:
             running_instances = self.running_instances()
         if running_instances:
