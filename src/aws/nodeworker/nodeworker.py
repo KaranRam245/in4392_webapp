@@ -21,11 +21,11 @@ class WorkerCore(Observable, con.MultiConnectionClient):
     The WorkerCore accepts the task from the Node Manager.
     """
 
-    def __init__(self, host, port, instance_id, task_queue, storage_connector):
+    def __init__(self, host, port, instance_id, storage_connector):
         Observable.__init__(self)
         con.MultiConnectionClient.__init__(self, host=host, port=port)
         self._instance_id = instance_id
-        self._task_queue = task_queue
+        self._task_queue = []
         self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
@@ -104,10 +104,6 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
 class WorkerMonitor(Listener, con.MultiConnectionClient):
 
-    def __init__(self, host, port, task_queue, instance_id):
-        self._task_queue = task_queue
-        super().__init__(host, port)
-
     def event(self, message):
         """
         Method called when the notify function is called in the Observable class. The Listener is
@@ -129,15 +125,13 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
 
 def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_IM,
                    port_nm=con.PORT_NM):
-    task_queue = []
     storage_connector = ResourceManagerCore(account_id=account_id, instance_id=instance_id)
     log_info("Starting WorkerCore with instance id:" + instance_id + ".")
     worker_core = WorkerCore(host=host_nm,
                              port=port_nm,
                              instance_id=instance_id,
-                             task_queue=task_queue,
                              storage_connector=storage_connector)
-    monitor = WorkerMonitor(host_im, port_im, task_queue, instance_id)
+    monitor = WorkerMonitor(host_im, port_im, instance_id)
     log_info("Starting WorkerMonitor...")
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
