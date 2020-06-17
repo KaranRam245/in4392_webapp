@@ -333,16 +333,17 @@ class NodeScheduler:
                 self.check_all_living()
 
                 # Check if some worker is underloaded or overloaded.
-                active_workers = len(self.instances.get_all('worker',
+                active_workers = self.instances.get_all('worker',
                                                             filter_state=[InstanceState.PENDING,
-                                                                          InstanceState.RUNNING]))
+                                                                          InstanceState.RUNNING])
                 max_workers = len(self.instances.get_nodes('worker'))
                 window_response = self.timewindow.get_action(current_workers=active_workers,
                                                              max_workers=max_workers)
                 if 'create' in window_response:
                     self.start_worker()
                 elif 'kill' in window_response:
-                    self._kill_instance(instance_ids=[window_response['kill']],
+                    to_kill = window_response['kill']
+                    self._kill_instance(instance_ids=[to_kill],
                                         instance_types=['worker'])
 
                 update_counter -= sleep_time
@@ -493,7 +494,7 @@ class TimeWindow:
         if len(self.mean_total_tasks) > config.WINDOW_SIZE:
             self.mean_total_tasks.popleft()
 
-    def get_action(self, current_workers: int, max_workers: int):
+    def get_action(self, current_workers: dict, max_workers: int):
         number_of_workers = len(self.worker_allocation)
         if not self.mean_total_tasks:  # We first need a heartbeat from the Node manager.
             return {}
@@ -507,17 +508,19 @@ class TimeWindow:
         if config.MIN_JOBS_PER_WORKER > mean_task_per_worker:
             if self.mean_total_tasks[-1] > 0 and number_of_workers == 1:
                 return {}  # If there is still work and only one worker to do it.
-            if current_workers < number_of_workers:
+            if len(current_workers) < number_of_workers:
                 return {}  # In an earlier check, an instance was already killed wait for next HB.
             # Kill the instance with the least tasks.
             log_info("[LB] The instance with the least tasks will be killed.")
-            return {'kill': min(self.worker_allocation, key=self.worker_allocation.get)}
+            if number_of_workers:
+                return {'kill': min(self.worker_allocation, key=self.worker_allocation.get)}
+            return {'kill': list(current_workers.keys())[0]}
 
         # Check if there are overloaded workers.
         if mean_task_per_worker > config.MAX_JOBS_PER_WORKER:
-            if current_workers == max_workers:
+            if len(current_workers) == max_workers:
                 return {}  # No new worker can be created, if we already reached the limit.
-            if current_workers > number_of_workers:
+            if len(current_workers) > number_of_workers:
                 return {}  # In an earlier check, an instance was already created wait for next HB.
             # Create an instance.
             log_info("[LB] A new instance is needed for load balancing.")
