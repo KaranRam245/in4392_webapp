@@ -110,7 +110,6 @@ class MultiConnectionClient:
         self.host = host
         self.port = port
         self.send_buffer: List[Packet] = []
-        self.received_packets: List[Packet] = []
         self.running = True
         self._sleep_time = sleep_time
 
@@ -151,7 +150,7 @@ class MultiConnectionClient:
                         break
                     packet_received = decode_packet(data_received)
                     log_info('+ Received: {}'.format(packet_received))
-                    self.received_packets.append(packet_received)
+                    self.process_message(packet_received)
                     # TODO: process the received messages.
 
                 await asyncio.sleep(self._sleep_time)

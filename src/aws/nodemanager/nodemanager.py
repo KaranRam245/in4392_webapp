@@ -172,11 +172,10 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
     def event(self, message):
         self.send_message(message)
 
-    def process_command(self, command) -> Packet:
+    def process_command(self, command):
         log_warning(
             "TaskPoolMonitor received a command {}. "
             "This should not happen!".format(command))
-        return command
 
     def process_heartbeat(self, heartbeat: HeartBeatPacket):
         if heartbeat['instance_type'] == 'instance_manager':
