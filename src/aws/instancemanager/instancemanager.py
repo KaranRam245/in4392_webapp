@@ -446,6 +446,8 @@ class NodeMonitor(con.MultiConnectionServer):
             return self._generate_nm_response()
         if heartbeat['instance_type'] == 'worker':
             return heartbeat
+        log_warning("Received a heartbeat from an instance type I do not know: {}".format(heartbeat))
+        return heartbeat
 
     def _generate_nm_response(self):
         workers_running = self._ns.instances.get_all('worker',
@@ -514,7 +516,8 @@ class TimeWindow:
             return {'create': 1}
         return {}
 
-    def _mean(self, values, rounding=2):
+    @staticmethod
+    def _mean(values, rounding=2):
         return round(sum(values) / len(values), rounding)
 
 
