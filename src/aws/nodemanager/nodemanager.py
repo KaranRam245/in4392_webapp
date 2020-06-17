@@ -124,9 +124,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
             self.notify(message=heartbeat)
 
     def process_heartbeat(self, hb, source) -> Packet:
-        # If the worker has an assigned task, but is done processing. Give a new task from assigned.
-        if hb['instance_id'] in self.task_assignment and \
-                not hb['instance_id'] in self.task_processing:
+        # If the worker has an assigned task, but has not started. Give a task from assigned.
+        if hb['instance_id'] in self.task_assignment and hb['queue_size'] == 0:
             packet = CommandPacket(command="task")
             packet['task'] = self.task_assignment[hb['instance_id']].popleft()
             self.task_processing[hb['instance_id']] = deque(['task'])
