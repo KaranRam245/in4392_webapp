@@ -25,11 +25,11 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         Observable.__init__(self)
         con.MultiConnectionClient.__init__(self, host=host, port=port)
         self._instance_id = instance_id
-        self._task_queue = []
-        self.current_task = None
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
         self.storage_connector = storage_connector
+        self._task_queue = []
+        self.current_task = None
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
