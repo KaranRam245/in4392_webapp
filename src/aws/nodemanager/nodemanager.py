@@ -3,7 +3,7 @@ Module for the Node Manager.
 """
 import asyncio
 import os
-from collections import Counter
+from collections import Counter, deque
 
 import pandas as pd
 
@@ -26,7 +26,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         con.MultiConnectionServer.__init__(self, host, port)
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
-        self.tasks = []  # Available & Unassigned tasks.
+        self.tasks = deque()  # Available & Unassigned tasks.
         self.all_assigned_tasks = 0  # Number of tasks which are assigned but not running
         self.task_assignment = {}  # Available & Assigned tasks
         self.task_processing = {}  # Tasks currently being processed
@@ -40,11 +40,11 @@ class TaskPool(Observable, con.MultiConnectionServer):
             task = Task(row["Input"], 0)
             time = int(row["Time"])  # Convert time to int.
             benchmark_tasks.append((time, task))
-        benchmark_tasks = sorted(benchmark_tasks, key=lambda x: x[0])  # Sort on time.
+        benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
         current_time = 0
         while benchmark_tasks:  # While there are tasks.
             while benchmark_tasks[0] == current_time:
-                time, task = benchmark_tasks.pop(0)
+                time, task = benchmark_tasks.popleft()
                 self.tasks.append(task)  # Append task to the taskpool on given time.
             current_time += 1
             await asyncio.sleep(1)
@@ -61,7 +61,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
                     task_per_worker = {key: len(value) for key, value in
                                        self.task_assignment.items()}
 
-                    task = self.tasks.pop(0)
+                    task = self.tasks.popleft()
                     worker = min(task_per_worker, key=task_per_worker.get)
                     self.task_assignment[worker].append(task)
                     self.all_assigned_tasks += 1
@@ -130,26 +130,26 @@ class TaskPool(Observable, con.MultiConnectionServer):
         if hb['instance_id'] in self.task_assignment and \
                 not hb['instance_id'] in self.task_processing:
             packet = CommandPacket(command="task")
-            packet['task'] = self.task_assignment[hb['instance_id']].pop(0)
-            self.task_processing[hb['instance_id']] = [packet['task']]
+            packet['task'] = self.task_assignment[hb['instance_id']].popleft()
+            self.task_processing[hb['instance_id']] = deque(['task'])
             return packet
 
         return hb
 
     def process_command(self, command: CommandPacket, source):
         if command["command"] == "done":
-            self.task_processing[command["instance_id"]].pop(0)
+            self.task_processing[command["instance_id"]].popleft()
             self.all_assigned_tasks -= 1
 
             packet = CommandPacket(command="task")
             if len(self.task_assignment[command['instance_id']]) > 0:
                 # If there are tasks in the taskpool send a new command to the worker
-                packet['task'] = self.task_assignment[command['instance_id']].pop(0)
-                self.task_processing[command['instance_id']] = [packet['task']]
+                packet['task'] = self.task_assignment[command['instance_id']].popleft()
+                self.task_processing[command['instance_id']] = deque(packet['task'])
             else:
                 stolen_task = self.steal_task()
                 if stolen_task:
-                    self.task_processing[command['instance_id']] = [stolen_task]
+                    self.task_processing[command['instance_id']] = deque(stolen_task)
                     packet["task"] = stolen_task
                 else:
                     return command
@@ -190,8 +190,8 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
                 del self._tp.task_assignment[worker]
                 del self._tp.task_processing[worker]
             for worker in new_workers:
-                self._tp.task_assignment[worker] = []
-                self._tp.task_processing[worker] = []
+                self._tp.task_assignment[worker] = deque()
+                self._tp.task_processing[worker] = deque()
         else:
             log_warning(
                 'I received a heartbeat from {} [{}] '
