@@ -127,7 +127,7 @@ class MultiConnectionClient:
             log_error("I do not know this packet type: {}".format(packet['packet_type']))
 
     def process_heartbeat(self, heartbeat: HeartBeatPacket):
-        log_info("Acknowledge on my heartbeat. No additional action to take.")
+        pass  # Acknowledge on my heartbeat. No additional action to take.
 
     @abstractmethod
     def process_command(self, command: CommandPacket):

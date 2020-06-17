@@ -62,6 +62,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.popleft()
+                    self._program_state = ProgramState.RUNNING
 
                     # log_info("Downloading File " + self.current_task.file_path + ".")
                     # file = self.storage_connector.download_file(
@@ -70,11 +71,15 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     # )
                     # log_info("Downloaded file " + self.current_task.file_path + ".")
                     input_data = self.current_task["task"]["data"]
+                    log_info("[PROGRESS] Read task data..")
                     input_sequences = Tokenize.tokenize_text(
                         os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
                         input_data)
+                    log_info("[PROGRESS] Tokenized text..")
                     model = load_model(os.path.join("src", "aws", "nodeworker", "Senti.h5"))
+                    log_info("[PROGRESS] Loaded model..")
                     labels = model.predict(input_sequences)
+                    log_info("[PROGRESS] Predicted sequence from model..")
 
                     # Send command with completed task, results and instance id completed
                     message = CommandPacket(command="done")
@@ -82,13 +87,17 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     message["instance_id"] = self._instance_id
                     message['task'] = self.current_task["task"]
 
+                    log_info("[PROGRESS] Created response..")
+
                     self.send_message(message)
 
+                    self._program_state = ProgramState.PENDING
                     self.current_task = None
                 await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
             pass
         except Exception as exc:
+            self._program_state = ProgramState.ERROR
             log_error("Worker process crashed {}: {}".format(exc, traceback.format_exc()))
             self.storage_connector.upload_log(clean=False)
 
@@ -97,7 +106,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                                     instance_type='worker',
                                     instance_state=self._instance_state,
                                     program_state=self._program_state,
-                                    queue_size=len(self._task_queue))
+                                    queue_size=len(self._task_queue),
+                                    current_task_start=self.current_task['time'] if self.current_task else '')
         # self.send_message(message=heartbeat)
         if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)
