@@ -25,10 +25,10 @@ class TaskPool(Observable, con.MultiConnectionServer):
         con.MultiConnectionServer.__init__(self, host, port)
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
-        self._tasks = []  # Available & Unassigned tasks.
-        self._all_assigned_tasks = 0  # Number of tasks which are assigned but not running
-        self._task_assignment = {}  # Available & Assigned tasks
-        self._task_processing = {}  # Tasks currently being processed
+        self.tasks = []  # Available & Unassigned tasks.
+        self.all_assigned_tasks = 0  # Number of tasks which are assigned but not running
+        self.task_assignment = {}  # Available & Assigned tasks
+        self.task_processing = {}  # Tasks currently being processed
         self._workers_running = []
         self._workers_pending = []
 
@@ -44,7 +44,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         while benchmark_tasks:  # While there are tasks.
             while benchmark_tasks[0] == current_time:
                 time, task = benchmark_tasks.pop(0)
-                self._tasks.append(task)  # Append task to the taskpool on given time.
+                self.tasks.append(task)  # Append task to the taskpool on given time.
             current_time += 1
             await asyncio.sleep(1)
 
@@ -56,14 +56,14 @@ class TaskPool(Observable, con.MultiConnectionServer):
             while True:
                 self.generate_heartbeat()
 
-                while self._tasks:
+                while self.tasks:
                     task_per_worker = {key: len(value) for key, value in
-                                       self._task_assignment.items()}
+                                       self.task_assignment.items()}
 
-                    task = self._tasks.pop(0)
+                    task = self.tasks.pop(0)
                     worker = min(task_per_worker, key=task_per_worker.get)
-                    self._task_assignment[worker].append(task)
-                    self._all_assigned_tasks += 1
+                    self.task_assignment[worker].append(task)
+                    self.all_assigned_tasks += 1
 
                 await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
@@ -79,18 +79,20 @@ class TaskPool(Observable, con.MultiConnectionServer):
     def steal_task(self):
         """Steals a task from the worker with the most number of tasks"""
 
-        assignments = {key: len(value) for key, value in self._task_assignment.items()}
+        assignments = {key: len(value) for key, value in self.task_assignment.items()}
         victim_worker = max(assignments, key=assignments.get)
-        return self._task_assignment[victim_worker].pop()
+        if assignments[victim_worker] >= 2:
+            return self.task_assignment[victim_worker].pop()
+        return None
 
     def worker_change(self, previous_workers):
         """
-        Based on the new running and pending workers provided by the IM. Finds stopped or 
+        Based on the new running and pending workers provided by the IM. Finds stopped or
         newly created workers
         """
         total_workers = self._workers_running + self._workers_pending
-        stopped_workers = [worker for worker in previous_workers if not worker in total_workers]
-        new_workers = [worker for worker in total_workers if not worker in previous_workers]
+        stopped_workers = [worker for worker in previous_workers if worker not in total_workers]
+        new_workers = [worker for worker in total_workers if worker not in previous_workers]
 
         return stopped_workers, new_workers
 
@@ -102,8 +104,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='node_manager',
                                     instance_state=self._instance_state,
-                                    tasks_waiting=self._all_assigned_tasks + len(self._tasks),
-                                    tasks_running=len(list(self._task_processing.keys())))
+                                    tasks_waiting=self.all_assigned_tasks + len(self.tasks),
+                                    tasks_running=len(list(self.task_processing.keys())))
         log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
                     'tasks_running': heartbeat['tasks_running'],
                     'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
@@ -116,30 +118,31 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
 
         # If the worker has an assigned task, but is done processing. Give a new task from assigned.
-        if hb['instance_id'] in self._task_assignment and \
-                not hb['instance_id'] in self._task_processing:
+        if hb['instance_id'] in self.task_assignment and \
+                not hb['instance_id'] in self.task_processing:
             packet = CommandPacket(command="task")
-            packet['task'] = self._task_assignment[hb['instance_id']].pop(0)
-            self._task_processing[hb['instance_id']] = [packet['task']]
+            packet['task'] = self.task_assignment[hb['instance_id']].pop(0)
+            self.task_processing[hb['instance_id']] = [packet['task']]
             return packet
 
         return hb
 
     def process_command(self, command: CommandPacket, source):
         if command["command"] == "done":
-            self._task_processing[command["instance_id"]].pop(0)
-            self._all_assigned_tasks -= 1
+            self.task_processing[command["instance_id"]].pop(0)
+            self.all_assigned_tasks -= 1
 
             packet = CommandPacket(command="task")
-            if len(self._task_assignment[command['instance_id']]) > 0:
+            if len(self.task_assignment[command['instance_id']]) > 0:
                 # If there are tasks in the taskpool send a new command to the worker
-                packet['task'] = self._task_assignment[command['instance_id']].pop(0)
-                self._task_processing[command['instance_id']] = [packet['task']]
+                packet['task'] = self.task_assignment[command['instance_id']].pop(0)
+                self.task_processing[command['instance_id']] = [packet['task']]
             else:
                 stolen_task = self.steal_task()
-                self._task_processing[command['instance_id']] = [stolen_task]
+                self.task_processing[command['instance_id']] = [stolen_task]
                 packet["task"] = stolen_task
             return packet
+        return command
 
 
 class TaskPoolMonitor(Listener, con.MultiConnectionClient):
@@ -171,13 +174,13 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
             # Add all tasks remaining in stopped worker assignments back to the taskpool
             for worker in stopped_workers:
-                self._tp._all_assigned_tasks -= len(self._tp._task_assignment[worker])
-                self._tp._tasks += self._tp._task_assignment[worker]
-                del self._tp._task_assignment[worker]
-                del self._tp._task_processing[worker]
+                self._tp.all_assigned_tasks -= len(self._tp.task_assignment[worker])
+                self._tp.tasks += self._tp.task_assignment[worker]
+                del self._tp.task_assignment[worker]
+                del self._tp.task_processing[worker]
             for worker in new_workers:
-                self._tp._task_assignment[worker] = []
-                self._tp._task_processing[worker] = []
+                self._tp.task_assignment[worker] = []
+                self._tp.task_processing[worker] = []
         else:
             log_warning(
                 'I received a heartbeat from {} [{}] '
