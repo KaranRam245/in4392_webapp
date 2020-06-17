@@ -45,6 +45,7 @@ def decode_packet(data) -> Packet:
         log_error("JsonDecodeError on: {} with {}: {}".format(value, e, traceback.format_exc()))
         raise e
 
+
 class MultiConnectionServer:
     """
     Class for multiple connections handling.
