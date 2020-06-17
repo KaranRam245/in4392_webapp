@@ -98,9 +98,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._workers_running = running
         self._workers_pending = pending
 
-        log_info("New workers registered: {}. Old workers deregistered: {}."
-                 " ".format(new_workers, stopped_workers))
-
         return stopped_workers, new_workers
 
     def generate_heartbeat(self, notify=True):
