@@ -42,7 +42,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
             current_time = 0
             while benchmark_tasks:  # While there are tasks.
-                while benchmark_tasks[0][0] == current_time:
+                while benchmark_tasks and benchmark_tasks[0][0] == current_time:
                     time, task = benchmark_tasks.popleft()
                     self.tasks.append(task)  # Append task to the taskpool on given time.
                 current_time += 1
@@ -98,9 +98,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._workers_running = running
         self._workers_pending = pending
 
-        log_info("New workers registered: {}. Old workers deregistered: {}. "
-                 "Workers running: {}. Workers pending: {}.".format(new_workers, stopped_workers, self._workers_running,
-                                                                    self._workers_pending))
+        log_info("New workers registered: {}. Old workers deregistered: {}."
+                 " ".format(new_workers, stopped_workers))
 
         return stopped_workers, new_workers
 
