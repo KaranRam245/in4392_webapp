@@ -28,8 +28,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._all_assigned_tasks=[] #Tasks which are assigned but not running
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
-        self._task_assignment={} # Available & Assigned tasks
-        self._task_processing={} # Tasks currently being processed
+        self._task_assignment = {}  # Available & Assigned tasks
+        self._task_processing = {}  # Tasks currently being processed
         self.workers_running = []
         self.workers_pending = []
 
@@ -97,7 +97,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         :return:
         """
         raise NotImplementedError()
-    
+
     def steal_task(self):
         """Steals a task from the worker with the most number of tasks"""
 
@@ -139,13 +139,13 @@ class TaskPool(Observable, con.MultiConnectionServer):
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
         self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
 
-
-        if hb['instance_id'] in list(self._task_assignment.keys()) and not hb['instance_id'] in list(self._tasks_running.keys()):
-            packet=CommandPacket(command="task")
-            packet['task']=self._task_assignment[hb['instance_id']].pop(0)
-            self._task_processing[hb['instance_id']]=[packet['task']]
+        if hb['instance_id'] in self._task_assignment and \
+                not hb['instance_id'] in self._tasks_running:
+            packet = CommandPacket(command="task")
+            packet['task'] = self._task_assignment[hb['instance_id']].pop(0)
+            self._task_processing[hb['instance_id']] = [packet['task']]
             return packet
-       
+
         # When a new instance is available
         elif not hb['instance_id'] in self._task_assignment:
             packet=CommandPacket(command="task")
@@ -156,16 +156,15 @@ class TaskPool(Observable, con.MultiConnectionServer):
                 packet["task"]= stolen_task
                 return packet
             # taskpool contains tasks so take from there
-            else:
-                task=self._tasks.pop(0)
-                self._task_processing[hb['instance_id']]=task
-                packet["task"]=task
-                self._task_assignment[hb['instance_id']]=[self._tasks.pop(0)]
-                return packet
+            task = self._tasks.pop(0)
+            self._task_processing[hb['instance_id']] = task
+            packet["task"] = task
+            self._task_assignment[hb['instance_id']] = [self._tasks.pop(0)]
+            return packet
         else:
-            return hb 
-            
-            #In case there are no more commands send hb           
+            return hb
+
+            # In case there are no more commands send hb
         # TODO: process the heartbeat and take actions which task to send where @Karan.
         # In the heartbeat you could indicate how far the job is, if it is done, etc.
         # Based on this task 'state', you could assign new tasks, check if a new task should be
@@ -173,16 +172,18 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
         # This value is returned to the worker client.
 
-    def process_command(self, command: CommandPacket):
-        if command["command"]=="done":
+    def process_command(self, command: CommandPacket, source):
+        if command["command"] == "done":
             self._task_processing[command["instance_id"]].pop(0)
-            
-            if len(self._task_assignment[command['instance_id']])>0:  #If there are tasks in the taskpool send a new command to the worker
-                packet=CommandPacket(command="task")
-                packet['task']=self._task_assignment[command['instance_id']].pop(0)
-                self._task_processing[command['instance_id']]=[packet['task']]
+
+            if len(self._task_assignment[command['instance_id']]) > 0:
+                # If there are tasks in the taskpool send a new command to the worker
+                packet = CommandPacket(command="task")
+                packet['task'] = self._task_assignment[command['instance_id']].pop(0)
+                self._task_processing[command['instance_id']] = [packet['task']]
                 return packet
-            #TODO: Check taskpool or steal a task when there are no more assigned
+            # TODO: Check taskpool or steal a task when there are no more assigned
+
 
 class TaskPoolMonitor(Listener, con.MultiConnectionClient):
     """
@@ -217,7 +218,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
             # Add all tasks remaining in stopped worker assignments back to the taskpool
             for worker in stopped_workers:
-                self._tp._tasks=self._tp._tasks+self._tp._task_assignment[worker]
+                self._tp._tasks = self._tp._tasks + self._tp._task_assignment[worker]
 
             # Set pending workers as available to create task assignments 
             self._tp.workers_running=self._tp.workers_running+self._tp.workers_pending
