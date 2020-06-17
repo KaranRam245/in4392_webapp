@@ -25,7 +25,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         con.MultiConnectionServer.__init__(self, host, port)
         self._tasks = []  # Available & Unassigned tasks.
         self._tasks_running = [] # Tasks running.
-        self._all_assigned_tasks=[] #Tasks which are assigned but not running
+        self._all_assigned_tasks = [] # Tasks which are assigned but not running
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
         self._task_assignment = {}  # Available & Assigned tasks
@@ -56,36 +56,18 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             while True:
                 self.generate_heartbeat()
-                number_of_workers=len(self._workers_pending+self._workers_running)
-                remaining_tasks=len(self._tasks)%number_of_workers
-                task_per_worker=round((len(self._tasks)-remaining_tasks)/number_of_workers)
-                first_assignment=0
-                remainders_added=0
-                for worker in self.available_workers:
-                    if remaining_tasks != remainders_added:
-                        self._task_assignment[worker]=self._tasks[first_assignment:first_assignment+task_per_worker+1]
-                        self._all_assigned_tasks=self._all_assigned_tasks+self._tasks[first_assignment:first_assignment+task_per_worker+1]
-                        del self._tasks[first_assignment:first_assignment+task_per_worker+1]
-                        first_assignment+=task_per_worker+1
-                        remainders_added+=1
-                    else:
-                        self._task_assignment[worker]=self._tasks[first_assignment:first_assignment+task_per_worker]
-                        self._all_assigned_tasks=self._all_assigned_tasks+self._tasks[first_assignment:first_assignment+task_per_worker]
-                        del self._tasks[first_assignment:first_assignment+task_per_worker+1]
-                        first_assignment+=task_per_worker
-                # TODO: divide the tasks here. @Karan (see below)
-                """
-                Send them to workers. The available workers are in 
-                self.available_workers. You may need to create a list of divided work where you
-                keep track of the divided work and keep track of tasks that are actuall divided
-                or still waiting for a heartbeat of a worker to give the task.
-                
-                in process_heartbeat you can then actuall send the task to the worker with a
-                CommandPacket.
-                """
-                # TODO: process for keeping track of work.
-                # Based on a buffer, decisions can be made. Whenever the process_heartbeat comes
-                # in from the desired worker, the task can be assigned/stolen.
+
+                while self._tasks:
+                    available_workers = self._workers_pending + self._workers_running
+                    task_per_worker = {key: len(value) for key, value in self._task_assignment.items()}
+
+                    first_assignment = 0
+                    remainders_added = 0
+
+                    task = self._tasks.pop(0)
+                    worker = min(task_per_worker, key=task_per_worker.get)
+                    self._task_assignment.setdefault(worker, []).append(task)
+                    self._all_assigned_tasks.append(task)
 
                 await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
         except KeyboardInterrupt:
@@ -104,9 +86,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
         assignments = {key: len(value) for key, value in self._task_assignment.items()}
         victim_worker = max(assignments, key=assignments.get)
         return self._task_assignment[victim_worker].pop()
-        
 
-    def worker_change(self,previous_workers):
+    def worker_change(self, previous_workers):
         """
         Based on the new running and pending workers provided by the IM. Finds stopped or 
         newly created workers
