@@ -40,7 +40,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
             benchmark_tasks = [(row.Time, Task(row.Input, 0)) for _, row in imported_csv.iterrows()]
             print("First: {}".format(benchmark_tasks[1:2]))
             benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
-            print("Second: {}".format(benchmark_tasks[1:2]))
+            print("Second: {}".format(benchmark_tasks[1]))
 
             current_time = 0
             while benchmark_tasks:  # While there are tasks.
