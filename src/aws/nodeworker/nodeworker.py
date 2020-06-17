@@ -3,6 +3,7 @@ Module for the Node Worker.
 """
 import asyncio
 import os
+import traceback
 from contextlib import suppress
 
 from tensorflow.keras.models import load_model
@@ -27,7 +28,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._instance_id = instance_id
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._program_state = ProgramState(ProgramState.PENDING)
-        self.storage_connector = storage_connector
+        self.storage_connector: ResourceManagerCore = storage_connector
         self._task_queue = []
         self.current_task = None
 
@@ -89,6 +90,9 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                 await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
             pass
+        except Exception as exc:
+            log_error("Worker process crashed {}: {}".format(exc, traceback.format_exc()))
+            self.storage_connector.upload_log(clean=False)
 
     def generate_heartbeat(self, notify=True):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
