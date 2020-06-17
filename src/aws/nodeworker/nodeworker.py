@@ -5,6 +5,7 @@ import asyncio
 import os
 import traceback
 from contextlib import suppress
+import sys
 
 from tensorflow.keras.models import load_model
 
@@ -92,7 +93,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             pass
         except Exception as exc:
             log_error("Worker process crashed {}: {}".format(exc, traceback.format_exc()))
-            self.storage_connector.upload_log(clean=False)
+            self.storage_connector.upload_log(clean=True)
+            sys.exit(0)
 
     def generate_heartbeat(self, notify=True):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
