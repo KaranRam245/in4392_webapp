@@ -26,7 +26,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
         self._tasks = []  # Available & Unassigned tasks.
-        self._tasks_running = []  # Tasks running.
         self._all_assigned_tasks = 0  # Number of tasks which are assigned but not running
         self._task_assignment = {}  # Available & Assigned tasks
         self._task_processing = {}  # Tasks currently being processed
@@ -89,7 +88,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         Based on the new running and pending workers provided by the IM. Finds stopped or 
         newly created workers
         """
-        total_workers = self.workers_running + self.workers_pending
+        total_workers = self._workers_running + self._workers_pending
         stopped_workers = [worker for worker in previous_workers if not worker in total_workers]
         new_workers = [worker for worker in total_workers if not worker in previous_workers]
 
@@ -108,7 +107,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
         log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
                     'tasks_running': heartbeat['tasks_running'],
                     'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running']})
-        # TODO fix the above tasks_waiting and tasks_running with the actual numbers!
 
         if notify:
             self.notify(message=heartbeat)
@@ -117,30 +115,15 @@ class TaskPool(Observable, con.MultiConnectionServer):
         hb['source'] = source  # Set the source IP of the heartbeat (i.e., the worker).
         self.notify(hb)  # Forward the heartbeat to the monitor for metrics.
 
+        # If the worker has an assigned task, but is done processing. Give a new task from assigned.
         if hb['instance_id'] in self._task_assignment and \
-                not hb['instance_id'] in self._tasks_running:
+                not hb['instance_id'] in self._task_processing:
             packet = CommandPacket(command="task")
             packet['task'] = self._task_assignment[hb['instance_id']].pop(0)
             self._task_processing[hb['instance_id']] = [packet['task']]
             return packet
 
-        # When a new instance is available
-        elif not hb['instance_id'] in self._task_assignment:
-            packet = CommandPacket(command="task")
-            # No tasks are available so steal a pair of tasks
-            if len(self._tasks) == 0:
-                stolen_task = self.steal_task()
-                self._task_processing[hb['instance_id']] = [stolen_task]
-                packet["task"] = stolen_task
-                return packet
-            # taskpool contains tasks so take from there
-            task = self._tasks.pop(0)
-            self._task_processing[hb['instance_id']] = task
-            packet["task"] = task
-            self._task_assignment[hb['instance_id']] = [self._tasks.pop(0)]
-            return packet
-        else:
-            return hb
+        return hb
 
     def process_command(self, command: CommandPacket, source):
         if command["command"] == "done":
@@ -181,10 +164,6 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
 
     def process_heartbeat(self, heartbeat: HeartBeatPacket):
         if heartbeat['instance_type'] == 'instance_manager':
-            workers_stopped = [worker for worker in
-                               self._tp.workers_running if
-                               worker not in heartbeat['workers_running']]
-            # TODO do something with the workers_stopped. These workers were running before. @Karan.
             previous_available_workers = self._tp.workers_running + self._tp.workers_pending
             self._tp.workers_running = heartbeat['workers_running']
             self._tp.workers_pending = heartbeat['workers_pending']
@@ -194,18 +173,11 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
             for worker in stopped_workers:
                 self._tp._all_assigned_tasks -= len(self._tp._task_assignment[worker])
                 self._tp._tasks += self._tp._task_assignment[worker]
-
-            # self._tasks = []  # Available & Unassigned tasks.
-            # self._tasks_running = []  # Tasks running.
-            # self._all_assigned_tasks = 0  # Number of tasks which are assigned but not running
-            # self._task_assignment = {}  # Available & Assigned tasks
-            # self._task_processing = {}  # Tasks currently being processed
-            # self._workers_running = []
-            # self._workers_pending = []
-
-            # Set pending workers as available to create task assignments 
-            self._tp.workers_running = self._tp.workers_running + self._tp.workers_pending
-            self._tp.workers_pending = []
+                del self._tp._task_assignment[worker]
+                del self._tp._task_processing[worker]
+            for worker in new_workers:
+                self._tp._task_assignment[worker] = []
+                self._tp._task_processing[worker] = []
         else:
             log_warning(
                 'I received a heartbeat from {} [{}] '
