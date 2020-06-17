@@ -503,6 +503,8 @@ class TimeWindow:
 
         # Check if there are underloaded workers.
         if config.MIN_JOBS_PER_WORKER > mean_task_per_worker:
+            if len(current_workers) == 0:
+                return {}  # There is no worker to kill.
             if self.mean_total_tasks[-1] > 0 and number_of_workers == 1:
                 return {}  # If there is still work and only one worker to do it.
             if len(current_workers) < number_of_workers:
