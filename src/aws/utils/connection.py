@@ -120,7 +120,7 @@ class MultiConnectionClient:
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
-            self.process_command(packet['command'])
+            self.process_command(packet)
         elif isinstance(packet, HeartBeatPacket):
             self.process_heartbeat(packet)
         else:

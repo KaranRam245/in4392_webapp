@@ -43,10 +43,8 @@ class HeartBeatPacket(Packet):
 
 class CommandPacket(Packet):
 
-    def __init__(self, command, packet_type='Command', args: dict = None, time=None, **kwargs):
-        if args is None:
-            args = {}
-        super().__init__(packet_type=packet_type, time=time, command=command, args=args, **kwargs)
+    def __init__(self, command, packet_type='Command', time=None, **kwargs):
+        super().__init__(packet_type=packet_type, time=time, command=command, **kwargs)
 
 
 class PacketTranslator:
