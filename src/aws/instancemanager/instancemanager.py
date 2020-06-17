@@ -61,7 +61,8 @@ class Instances:
         old_state = nodes.get(instance_id, None)
         if not old_state or not state.is_state(old_state):
             nodes[instance_id] = state
-            log_info("State of instance {} set from {} to {}.".format(instance_id, old_state, state))
+            log_info(
+                "State of instance {} set from {} to {}.".format(instance_id, old_state, state))
 
     def set_ip(self, instance_id, ip_address):
         log_info("IP address of {} set to {}.".format(instance_id, ip_address))
@@ -214,7 +215,8 @@ class NodeScheduler:
             )
             self.commands.append(response['Command']['CommandId'])
         except self.boto.ssm.exceptions.InvalidInstanceId:
-            log_info("Instance {} [{}] not yet running. Retry later.".format(instance_type, instance_id))
+            log_info(
+                "Instance {} [{}] not yet running. Retry later.".format(instance_type, instance_id))
         except Exception as exc:
             log_exception("The following exception has occurred while trying"
                           + " to send a command: " + str(exc))
@@ -274,7 +276,8 @@ class NodeScheduler:
                                          InstanceState(InstanceState.STOPPING))
                 self.instances.clear_time(instance_id)
         else:
-            log_warning("No instance_types specified for {}. Could not properly kill.".format(instance_ids))
+            log_warning(
+                "No instance_types specified for {}. Could not properly kill.".format(instance_ids))
         for idx, instance_id in enumerate(instance_ids):
             if instance_id in self.instances.charge_time:
                 log_metric(
@@ -441,11 +444,13 @@ class NodeMonitor(con.MultiConnectionServer):
         if heartbeat['instance_type'] == 'node_manager':
             self._ns.node_manager_running = True
             self._ns.timewindow.update_node_manager(nm_heartbeat=heartbeat)
+            log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
+                        'tasks_running': heartbeat['tasks_running'],
+                        'tasks_total': heartbeat['tasks_waiting'] + heartbeat['tasks_running'],
+                        'worker_allocation': heartbeat['worker_allocation']})
             return self._generate_nm_response()
         if heartbeat['instance_type'] == 'worker':
             state = self._ns.instances.get_nodes('worker')[heartbeat['instance_id']]
-            if state.is_state(InstanceState.RUNNING):
-                self._ns.timewindow.update_worker(worker_heartbeat=heartbeat)
             return heartbeat
 
     def _generate_nm_response(self):
@@ -469,8 +474,6 @@ class TimeWindow:
     """
 
     def __init__(self):
-        self.cpu_window = {}
-        self.mem_window = {}
         self.queue_window = {}
         self.nm_task_window = {
             'tasks_waiting': 0,
@@ -507,8 +510,6 @@ class TimeWindow:
                 window[worker_heartbeat['instance_id']] = [current_metric]
 
     def delete_instance(self, instance_id):
-        self.cpu_window.pop(instance_id, None)
-        self.mem_window.pop(instance_id, None)
         self.queue_window.pop(instance_id, None)
 
     def get_overloaded(self, sort=False) -> list:
@@ -522,9 +523,7 @@ class TimeWindow:
         if not self.nm_task_window['tasks_running']:
             return []  # If there are no tasks running, there cannot be an overloaded worker.
         for instance in self.cpu_window:
-            if sum(self.cpu_window[instance]) >= config.CPU_OVERLOAD_PRODUCT or \
-                    sum(self.mem_window[instance]) >= config.MEM_OVERLOAD_PRODUCT or \
-                    self._queue_overloaded(instance):
+            if self._queue_overloaded(instance):
                 overloaded.append(instance)
                 jobs_running.append(self.queue_window)
         if sort:
@@ -540,7 +539,8 @@ class TimeWindow:
         if self.nm_task_window['tasks_waiting']:
             return []  # There are tasks that need to be divided before one can be underloaded.
         for instance in self.queue_window:
-            if len(self.queue_window[instance]) == config.WINDOW_SIZE and sum(self.queue_window[instance]) == 0:
+            if len(self.queue_window[instance]) == config.WINDOW_SIZE and sum(
+                    self.queue_window[instance]) == 0:
                 underloaded.append(instance)
         return underloaded
 
