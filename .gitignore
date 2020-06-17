@@ -1,5 +1,6 @@
 #Ignore .csv files and embeddings
 *.csv
+!src/data/Input.csv
 *.txt
 #Ignore jupyter checkpoints
 .ipynb_checkpoints/
