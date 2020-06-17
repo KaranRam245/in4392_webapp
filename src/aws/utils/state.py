@@ -45,7 +45,7 @@ class ProgramState(State):
     PENDING = 0  # When the instance has been started but has not yet received a task.
     RUNNING = 1  # When computing or managing.
     STOPPING = 2  # When the stop comment has been received.
-    ERROR = 3  # When an error has occured.
+    ERROR = 3  # When an error has occurred.
 
     MAPPING = {
         PENDING: 'pending',

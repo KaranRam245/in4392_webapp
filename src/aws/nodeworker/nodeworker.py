@@ -32,6 +32,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self.storage_connector: ResourceManagerCore = storage_connector
         self._task_queue = deque()
         self.current_task = None
+        self.args = {}
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
@@ -62,7 +63,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
             while True:
                 if not self.current_task and self._task_queue:
                     self.current_task = self._task_queue.popleft()
-                    self._program_state = ProgramState.RUNNING
+                    self._program_state = ProgramState(ProgramState.RUNNING)
 
                     # log_info("Downloading File " + self.current_task.file_path + ".")
                     # file = self.storage_connector.download_file(
@@ -91,13 +92,14 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
                     self.send_message(message)
 
-                    self._program_state = ProgramState.PENDING
+                    self._program_state = ProgramState(ProgramState.PENDING)
                     self.current_task = None
                 await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
             pass
         except Exception as exc:
-            self._program_state = ProgramState.ERROR
+            self._program_state = ProgramState(ProgramState.ERROR)
+            self.args = {'exc': str(exc), 'trace': traceback.format_exc()}
             log_error("Worker process crashed {}: {}".format(exc, traceback.format_exc()))
             self.storage_connector.upload_log(clean=False)
 
@@ -105,9 +107,10 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         heartbeat = HeartBeatPacket(instance_id=self._instance_id,
                                     instance_type='worker',
                                     instance_state=self._instance_state,
-                                    program_state=self._program_state,
+                                    program_state=str(self._program_state),
                                     queue_size=len(self._task_queue),
-                                    current_task_start=self.current_task['time'] if self.current_task else '')
+                                    current_task_start=self.current_task['time'] if self.current_task else '',
+                                    args=self.args)
         # self.send_message(message=heartbeat)
         if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)
