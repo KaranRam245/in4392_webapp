@@ -120,13 +120,9 @@ class MultiConnectionClient:
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
-            log_info("Processing command..")
             self.process_command(packet['command'])
-            log_info("Done command..")
         elif isinstance(packet, HeartBeatPacket):
-            log_info("Processing heartbeat..")
             self.process_heartbeat(packet)
-            log_info("Done heartbeat..")
         else:
             log_error("I do not know this packet type: {}".format(packet['packet_type']))
 
