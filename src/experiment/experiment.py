@@ -142,7 +142,8 @@ class Parser:
                                                                                    charge_times))
 
     @staticmethod
-    def plot_heartbeats(metrics, hb_keys, ylabels, filter=[], titles=None):
+    def plot_heartbeats(metrics, hb_keys, ylabels, keep_instances=None, titles=None,
+                        same_figure=False, alt_labels=None, replace_id=None):
         for _, values in metrics.items():  # This loop always runs once (metrics=['heartbeat']).
             _, heartbeats = zip(*values)
             heartbeats = [(heartbeat['time'], heartbeat['instance_id'], heartbeat) for heartbeat in
@@ -152,28 +153,42 @@ class Parser:
                 heartbeat_dict.setdefault(instance_id, []).append((time, heartbeat))
 
             for idx, key in enumerate(hb_keys):
-                if key not in filter:  # Key should be instance_id
-                    continue
                 lines = []
-                for instance_id, values in heartbeat_dict.items():
-                    metric_values = [(time, heartbeat[key]) for time, heartbeat in values]
+                for instance_id, inst_values in heartbeat_dict.items():
+                    if keep_instances and instance_id not in keep_instances:
+                        continue
+                    metric_values = [(time, heartbeat[key]) for time, heartbeat in inst_values]
                     lines.append((instance_id, metric_values))
                 flat_lines = [item for sublist in [line for _, line in lines] for item in sublist]
                 min_time = min([time for time, _ in flat_lines])
-                title = titles[idx] if titles else key
-                Parser._heartbeat_lines(lines, min_time=min_time, title=title, ylabel=ylabels[idx])
+                if same_figure:
+                    if not titles:
+                        print("YOU MUST SPECIFY TITLES WITH SAME FIGURE!")
+                    title = titles[0]  # Must specify a title
+                    show = idx == (len(hb_keys) - 1)
+                    ylabel = ylabels[0]
+                else:
+                    title = titles[idx] if titles else key
+                    show = True
+                    ylabel = ylabels[idx]
+                alt_label = None if not alt_labels else alt_labels[idx]
+                Parser._heartbeat_lines(lines, min_time=min_time, title=title, ylabel=ylabel,
+                                        show=show, alt_label=alt_label, replace_id=replace_id)
 
     @staticmethod
-    def _heartbeat_lines(lines, min_time, title='', ylabel=''):
+    def _heartbeat_lines(lines, min_time, title='', ylabel='', show=True, alt_label=None,
+                         replace_id={}):
         for instance_id, values in lines:
             times, y_values = zip(*values)
             times = [time - min_time for time in times]
-            plt.plot(times, y_values, linestyle='-', marker='o', label=instance_id)
-        plt.title(title)
-        plt.xlabel("Time (in seconds)")
-        plt.ylabel(ylabel)
-        plt.legend()
-        plt.show()
+            label = alt_label if alt_label else replace_id.get(instance_id, instance_id)
+            plt.plot(times, y_values, linestyle='-', marker='o', label=label)
+        if show:
+            plt.title(title)
+            plt.xlabel("Time (in seconds)")
+            plt.ylabel(ylabel)
+            plt.legend()
+            plt.show()
 
     @staticmethod
     def process(metrics, keys: list, func, **kwargs):
@@ -185,27 +200,34 @@ class Parser:
 
 
 PROCESSED = {}
+NODE_MANAGER = 'i-0b5222c31dc02418c'
 
 
 def main():
-    global PROCESSED
+    global PROCESSED, NODE_MANAGER
     parser = Parser()
     metrics = parser.parse('instance_manager.tgz')
     # pprint.PrettyPrinter(indent=4).pprint(metrics)
     PROCESSED = dict.fromkeys(list(metrics.keys()), False)
-    # parser.process(metrics, ['workers'], parser.plot_metrics,
-    #                xlabel='Time (in seconds)', ylabel='Workers running',
-    #                int_yticks=True)
-    # parser.process(metrics, ['upload_duration'], parser.statistics)
-    # parser.process(metrics, ['charged_time'], parser.charge_time)
-    # parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
-    #                hb_keys=['cpu_usage', 'mem_usage'],
-    #                ylabels=['CPU usage (in %)', 'RAM usage (in %)'])
+    parser.process(metrics, ['workers'], parser.plot_metrics,
+                   xlabel='Time (in seconds)', ylabel='Workers running',
+                   int_yticks=True)
+    parser.process(metrics, ['upload_duration'],
+                   parser.statistics)
+    parser.process(metrics, ['charged_time'],
+                   parser.charge_time)
+    parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
+                   hb_keys=['cpu_usage', 'mem_usage'],
+                   ylabels=['CPU usage (in %)', 'RAM usage (in %)'],
+                   replace_id={NODE_MANAGER: 'node_manager'},
+                   titles=['CPU usage in instances', 'Memory usage in instances'])
     parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
                    hb_keys=['tasks_waiting', 'tasks_running'],
-                   ylabels=['Tasks waiting', 'Tasks running'],
-                   filter=[],
-                   titles=['Tasks waiting in Node Manager', 'Tasks running in Node Manager'])
+                   ylabels=['Tasks'],
+                   keep_instances=[NODE_MANAGER],
+                   titles=['Tasks waiting and running in Node Manager'],
+                   alt_labels=['Tasks waiting', 'Tasks running'],
+                   same_figure=True)
     print("Metrics processed: {}".format(PROCESSED))
 
 
