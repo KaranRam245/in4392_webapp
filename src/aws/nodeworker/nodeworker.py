@@ -67,16 +67,18 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     #     key=self.current_task.key
                     # )
                     # log_info("Downloaded file " + self.current_task.file_path + ".")
-                    input_data=self.current_task["task"].get_task_data()
-                    input_sequences= Tokenize.tokenize_text(os.path.join("src","aws","nodeworker","tokenizer_20000.pickle"),input_data) 
-                    model=load_model(os.path.join("src","aws","nodeworker","Senti.h5")) 
-                    labels=model.predict(input_sequences) 
+                    input_data = self.current_task["task"].get_task_data()
+                    input_sequences = Tokenize.tokenize_text(
+                        os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
+                        input_data)
+                    model = load_model(os.path.join("src", "aws", "nodeworker", "Senti.h5"))
+                    labels = model.predict(input_sequences)
 
                     # Send command with completed task, results and instance id completed
-                    message=CommandPacket(command="done")
-                    message["labels"]=labels
-                    message["instance_id"]=self._instance_id
-                    message['task']=current_task["task"]
+                    message = CommandPacket(command="done")
+                    message["labels"] = labels
+                    message["instance_id"] = self._instance_id
+                    message['task'] = current_task["task"]
 
                     self.send_message(message)
                     # TODO: Process the file! @Karan
