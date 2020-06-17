@@ -432,6 +432,8 @@ class NodeMonitor(con.MultiConnectionServer):
 
     def process_heartbeat(self, heartbeat, source) -> Packet:
         try:
+            if heartbeat['instance_id'] not in self._ns.instances.charge_time:
+                self._ns.instances.charge_time[heartbeat['instance_id']] = time()
             self._ns.instances.set_last_heartbeat(heartbeat=heartbeat)
             log_metric({'heartbeat': heartbeat})
             if heartbeat['instance_type'] == 'node_manager':
