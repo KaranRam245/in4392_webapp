@@ -30,8 +30,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._instance_id = instance_id
         self._task_assignment = {}  # Available & Assigned tasks
         self._task_processing = {}  # Tasks currently being processed
-        self.workers_running = []
-        self.workers_pending = []
+        self._workers_running = []
+        self._workers_pending = []
 
     async def create_full_taskpool(self):
         imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
@@ -214,7 +214,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
             previous_available_workers=self._tp.workers_running+self._tp.workers_pending
             self._tp.workers_running = heartbeat['workers_running']
             self._tp.workers_pending = heartbeat['workers_pending']
-            stopped_workers,new_workers=self._tp.worker_change(previous_available_workers)
+            stopped_workers, new_workers=self._tp.worker_change(previous_available_workers)
 
             # Add all tasks remaining in stopped worker assignments back to the taskpool
             for worker in stopped_workers:
