@@ -42,10 +42,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
             current_time = 0
             while benchmark_tasks:  # While there are tasks.
-                print("Current tasks {}: {}".format(current_time, self.tasks))
-                while benchmark_tasks[0] == current_time:
+                while benchmark_tasks[0][0] == current_time:
                     time, task = benchmark_tasks.popleft()
-                    print("This task {}: {}".format(time, task))
                     self.tasks.append(task)  # Append task to the taskpool on given time.
                 current_time += 1
                 await asyncio.sleep(1)
