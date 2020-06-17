@@ -13,7 +13,7 @@ from aws.resourcemanager.resourcemanager import log_info, log_error, ResourceMan
 from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
-from src.data import Tokenize
+from data import Tokenize
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
