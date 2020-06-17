@@ -353,7 +353,7 @@ class NodeScheduler:
             pass
         except Exception as exc:
             log_error("The following exception {}"
-                      " occurred during run: {}".format(exc, traceback.print_exc()))
+                      " occurred during run: {}".format(exc, traceback.format_exc()))
 
     def check_all_living(self):
         """

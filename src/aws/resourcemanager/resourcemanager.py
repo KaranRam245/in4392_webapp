@@ -131,9 +131,9 @@ class ResourceManagerCore(Observable):
             except S3UploadFailedError as exc:
                 print("There was a ClientError during uploading to S3: {}".format(exc))
             except ValueError as exc:
-                print("Wrong value passed to S3 upload_file {}: {}".format(exc, traceback.print_exc()))
+                print("Wrong value passed to S3 upload_file {}: {}".format(exc, traceback.format_exc()))
             except Exception as exc:
-                print("Could not upload file due to exception {}: {}".format(exc, traceback.print_exc()))
+                print("Could not upload file due to exception {}: {}".format(exc, traceback.format_exc()))
         log_metric({'upload_duration': time() - start_time})
 
     def download_file(self, bucket_name, key, file_path):
@@ -177,7 +177,7 @@ class ResourceManagerCore(Observable):
         except FileNotFoundError:
             print("There were no more logs to report to S3. Temporary.log was not found.")
         except Exception as exc:
-            print("Could not upload logs to S3 due to {} with: {}".format(exc, traceback.print_exc()))
+            print("Could not upload logs to S3 due to {} with: {}".format(exc, traceback.format_exc()))
 
     async def period_upload_log(self):
         await asyncio.sleep(config.LOGGING_START_INTERVAL)

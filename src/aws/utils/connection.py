@@ -42,7 +42,7 @@ def decode_packet(data) -> Packet:
         packet_dict = json.loads(value)
         return PacketTranslator.translate(packet_dict)
     except json.JSONDecodeError as e:
-        log_error("JsonDecodeError on: {} with {}: {}".format(value, e, traceback.print_exc()))
+        log_error("JsonDecodeError on: {} with {}: {}".format(value, e, traceback.format_exc()))
         raise e
 
 class MultiConnectionServer:
