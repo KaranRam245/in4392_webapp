@@ -142,7 +142,7 @@ class Parser:
                                                                                    charge_times))
 
     @staticmethod
-    def plot_heartbeats(metrics, hb_keys, ylabels):
+    def plot_heartbeats(metrics, hb_keys, ylabels, filter=[], titles=None):
         for _, values in metrics.items():  # This loop always runs once (metrics=['heartbeat']).
             _, heartbeats = zip(*values)
             heartbeats = [(heartbeat['time'], heartbeat['instance_id'], heartbeat) for heartbeat in
@@ -152,13 +152,16 @@ class Parser:
                 heartbeat_dict.setdefault(instance_id, []).append((time, heartbeat))
 
             for idx, key in enumerate(hb_keys):
+                if key not in filter:  # Key should be instance_id
+                    continue
                 lines = []
                 for instance_id, values in heartbeat_dict.items():
                     metric_values = [(time, heartbeat[key]) for time, heartbeat in values]
                     lines.append((instance_id, metric_values))
                 flat_lines = [item for sublist in [line for _, line in lines] for item in sublist]
                 min_time = min([time for time, _ in flat_lines])
-                Parser._heartbeat_lines(lines, min_time=min_time, title=key, ylabel=ylabels[idx])
+                title = titles[idx] if titles else key
+                Parser._heartbeat_lines(lines, min_time=min_time, title=title, ylabel=ylabels[idx])
 
     @staticmethod
     def _heartbeat_lines(lines, min_time, title='', ylabel=''):
@@ -195,9 +198,14 @@ def main():
     #                int_yticks=True)
     # parser.process(metrics, ['upload_duration'], parser.statistics)
     # parser.process(metrics, ['charged_time'], parser.charge_time)
+    # parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
+    #                hb_keys=['cpu_usage', 'mem_usage'],
+    #                ylabels=['CPU usage (in %)', 'RAM usage (in %)'])
     parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
-                   hb_keys=['cpu_usage', 'mem_usage'],
-                   ylabels=['CPU usage (in %)', 'RAM usage (in %)'])
+                   hb_keys=['tasks_waiting', 'tasks_running'],
+                   ylabels=['Tasks waiting', 'Tasks running'],
+                   filter=[],
+                   titles=['Tasks waiting in Node Manager', 'Tasks running in Node Manager'])
     print("Metrics processed: {}".format(PROCESSED))
 
 
