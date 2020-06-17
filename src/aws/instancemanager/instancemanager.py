@@ -6,6 +6,7 @@ import time
 import traceback
 from contextlib import suppress
 from time import time
+from collections import deque
 
 import boto3
 from ec2_metadata import ec2_metadata
@@ -289,7 +290,6 @@ class NodeScheduler:
             if instance_types and instance_types[idx] == 'worker':
                 self.workers -= 1
                 log_metric({'workers': self.workers})
-            self.timewindow.delete_instance(instance_id)
 
     def running_instances(self):
         """
@@ -333,22 +333,17 @@ class NodeScheduler:
                 self.check_all_living()
 
                 # Check if some worker is underloaded or overloaded.
-                underloaded = self.timewindow.get_underloaded()
-                overloaded = self.timewindow.get_overloaded()
-                log_info("Overloaded: {}, Underloaded: {}".format(overloaded, underloaded))
-                if underloaded:
-                    if overloaded:
-                        pass  # The workload should be balanced. IM should do nothing.
-                    else:
-                        # Kill an underloaded worker. There is not enough work.
-                        self._kill_instance(underloaded[0], instance_types=['worker'])
-                else:
-                    if overloaded:
-                        # We need a new worker. There is too much work.
-                        worker_id = self.start_worker()
-                        self.timewindow.add_empty(worker_id)
-                    else:
-                        pass  # Everything is doing fine! Do nothing.
+                active_workers = len(self.instances.get_all('worker',
+                                                            filter_state=[InstanceState.PENDING,
+                                                                          InstanceState.RUNNING]))
+                max_workers = len(self.instances.get_nodes('worker'))
+                window_response = self.timewindow.get_action(current_workers=active_workers,
+                                                             max_workers=max_workers)
+                if 'create' in window_response:
+                    self.start_worker()
+                elif 'kill' in window_response:
+                    self._kill_instance(instance_ids=[window_response['kill']],
+                                        instance_types=['worker'])
 
                 update_counter -= sleep_time
                 await asyncio.sleep(sleep_time)
@@ -450,12 +445,13 @@ class NodeMonitor(con.MultiConnectionServer):
                         'worker_allocation': heartbeat['worker_allocation']})
             return self._generate_nm_response()
         if heartbeat['instance_type'] == 'worker':
-            state = self._ns.instances.get_nodes('worker')[heartbeat['instance_id']]
             return heartbeat
 
     def _generate_nm_response(self):
-        workers_running = self._ns.instances.get_all('worker', filter_state=[InstanceState.RUNNING])
-        workers_pending = self._ns.instances.get_all('worker', filter_state=[InstanceState.PENDING])
+        workers_running = self._ns.instances.get_all('worker',
+                                                     filter_state=[InstanceState.RUNNING])
+        workers_pending = self._ns.instances.get_all('worker',
+                                                     filter_state=[InstanceState.PENDING])
         response = HeartBeatPacket(instance_id='instance_manager',
                                    instance_state=InstanceState(InstanceState.RUNNING),
                                    instance_type='instance_manager',
@@ -474,96 +470,52 @@ class TimeWindow:
     """
 
     def __init__(self):
-        self.queue_window = {}
-        self.nm_task_window = {
-            'tasks_waiting': 0,
-            'tasks_running': 0
-        }
+        self.mean_total_tasks = deque()
+        self.worker_allocation = {}
 
     def update_node_manager(self, nm_heartbeat: HeartBeatPacket):
         """
         Update the state of the node manager in the time window.
         :param nm_heartbeat: The heartbeat from the Node manager.
         """
-        self.nm_task_window = {
-            'tasks_waiting': nm_heartbeat['tasks_waiting'],
-            'tasks_running': nm_heartbeat['tasks_running']
-        }
+        self.mean_total_tasks.append(
+            (nm_heartbeat['tasks_waiting'] + nm_heartbeat['tasks_running']) / len(
+                nm_heartbeat['worker_allocation']))
+        self.worker_allocation = nm_heartbeat['worker_allocation']
+        if len(self.mean_total_tasks) > config.WINDOW_SIZE:
+            self.mean_total_tasks.popleft()
 
-    def update_worker(self, worker_heartbeat: HeartBeatPacket):
-        """
-        Update the worker in the windows. The windows keep track of the last metrics, such as CPU.
-        :param worker_heartbeat: Heartbeat received belonging to the worker.
-        """
-        metric = ('cpu_usage', 'mem_usage', 'queue_size')
-        for idx, window in enumerate((self.cpu_window, self.mem_window, self.queue_window)):
-            old_window = window.get(worker_heartbeat['instance_id'], None)
-            current_metric = worker_heartbeat[metric[idx]]
-            if old_window:
-                # Add the current metric at the end and shift by removing the first element if
-                # The window has has exceeded (i.e.,
-                new_window = (old_window + [current_metric])[
-                             max(len(old_window) - (config.WINDOW_SIZE - 1), 0):(
-                                     config.WINDOW_SIZE + 1)]
-                window[worker_heartbeat['instance_id']] = new_window
-            else:
-                window[worker_heartbeat['instance_id']] = [current_metric]
+    def get_action(self, current_workers: int, max_workers: int):
+        number_of_workers = len(self.worker_allocation)
+        if self.mean_total_tasks[-1] > 0 and number_of_workers == 0:
+            log_info("[LB] There was no worker, but there is work to do.")
+            return {'create': 1}  # There was no worker, but there is work to do.
 
-    def delete_instance(self, instance_id):
-        self.queue_window.pop(instance_id, None)
+        mean_task_per_worker = self._mean(self.mean_total_tasks)
 
-    def get_overloaded(self, sort=False) -> list:
-        """
-        Get a list of overloaded workers.
-        :param sort: Boolean indicating if the workers should be sorted on the number of jobs.
-        :return: List of overloaded workers.
-        """
-        overloaded = []
-        jobs_running = []
-        if not self.nm_task_window['tasks_running']:
-            return []  # If there are no tasks running, there cannot be an overloaded worker.
-        for instance in self.cpu_window:
-            if self._queue_overloaded(instance):
-                overloaded.append(instance)
-                jobs_running.append(self.queue_window)
-        if sort:
-            overloaded, _ = (list(t) for t in zip(*sorted(zip(overloaded, jobs_running))))
-        return overloaded
+        # Check if there are underloaded workers.
+        if config.MIN_JOBS_PER_WORKER < mean_task_per_worker:
+            if self.mean_total_tasks[-1] > 0 and number_of_workers == 1:
+                return {}  # If there is still work and only one worker to do it.
+            if current_workers < number_of_workers:
+                return {}  # In an earlier check, an instance was already killed wait for next HB.
+            # Kill the instance with the least tasks.
+            log_info("[LB] The instance with the least tasks will be killed.")
+            return {'kill': min(self.worker_allocation, key=self.worker_allocation.get)}
 
-    def get_underloaded(self) -> list:
-        """
-        Get a list of underloaded workers. Currently, workers without a job.
-        :return: List of underloaded workers.
-        """
-        underloaded = []
-        if self.nm_task_window['tasks_waiting']:
-            return []  # There are tasks that need to be divided before one can be underloaded.
-        for instance in self.queue_window:
-            if len(self.queue_window[instance]) == config.WINDOW_SIZE and sum(
-                    self.queue_window[instance]) == 0:
-                underloaded.append(instance)
-        return underloaded
+        # Check if there are overloaded workers.
+        if mean_task_per_worker > config.MAX_JOBS_PER_WORKER:
+            if current_workers == max_workers:
+                return {}  # No new worker can be created, if we already reached the limit.
+            if current_workers > number_of_workers:
+                return {}  # In an earlier check, an instance was already created wait for next HB.
+            # Create an instance.
+            log_info("[LB] A new instance is needed for load balancing.")
+            return {'create': 1}
+        return {}
 
-    def add_empty(self, instance_id):
-        """
-        Add an empty worker to the time window. This worker likely hasn't started yet.
-        :param instance_id: Instance id of the worker added.
-        """
-        self.queue_window[instance_id] = []
-        self.mem_window = []
-        self.cpu_window = []
-
-    def _queue_overloaded(self, instance):
-        """
-        Check if the queue of a worker is overloaded. If there are no measurements yet, the
-        worker cannot be overloaded yet.
-        :param instance: Instance id of the checked worker.
-        :return: Boolean indicating if the worker is overloaded.
-        """
-        window_size = len(self.queue_window[instance])
-        if window_size < config.WINDOW_SIZE:  # Not enough measurements yet. Likely it is still starting.
-            return False
-        return sum(self.queue_window[instance]) / window_size >= config.MAX_JOBS_PER_WORKER
+    def _mean(self, values, rounding=2):
+        return round(sum(values) / len(values), rounding)
 
 
 def start_instance(debug=False, git_pull=False):
