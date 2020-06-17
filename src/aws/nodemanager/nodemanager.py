@@ -113,7 +113,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
                                     instance_type='node_manager',
                                     instance_state=self._instance_state,
                                     tasks_waiting=self.all_assigned_tasks + len(self.tasks),
-                                    tasks_running=len(list(self.task_processing.keys())),
+                                    tasks_running=len(processing),
                                     worker_allocation=dict(assignments + processing))
         log_metric({'tasks_waiting': heartbeat['tasks_waiting'],
                     'tasks_running': heartbeat['tasks_running'],
