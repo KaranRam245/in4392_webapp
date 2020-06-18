@@ -99,14 +99,16 @@ class TaskPool(Observable, con.MultiConnectionServer):
         except KeyboardInterrupt:
             pass
 
-    def steal_task(self):
+    def steal_task(self, worker):
         """
         Steals a task from the worker with the most number of tasks
         """
         assignments = {key: len(value) for key, value in self.task_assignment.items()}
         victim_worker = max(assignments, key=assignments.get)
         if assignments[victim_worker] >= 2:
-            return self.task_assignment[victim_worker].pop()
+            task = self.task_assignment[victim_worker].pop()
+            self.task_assignment[worker].append(task)
+            return task
         return None
 
     def worker_change(self, running, pending):
@@ -152,12 +154,12 @@ class TaskPool(Observable, con.MultiConnectionServer):
             if assignments:
                 packet['task'] = assignments.popleft()
             else:
-                stolen_packet = self.steal_task()
+                stolen_packet = self.steal_task(hb['instance_id'])
                 if stolen_packet:
                     packet['task'] = stolen_packet
                 else:
                     return hb
-            self.task_processing[hb['instance_id']] = deque(packet['task'])
+            self.task_processing[hb['instance_id']].append(packet['task'])
             return packet
 
         return hb
@@ -174,11 +176,11 @@ class TaskPool(Observable, con.MultiConnectionServer):
             if len(self.task_assignment[command['instance_id']]) > 0:
                 # If there are tasks in the taskpool send a new command to the worker
                 packet['task'] = self.task_assignment[command['instance_id']].popleft()
-                self.task_processing[command['instance_id']] = deque(packet['task'])
+                self.task_processing[command['instance_id']].append(packet['task'])
             else:
-                stolen_task = self.steal_task()
+                stolen_task = self.steal_task(command['instance_id'])
                 if stolen_task:
-                    self.task_processing[command['instance_id']] = deque(stolen_task)
+                    self.task_processing[command['instance_id']].append(stolen_task)
                     packet["task"] = stolen_task
                 else:
                     return command
