@@ -71,7 +71,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     self.current_task = self._task_queue.popleft()
                     self._program_state = ProgramState(ProgramState.RUNNING)
 
-                    os.mkdir(config.DEFAULT_JOB_LOCAL_DIRECTORY)
+                    os.makedirs(config.DEFAULT_JOB_LOCAL_DIRECTORY, exist_ok=True)
                     task_file_name = self.current_task['task']
                     log_info("Downloading File {}.".format(task_file_name))
                     filepath = config.DEFAULT_JOB_LOCAL_DIRECTORY + task_file_name
