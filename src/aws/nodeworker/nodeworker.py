@@ -137,8 +137,10 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         """
         if self.connection_lost:
             message['error_monitor'] = self.last_exception
+            message['trace_monitor'] = self.last_trace
         if self.core.connection_lost:
-            message['error_core'] = self.last_exception
+            message['error_core'] = self.core.last_exception
+            message['trace_core'] = self.core.last_trace
         log_info("Sending message: {}.".format(message))
         self.send_message(message)
 

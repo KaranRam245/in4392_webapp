@@ -96,10 +96,12 @@ class MultiConnectionServer:
                 writer.write(data_response)
                 await writer.drain()
                 await asyncio.sleep(config.SERVER_SLEEP_TIME)
-        except ConnectionResetError:
-            log_exception("Client {} forcibly closed its connection.".format(addr))
+        except ConnectionResetError as exc:
+            log_exception("Client {} forcibly closed its connection {} : {}".format(addr, exc, traceback.format_exc()))
         except TypeError as excep:
-            log_exception(str(excep))
+            log_exception("Type error in server {} : {}".format(excep, traceback.format_exc()))
+        except Exception as exc:
+            log_exception("Exception in server {} : {}".format(exc, traceback.format_exc()))
         finally:
             log_info("Closed connection of client: {}".format(addr))
             writer.close()
@@ -115,6 +117,7 @@ class MultiConnectionClient:
         self._sleep_time = sleep_time
         self.connection_lost = False
         self.last_exception = ""
+        self.last_trace = ""
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
@@ -149,6 +152,7 @@ class MultiConnectionClient:
 
                     data_received = await reader.read(1024)
                     if data_received == b"":  # EOF passed.
+                        log_info("EOF passed. Closing the connection.")
                         break
                     packet_received = decode_packet(data_received)
                     log_info('+ Received: {}'.format(packet_received))
@@ -159,7 +163,8 @@ class MultiConnectionClient:
             pass
         except Exception as exc:
             log_exception("Socket closed due to an exception {}: {}".format(exc, traceback.format_exc()))
-            self.last_exception = traceback.format_exc()
+            self.last_exception = str(exc)
+            self.last_trace = traceback.format_exc()
         finally:
             log_info('Close the socket [{}:{}]'.format(self.host, self.port))
             writer.close()
