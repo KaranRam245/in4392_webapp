@@ -37,10 +37,14 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self._workers_running = []
         self._workers_pending = []
 
+    @staticmethod
+    def translate(data):
+        return re.sub(r'[\n\r\t"\']+', ' ', data)
+
     async def create_full_taskpool(self):
         try:
             imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
-            benchmark_tasks = [(row.Time, row.Input) for _, row in imported_csv.iterrows()]
+            benchmark_tasks = [(row.Time, self.translate(row.Input)) for _, row in imported_csv.iterrows()]
             benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
 
             current_time = 0
