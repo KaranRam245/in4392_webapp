@@ -118,7 +118,6 @@ class MultiConnectionClient:
         self.connection_lost = False
         self.last_exception = ""
         self.last_trace = ""
-        self.last_packet_received = None
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
@@ -155,7 +154,6 @@ class MultiConnectionClient:
                     if data_received == b"":  # EOF passed.
                         log_info("EOF passed. Closing the connection.")
                         break
-                    self.last_packet_received = data_received
                     packet_received = decode_packet(data_received)
                     log_info('+ Received: {}'.format(packet_received))
                     self.process_message(packet_received)
