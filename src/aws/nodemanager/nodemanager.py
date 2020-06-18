@@ -7,6 +7,7 @@ import traceback
 from collections import Counter, deque
 from time import time
 import json
+import re
 
 import pandas as pd
 
@@ -237,6 +238,7 @@ class Task(dict):
     """
 
     def __init__(self, data, dataType):
+        data = re.sub('\n|\t|\r|\'|"', '', data)
         super().__init__(data=json.dumps(data), taskType=dataType, state=TaskState.UPLOADING)
 
     def get_task_type(self):

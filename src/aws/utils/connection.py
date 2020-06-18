@@ -93,7 +93,9 @@ class MultiConnectionServer:
 
                 log_info("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
+                log_info("--------THIS IS THE ENCODE DONE ----------- {}".format(data_response))
                 writer.write(data_response)
+                log_info("Sent the bastard!!!!!!!!!!")
                 await writer.drain()
                 await asyncio.sleep(config.SERVER_SLEEP_TIME)
         except ConnectionResetError:
