@@ -6,6 +6,7 @@ import os
 import traceback
 from collections import Counter, deque
 from time import time
+import re
 
 import pandas as pd
 
@@ -236,6 +237,8 @@ class Task(dict):
     """
 
     def __init__(self, data, dataType):
+        data = re.sub('r[\'"]', '', data)
+        data = re.sub('r[\n\r\t]', ' ', data)
         super().__init__(data=data, taskType=dataType, state=TaskState.UPLOADING)
 
     def get_task_type(self):
