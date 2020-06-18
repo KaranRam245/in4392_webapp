@@ -166,6 +166,9 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
     def process_command(self, command: CommandPacket, source):
         if command["command"] == "done":
+            if command["instance_id"] not in (self._workers_running + self._workers_pending):
+                return command
+
             self.task_processing[command["instance_id"]].popleft()
             self.all_assigned_tasks -= 1
 
@@ -216,6 +219,7 @@ class TaskPoolMonitor(Listener, con.MultiConnectionClient):
             for worker in stopped_workers:
                 self._tp.all_assigned_tasks -= len(self._tp.task_assignment[worker])
                 self._tp.tasks += self._tp.task_assignment[worker]
+                self._tp.tasks = list(self._tp.task_processing[worker]) + self._tp.tasks
                 del self._tp.task_assignment[worker]
                 del self._tp.task_processing[worker]
             for worker in new_workers:

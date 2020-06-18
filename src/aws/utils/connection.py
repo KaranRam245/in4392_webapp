@@ -97,7 +97,7 @@ class MultiConnectionServer:
                 await writer.drain()
                 await asyncio.sleep(config.SERVER_SLEEP_TIME)
         except ConnectionResetError as exc:
-            log_exception("Client {} forcibly closed its connection {} : {}".format(addr, exc, traceback.format_exc()))
+            log_exception("Client {} forcibly closed its connection {}".format(addr, exc))
         except TypeError as excep:
             log_exception("Type error in server {} : {}".format(excep, traceback.format_exc()))
         except Exception as exc:

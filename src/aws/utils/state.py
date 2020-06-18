@@ -21,7 +21,7 @@ class State(ABC):
 
     def is_state(self, state) -> bool:
         if isinstance(state, InstanceState):
-            return self._state == state._state
+            return self._state == state.get_state()
         return self._state == state
 
     def is_any(self, states: Iterable[int]) -> bool:

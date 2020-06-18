@@ -242,6 +242,12 @@ class NodeScheduler:
 
     def _init_instance(self, instance_id, instance_type: str, wait=False):
         log_info("Starting {} instance {}".format(instance_type, instance_id))
+        current_state: InstanceState = self.instances.get_nodes('instance_type').get(instance_id, None)
+        if current_state and not current_state.is_state(InstanceState.STOPPED):
+            log_info("Could not init instance {}. Current state is {}. "
+                     "Waiting until STOPPED".format(instance_id, current_state))
+            return
+
         self.boto.ec2.start_instances(InstanceIds=[instance_id])
         if wait:
             waiter = self.boto.ec2.get_waiter('instance_running')
@@ -558,10 +564,11 @@ def start_instance(debug=False, git_pull=False):
         if not scheduler.cleaned_up:
             scheduler.cancel_all()
         tasks = asyncio.Task.all_tasks(loop=loop)
-        for task in tasks:
-            task.cancel()
-            log_info("Cancelled task {}".format(task))
         with suppress(asyncio.CancelledError):
+            for task in tasks:
+                task.cancel()
+                log_info("Cancelled task {}".format(task))
+
             group = asyncio.gather(*tasks, return_exceptions=True)
             loop.run_until_complete(group)
         resource_manager.upload_log(clean=True)  # Clean the last logs.
