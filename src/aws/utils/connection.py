@@ -93,9 +93,7 @@ class MultiConnectionServer:
 
                 log_info("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
-                log_info("--------THIS IS THE ENCODE DONE ----------- {}".format(data_response))
                 writer.write(data_response)
-                log_info("Sent the bastard!!!!!!!!!!")
                 await writer.drain()
                 await asyncio.sleep(config.SERVER_SLEEP_TIME)
         except ConnectionResetError:
@@ -115,6 +113,8 @@ class MultiConnectionClient:
         self.send_buffer: deque[Packet] = deque()
         self.running = True
         self._sleep_time = sleep_time
+        self.connection_lost = False
+        self.last_exception = ""
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
@@ -159,9 +159,11 @@ class MultiConnectionClient:
             pass
         except Exception as exc:
             log_exception("Socket closed due to an exception {}: {}".format(exc, traceback.format_exc()))
+            self.last_exception = traceback.format_exc()
         finally:
             log_info('Close the socket [{}:{}]'.format(self.host, self.port))
             writer.close()
+            self.connection_lost = True
 
     def close(self):
         self.running = False

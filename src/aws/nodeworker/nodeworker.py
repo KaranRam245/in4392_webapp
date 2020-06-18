@@ -94,11 +94,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
                     log_info("[PROGRESS] Created response {}".format(message))
 
-                    self.storage_connector.upload_log(clean=False)
-
                     self.send_message(message)
-
-                    self.storage_connector.upload_log(clean=False)
 
                     self._program_state = ProgramState(ProgramState.PENDING)
                     self.current_task = None
@@ -128,12 +124,21 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
 class WorkerMonitor(Listener, con.MultiConnectionClient):
 
+    def __init__(self, host, port, core):
+        self.core = core
+        Listener.__init__(self)
+        con.MultiConnectionClient.__init__(self, host, port)
+
     def event(self, message):
         """
         Method called when the notify function is called in the Observable class. The Listener is
         notified through the event function with a dict message result.
         :param message: Message of the event in dict format.
         """
+        if self.connection_lost:
+            message['error_monitor'] = self.last_exception
+        if self.core.connection_lost:
+            message['error_core'] = self.last_exception
         log_info("Sending message: {}.".format(message))
         self.send_message(message)
 
