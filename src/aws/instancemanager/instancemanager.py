@@ -101,7 +101,7 @@ class Instances:
         for boto_instance in boto_response:
             self.set_state(instance_id=boto_instance.instance_id, instance_type=boto_instance.name,
                            state=boto_instance.state)
-            self.set_ip(instance_id=boto_instance.instance_id, ip_address=boto_instance.public_ip)
+            self.set_ip(instance_id=boto_instance.instance_id, ip_address=boto_instance.dns)
 
     def get_worker_split(self):
         """
@@ -162,7 +162,6 @@ class NodeScheduler:
     def __init__(self, debug, git_pull, account_id):
         self.instance_id = ec2_metadata.instance_id
         self.instances = Instances()
-        self.ipv4 = ec2_metadata.public_ipv4
         self.dns = ec2_metadata.public_hostname
         self.boto = BotoInstanceReader()
         self.commands = []
@@ -194,7 +193,7 @@ class NodeScheduler:
     def _send_start_command(self, instance_type, instance_id):
         try:
             command = [config.DEFAULT_DIRECTORY,
-                       config.DEFAULT_MAIN_CALL.format(instance_type, self.ipv4, instance_id,
+                       config.DEFAULT_MAIN_CALL.format(instance_type, self.dns, instance_id,
                                                        self.account_id)]
             if instance_type == 'worker':
                 node_manager_ids = self.instances.get_all('node_manager', InstanceState.RUNNING)
