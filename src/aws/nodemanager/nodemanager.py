@@ -59,7 +59,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         try:
             os.makedirs(config.DEFAULT_JOB_LOCAL_DIRECTORY, exist_ok=True)
 
-            imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
+            imported_csv = pd.read_csv(os.path.join("src", "data", "all_tasks_scenario.csv"))
             benchmark_tasks = [(row.Time, self.translate(row.Input)) for _, row in imported_csv.iterrows()]
             benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
 
