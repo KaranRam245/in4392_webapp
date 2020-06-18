@@ -72,6 +72,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     self._program_state = ProgramState(ProgramState.RUNNING)
 
                     log_info("Downloading File " + self.current_task + ".")
+                    os.mkdir(config.DEFAULT_JOB_LOCAL_DIRECTORY)
                     filepath = config.DEFAULT_JOB_LOCAL_DIRECTORY + self.current_task
                     self.storage_connector.download_file(
                         file_path=filepath,
