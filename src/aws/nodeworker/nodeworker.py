@@ -87,7 +87,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
 
                     # Send command with completed task, results and instance id completed
                     message = CommandPacket(command="done")
-                    message["labels"] = str(labels)  # convert the array to a list for json.dumps.
+                    message["argmax"] = np.argmax(labels)  # convert the array to a list for json.dumps.
                     message["instance_id"] = self._instance_id
                     message['task'] = self.current_task["task"]
                     message['task_start'] = self.current_task['time']
