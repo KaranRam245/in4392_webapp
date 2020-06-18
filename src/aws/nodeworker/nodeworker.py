@@ -160,7 +160,7 @@ def start_instance(instance_id, host_im, host_nm, account_id, port_im=con.PORT_I
                              port=port_nm,
                              instance_id=instance_id,
                              storage_connector=storage_connector)
-    monitor = WorkerMonitor(host_im, port_im)
+    monitor = WorkerMonitor(host_im, port_im, worker_core)
     log_info("Starting WorkerMonitor...")
     worker_core.add_listener(monitor)
     storage_connector.add_listener(monitor)
