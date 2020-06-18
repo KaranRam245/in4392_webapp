@@ -136,10 +136,16 @@ class Parser:
                 instance_id = y_value['instance_id']
                 charged = y_value['charged']
                 charge_times[instance_id] = charge_times.get(instance_id, 0) + charged
+            charge_times['instance_manager'] = charge_times[NODE_MANAGER]
             total_time = round(sum(charge_times.values()), rounding)
             charge_times = {key: round(value, rounding) for key, value in charge_times.items()}
-            print("Charge time:\n  - Total: {} seconds\n  - Individual: {}".format(total_time,
-                                                                                   charge_times))
+            print("Charge time:\n"
+                  "  - Total: {} seconds\n"
+                  "  - Individual: {}".format(total_time, charge_times))
+            individual_costs = {k: '€' + str(round(v/3600*0.1, rounding)) for k, v in charge_times.items()}
+            print("Charged cost (assuming €0.1/h charged):\n"
+                  "  - Total: €{} seconds\n"
+                  "  - Individual: {}".format(total_time/3600*0.1, individual_costs))
 
     @staticmethod
     def plot_heartbeats(metrics, hb_keys, ylabels, keep_instances=None, titles=None,
@@ -200,13 +206,14 @@ class Parser:
 
 
 PROCESSED = {}
-NODE_MANAGER = 'i-0b5222c31dc02418c'
+NODE_MANAGER = 'i-01e2471c22a8d16a2'  # ALTER THIS.
+FILE_NAME = 'instance_manager_10.tgz'  # ALTER THIS
 
 
 def main():
-    global PROCESSED, NODE_MANAGER
+    global PROCESSED, NODE_MANAGER, FILE_NAME
     parser = Parser()
-    metrics = parser.parse('instance_manager.tgz')
+    metrics = parser.parse(FILE_NAME)
     # pprint.PrettyPrinter(indent=4).pprint(metrics)
     PROCESSED = dict.fromkeys(list(metrics.keys()), False)
     parser.process(metrics, ['workers'], parser.plot_metrics,
