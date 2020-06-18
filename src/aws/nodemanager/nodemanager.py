@@ -40,7 +40,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
     async def create_full_taskpool(self):
         try:
             imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
-            benchmark_tasks = [(row.Time, Task(row.Input, 0)) for _, row in imported_csv.iterrows()]
+            benchmark_tasks = [(row.Time, row.Input) for _, row in imported_csv.iterrows()]
             benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
 
             current_time = 0
@@ -239,7 +239,7 @@ class Task(dict):
 
     def __init__(self, data, dataType):
         data = re.sub('\n|\t|\r|\'|"', '', data)
-        super().__init__(data=json.dumps(data), taskType=dataType, state=TaskState.UPLOADING)
+        super().__init__(data=data, taskType=dataType, state=TaskState.UPLOADING)
 
     def get_task_type(self):
         return self['taskType']

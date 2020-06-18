@@ -77,7 +77,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     #     key=self.current_task.key
                     # )
                     # log_info("Downloaded file " + self.current_task.file_path + ".")
-                    input_data = self.current_task["task"]["data"]
+                    input_data = self.current_task["task"]
                     input_sequences = Tokenize.tokenize_text(
                         os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
                         input_data)
@@ -90,7 +90,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                                             argmax=np.argmax(labels),
                                             instance_id=self._instance_id,
                                             task=self.current_task["task"],
-                                            task_start = self.current_task['time'])
+                                            task_start=self.current_task['time'])
 
                     log_info("[PROGRESS] Created response {}".format(message))
 
@@ -141,6 +141,8 @@ class WorkerMonitor(Listener, con.MultiConnectionClient):
         if self.core.connection_lost:
             message['error_core'] = self.core.last_exception
             message['trace_core'] = self.core.last_trace
+            if self.core.last_packet_received['packet_type'] == 'worker':
+                message['last_data'] = self.core.last_packet_received['task']
         log_info("Sending message: {}.".format(message))
         self.send_message(message)
 
