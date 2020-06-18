@@ -40,12 +40,12 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
     @staticmethod
     def translate(data):
-        data = re.sub(r'[\n\r\t"\']+', ' ', data)
+        return re.sub(r'[\n\r\t"\']+', ' ', data)
 
     def register_task(self, task_data):
         unique_id_file = str(uuid.uuid4()) + '.txt'
         local_path = config.DEFAULT_JOB_LOCAL_DIRECTORY + unique_id_file
-        with open(local_path, 'w') as f:
+        with open(local_path, 'w+') as f:
             f.write(task_data)
         self.resource_manager.upload_file(
             file_path=local_path,
@@ -57,8 +57,6 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
     async def create_full_taskpool(self):
         try:
-            os.mkdir(config.DEFAULT_JOB_LOCAL_DIRECTORY)
-
             imported_csv = pd.read_csv(os.path.join("src", "data", "Input.csv"))
             benchmark_tasks = [(row.Time, self.translate(row.Input)) for _, row in imported_csv.iterrows()]
             benchmark_tasks = deque(sorted(benchmark_tasks, key=lambda x: x[0]))  # Sort on time.
