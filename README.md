@@ -72,7 +72,7 @@ Before continuing this read, be aware that for any problems you may find, there 
 4. `Next Configure Instance Details`.
 5. Assign the IAM role `EC2-SSM`.
 6. Click a few times on Next until you can choose the security group and assign the earlier created security group.
-  - Please do not forget you should add this new instance to the security group for TCP 8080 and 8081!
+    - Please do not forget you should add this new instance to the security group for TCP 8080 and 8081!
 7. `Review and Launch` and `Launch` and set your KeyPair you should have created earlier.
 8. While the instance is starting, we could assign an Elastic IP-address which prevents our progress from being lost.
     - Allocate an Elastic IP Address and Associate with the new instance. Do not forget to release Elastic IP-addresses if you delete your instance!
