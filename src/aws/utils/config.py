@@ -39,6 +39,8 @@ LOGGING_START_INTERVAL = LOGGING_INTERVAL
 # Default name for the log file.
 DEFAULT_LOG_FILE = '/tmp/temporary'
 
+DEFAULT_JOB_LOCAL_DIRECTORY = '/tmp/jobs/'
+
 """
 Parameters for Load balancing.
 """

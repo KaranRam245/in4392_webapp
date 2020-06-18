@@ -6,7 +6,7 @@ import os
 import traceback
 from collections import Counter, deque
 from time import time
-import json
+import uuid
 import re
 
 import pandas as pd
@@ -25,11 +25,12 @@ class TaskPool(Observable, con.MultiConnectionServer):
     The TaskPool accepts the tasks from the user.
     """
 
-    def __init__(self, instance_id, host, port):
+    def __init__(self, instance_id, host, port, resource_manager):
         Observable.__init__(self)
         con.MultiConnectionServer.__init__(self, host, port)
         self._instance_state = InstanceState(InstanceState.RUNNING)
         self._instance_id = instance_id
+        self.resource_manager: ResourceManagerCore = resource_manager
         self.tasks = deque()  # Available & Unassigned tasks.
         self.all_assigned_tasks = 0  # Number of tasks which are assigned but not running
         self.task_assignment = {}  # Available & Assigned tasks
@@ -39,7 +40,20 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
     @staticmethod
     def translate(data):
-        return re.sub(r'[\n\r\t"\']+', ' ', data)
+        data = re.sub(r'[\n\r\t"\']+', ' ', data)
+
+    def register_task(self, task_data):
+        unique_id_file = str(uuid.uuid4()) + '.txt'
+        local_path = config.DEFAULT_JOB_LOCAL_DIRECTORY + unique_id_file
+        with open(local_path, 'w') as f:
+            f.write(task_data)
+        self.resource_manager.upload_file(
+            file_path=local_path,
+            key=unique_id_file,
+            bucket_name=self.resource_manager.files_bucket
+        )
+        os.remove(local_path)
+        return unique_id_file
 
     async def create_full_taskpool(self):
         try:
@@ -50,7 +64,8 @@ class TaskPool(Observable, con.MultiConnectionServer):
             current_time = 0
             while benchmark_tasks:  # While there are tasks.
                 while benchmark_tasks and benchmark_tasks[0][0] == current_time:
-                    time, task = benchmark_tasks.popleft()
+                    _, task_data = benchmark_tasks.popleft()
+                    task = self.register_task(task_data)
                     self.tasks.append(task)  # Append task to the taskpool on given time.
                 current_time += 1
                 await asyncio.sleep(1)
@@ -206,9 +221,10 @@ def start_instance(instance_id, im_host, account_id, nm_host=con.HOST, im_port=c
     """
     Function to start the TaskPool, which is the heart of the Node Manager.
     """
+
     log_info("Starting TaskPool with ID: " + instance_id + ".")
     resource_manager = ResourceManagerCore(instance_id=instance_id, account_id=account_id)
-    taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port)
+    taskpool = TaskPool(instance_id=instance_id, host=nm_host, port=nm_port, resource_manager=resource_manager)
     monitor = TaskPoolMonitor(taskpool=taskpool, host=im_host, port=im_port)
     taskpool.add_listener(monitor)
 

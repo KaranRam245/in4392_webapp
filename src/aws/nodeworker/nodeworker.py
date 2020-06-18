@@ -71,33 +71,37 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     self.current_task = self._task_queue.popleft()
                     self._program_state = ProgramState(ProgramState.RUNNING)
 
-                    # log_info("Downloading File " + self.current_task.file_path + ".")
-                    # file = self.storage_connector.download_file(
-                    #     file_path=self.current_task.file_path,
-                    #     key=self.current_task.key
-                    # )
-                    # log_info("Downloaded file " + self.current_task.file_path + ".")
-                    input_data = self.current_task["task"]
-                    input_sequences = Tokenize.tokenize_text(
-                        os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
-                        input_data)
-                    log_info("[PROGRESS] Tokenized text..")
-                    labels = self._model.predict(input_sequences)
-                    log_info("[PROGRESS] Predicted sequence from model..")
+                    log_info("Downloading File " + self.current_task + ".")
+                    filepath = config.DEFAULT_JOB_LOCAL_DIRECTORY + self.current_task
+                    self.storage_connector.download_file(
+                        file_path=filepath,
+                        key=self.current_task,
+                        bucket_name=self.storage_connector.files_bucket
+                    )
+                    with open(filepath, 'r') as f:
+                        input_data = "".join(f.readlines())
+                        log_info("Read downloaded file {}.".format(filepath))
 
-                    # Send command with completed task, results and instance id completed
-                    message = CommandPacket(command="done",
-                                            argmax=np.argmax(labels),
-                                            instance_id=self._instance_id,
-                                            task=self.current_task["task"],
-                                            task_start=self.current_task['time'])
+                        input_sequences = Tokenize.tokenize_text(
+                            os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
+                            input_data)
+                        log_info("[PROGRESS] Tokenized text..")
+                        labels = self._model.predict(input_sequences)
+                        log_info("[PROGRESS] Predicted sequence from model..")
 
-                    log_info("[PROGRESS] Created response {}".format(message))
+                        # Send command with completed task, results and instance id completed
+                        message = CommandPacket(command="done",
+                                                argmax=np.argmax(labels),
+                                                instance_id=self._instance_id,
+                                                task=self.current_task["task"],
+                                                task_start=self.current_task['time'])
 
-                    self.send_message(message)
+                        log_info("[PROGRESS] Created response {}".format(message))
 
-                    self._program_state = ProgramState(ProgramState.PENDING)
-                    self.current_task = None
+                        self.send_message(message)
+
+                        self._program_state = ProgramState(ProgramState.PENDING)
+                        self.current_task = None
                 await asyncio.sleep(1)  # Pause from task processing.
         except KeyboardInterrupt:
             pass

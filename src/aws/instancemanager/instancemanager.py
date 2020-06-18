@@ -565,6 +565,7 @@ def start_instance(debug=False, git_pull=False):
             group = asyncio.gather(*tasks, return_exceptions=True)
             loop.run_until_complete(group)
         resource_manager.upload_log(clean=True)  # Clean the last logs.
+        resource_manager.delete_bucket(resource_manager.files_bucket)
         loop.close()
 
 
