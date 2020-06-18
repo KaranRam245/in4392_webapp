@@ -78,7 +78,7 @@ Before continuing this read, be aware that for any problems you may find, there 
     - Allocate an Elastic IP Address and Associate with the new instance. Do not forget to release Elastic IP-addresses if you delete your instance!
 9. Rename your new instance to `Node Manager` or `Worker`. You can do this in the `Name` column and by clicking the pencil icon.
 10. Connect to the instance through SSH.
-11. Go to the root user role, as the SSM connections go to `root` users. You can do this with `sudo su`.
+11. Go to the root user role, as the SSM connections go to `root` users. You can do this with `sudo su` and `yum update`.
 12. Run `aws configure` and fill in the keys you obtained earlier (see _Setup user permissions_).
 13. Install the SSM agent:
     - Run `cd /tmp`
