@@ -146,7 +146,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
 
     def process_heartbeat(self, hb, source) -> Packet:
         # If the worker has an assigned task, but has not started. Give a task from assigned.
-        if hb['instance_id'] in self.task_assignment and hb['queue_size'] == 0:
+        if not hb['no_hb_task'] and hb['instance_id'] in self.task_assignment:
             packet = CommandPacket(command="task")
             assignments = self.task_assignment[hb['instance_id']]
             if assignments:

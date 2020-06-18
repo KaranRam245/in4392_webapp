@@ -39,12 +39,15 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._model.build(input_shape=(100, 1))
         log_info("[PROGRESS] Loaded model..")
         self._model.load_weights(os.path.join("src", "aws", "nodeworker", "Senti.h5"))
+        self._task_command_received = False
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
         if command['command'] == 'task':
             self._task_queue.append(command)
-        # Skip if command == done (this is an acknowledge).
+            self._task_command_received = True
+        if command['command'] == 'done':
+            self._task_command_received = False
 
     async def heartbeat(self):
         """
@@ -120,7 +123,8 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                                     program_state=str(self._program_state),
                                     queue_size=len(self._task_queue),
                                     current_task_start=self.current_task['time'] if self.current_task else '',
-                                    args=self.args)
+                                    args=self.args,
+                                    no_hb_task=self._task_command_received)
         # self.send_message(message=heartbeat)
         if notify:  # Notify to the listeners (i.e., WorkerMonitor).
             self.notify(message=heartbeat)

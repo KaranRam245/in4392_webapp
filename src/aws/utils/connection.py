@@ -88,8 +88,8 @@ class MultiConnectionServer:
                 if data == b"":  # EOF passed.
                     break
                 packet_received = decode_packet(data)
-                packet_reponse = self.process_packet(packet_received, addr)
                 log_info("+ Received: {} from {}".format(packet_received, addr))
+                packet_reponse = self.process_packet(packet_received, addr)
 
                 log_info("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
