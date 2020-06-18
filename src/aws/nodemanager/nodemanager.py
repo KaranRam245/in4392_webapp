@@ -148,8 +148,16 @@ class TaskPool(Observable, con.MultiConnectionServer):
         # If the worker has an assigned task, but has not started. Give a task from assigned.
         if hb['instance_id'] in self.task_assignment and hb['queue_size'] == 0:
             packet = CommandPacket(command="task")
-            packet['task'] = self.task_assignment[hb['instance_id']].popleft()
-            self.task_processing[hb['instance_id']] = deque(['task'])
+            assignments = self.task_assignment[hb['instance_id']]
+            if assignments:
+                packet['task'] = assignments.popleft()
+            else:
+                stolen_packet = self.steal_task()
+                if stolen_packet:
+                    packet['task'] = stolen_packet
+                else:
+                    return hb
+            self.task_processing[hb['instance_id']] = deque(packet['task'])
             return packet
 
         return hb
