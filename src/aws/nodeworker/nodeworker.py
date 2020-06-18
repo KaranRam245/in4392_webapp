@@ -7,7 +7,7 @@ import traceback
 from collections import deque
 from contextlib import suppress
 
-from tensorflow.keras.models import load_model
+import numpy as np
 
 import aws.utils.config as config
 import aws.utils.connection as con
@@ -34,9 +34,9 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._task_queue = deque()
         self.current_task = None
         self.args = {}
-        self.__model=Senti()
-        self._model.set_pretrained_embeddings(20000,100,np.zeros([20000,100]))
-        self._model.build(input_shape=(100,1))
+        self._model = Senti()
+        self._model.set_pretrained_embeddings(20000, 100, np.zeros([20000, 100]))
+        self._model.build(input_shape=(100, 1))
         log_info("[PROGRESS] Loaded model..")
         self._model.load_weights(os.path.join("src", "aws", "nodeworker", "Senti.h5"))
 
