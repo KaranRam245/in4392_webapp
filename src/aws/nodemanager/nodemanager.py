@@ -5,6 +5,7 @@ import asyncio
 import os
 import traceback
 from collections import Counter, deque
+from time import time
 
 import pandas as pd
 
@@ -134,6 +135,9 @@ class TaskPool(Observable, con.MultiConnectionServer):
         if command["command"] == "done":
             self.task_processing[command["instance_id"]].popleft()
             self.all_assigned_tasks -= 1
+
+            log_metric({'task_finished': {'start_time': command['task_start'],
+                                          'duration': time() - command['task_start']}})
 
             packet = CommandPacket(command="task")
             if len(self.task_assignment[command['instance_id']]) > 0:

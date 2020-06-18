@@ -72,7 +72,6 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     # )
                     # log_info("Downloaded file " + self.current_task.file_path + ".")
                     input_data = self.current_task["task"]["data"]
-                    log_info("[PROGRESS] Read task data..")
                     input_sequences = Tokenize.tokenize_text(
                         os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
                         input_data)
@@ -87,6 +86,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     message["labels"] = labels
                     message["instance_id"] = self._instance_id
                     message['task'] = self.current_task["task"]
+                    message['task_start'] = self.current_task['time']
 
                     log_info("[PROGRESS] Created response..")
 
