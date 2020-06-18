@@ -6,6 +6,7 @@ import os
 import traceback
 from collections import deque
 from contextlib import suppress
+from time import time
 
 import numpy as np
 
@@ -71,18 +72,21 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         try:
             while True:
                 if not self.current_task and self._task_queue:
+                    start_time_task = time()
                     self.current_task = self._task_queue.popleft()
                     self._program_state = ProgramState(ProgramState.RUNNING)
 
                     os.makedirs(config.DEFAULT_JOB_LOCAL_DIRECTORY, exist_ok=True)
                     task_file_name = self.current_task['task']
                     log_info("Downloading File {}.".format(task_file_name))
+                    start_time_download = time()
                     filepath = config.DEFAULT_JOB_LOCAL_DIRECTORY + task_file_name
                     self.storage_connector.download_file(
                         file_path=filepath,
                         key=task_file_name,
                         bucket_name=self.storage_connector.files_bucket
                     )
+                    time_to_download = round(time() - start_time_download, 5)
                     with open(filepath, 'r') as f:
                         input_data = "".join(f.readlines())
                         log_info("Read downloaded file {}.".format(filepath))
@@ -90,16 +94,17 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                         input_sequences = Tokenize.tokenize_text(
                             os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
                             input_data)
-                        log_info("[PROGRESS] Tokenized text..")
                         labels = self._model.predict(input_sequences)
-                        log_info("[PROGRESS] Predicted sequence from model..")
 
+                        run_time_task = round(time() - start_time_task, 5)
                         # Send command with completed task, results and instance id completed
                         message = CommandPacket(command="done",
                                                 argmax=np.argmax(labels),
                                                 instance_id=self._instance_id,
                                                 task=self.current_task["task"],
-                                                task_start=self.current_task['time'])
+                                                task_start=self.current_task['time'],
+                                                time_to_download=time_to_download,
+                                                run_time_task=run_time_task)
 
                         log_info("[PROGRESS] Created response {}".format(message))
 

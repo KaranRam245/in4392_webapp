@@ -37,6 +37,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
         self.task_processing = {}  # Tasks currently being processed
         self._workers_running = []
         self._workers_pending = []
+        self.assign_time = {}
 
     @staticmethod
     def translate(data):
@@ -93,6 +94,7 @@ class TaskPool(Observable, con.MultiConnectionServer):
                     task = self.tasks.popleft()
                     worker = min(task_per_worker, key=task_per_worker.get)
                     self.task_assignment[worker].append(task)
+                    self.assign_time[task] = time()
                     self.all_assigned_tasks += 1
 
                 await asyncio.sleep(config.HEART_BEAT_INTERVAL_NODE_MANAGER)
@@ -172,8 +174,12 @@ class TaskPool(Observable, con.MultiConnectionServer):
             self.task_processing[command["instance_id"]].popleft()
             self.all_assigned_tasks -= 1
 
+            response_time = time() - self.assign_time[command['task']]
             log_metric({'task_finished': {'start_time': command['task_start'],
-                                          'duration': time() - command['task_start']}})
+                                          'duration': time() - command['task_start'],
+                                          'runtime': command['run_time_task'],
+                                          'time_to_download': command['time_to_download'],
+                                          'response_time': response_time}})
 
             packet = CommandPacket(command="task")
             if len(self.task_assignment[command['instance_id']]) > 0:
