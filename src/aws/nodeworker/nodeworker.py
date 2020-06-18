@@ -86,15 +86,19 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                     log_info("[PROGRESS] Predicted sequence from model..")
 
                     # Send command with completed task, results and instance id completed
-                    message = CommandPacket(command="done")
-                    message["argmax"] = np.argmax(labels)  # convert the array to a list for json.dumps.
-                    message["instance_id"] = self._instance_id
-                    message['task'] = self.current_task["task"]
-                    message['task_start'] = self.current_task['time']
+                    message = CommandPacket(command="done",
+                                            argmax=np.argmax(labels),
+                                            instance_id=self._instance_id,
+                                            task=self.current_task["task"],
+                                            task_start = self.current_task['time'])
 
-                    log_info("[PROGRESS] Created response..")
+                    log_info("[PROGRESS] Created response {}".format(message))
+
+                    self.storage_connector.upload_log(clean=False)
 
                     self.send_message(message)
+
+                    self.storage_connector.upload_log(clean=False)
 
                     self._program_state = ProgramState(ProgramState.PENDING)
                     self.current_task = None
