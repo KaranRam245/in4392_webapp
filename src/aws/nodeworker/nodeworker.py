@@ -16,7 +16,7 @@ from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
 from data import Tokenize
-from src.models.Senti import Senti
+from models.Senti import Senti
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
