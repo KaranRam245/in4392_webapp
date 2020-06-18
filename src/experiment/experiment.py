@@ -149,7 +149,7 @@ class Parser:
 
     @staticmethod
     def plot_heartbeats(metrics, hb_keys, ylabels, keep_instances=None, titles=None,
-                        same_figure=False, alt_labels=None, replace_id=None):
+                        same_figure=False, alt_labels=None, replace_id=None, correct_to_zero=False):
         for _, values in metrics.items():  # This loop always runs once (metrics=['heartbeat']).
             _, heartbeats = zip(*values)
             heartbeats = [(heartbeat['time'], heartbeat['instance_id'], heartbeat) for heartbeat in
@@ -179,13 +179,16 @@ class Parser:
                     ylabel = ylabels[idx]
                 alt_label = None if not alt_labels else alt_labels[idx]
                 Parser._heartbeat_lines(lines, min_time=min_time, title=title, ylabel=ylabel,
-                                        show=show, alt_label=alt_label, replace_id=replace_id)
+                                        show=show, alt_label=alt_label, replace_id=replace_id,
+                                        correct_to_zero=correct_to_zero)
 
     @staticmethod
     def _heartbeat_lines(lines, min_time, title='', ylabel='', show=True, alt_label=None,
-                         replace_id={}):
+                         replace_id={}, correct_to_zero=False):
         for instance_id, values in lines:
             times, y_values = zip(*values)
+            if correct_to_zero:
+                y_values = [max(y_value, 0) for y_value in y_values]
             times = [time - min_time for time in times]
             label = alt_label if alt_label else replace_id.get(instance_id, instance_id)
             plt.plot(times, y_values, linestyle='-', marker='o', label=label)
@@ -214,7 +217,6 @@ def main():
     global PROCESSED, NODE_MANAGER, FILE_NAME
     parser = Parser()
     metrics = parser.parse(FILE_NAME)
-    # pprint.PrettyPrinter(indent=4).pprint(metrics)
     PROCESSED = dict.fromkeys(list(metrics.keys()), False)
     parser.process(metrics, ['workers'], parser.plot_metrics,
                    xlabel='Time (in seconds)', ylabel='Workers running',
@@ -234,7 +236,8 @@ def main():
                    keep_instances=[NODE_MANAGER],
                    titles=['Tasks waiting and running in Node Manager'],
                    alt_labels=['Tasks waiting', 'Tasks running'],
-                   same_figure=True)
+                   same_figure=True,
+                   correct_to_zero=True)
     print("Metrics processed: {}".format(PROCESSED))
 
 
