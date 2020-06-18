@@ -16,6 +16,7 @@ from aws.utils.monitor import Observable, Listener
 from aws.utils.packets import CommandPacket, HeartBeatPacket
 from aws.utils.state import ProgramState, InstanceState
 from data import Tokenize
+from src.models.Senti import Senti
 
 
 class WorkerCore(Observable, con.MultiConnectionClient):
@@ -33,6 +34,11 @@ class WorkerCore(Observable, con.MultiConnectionClient):
         self._task_queue = deque()
         self.current_task = None
         self.args = {}
+        self.__model=Senti()
+        self._model.set_pretrained_embeddings(20000,100,np.zeros([20000,100]))
+        self._model.build(input_shape=(100,1))
+        log_info("[PROGRESS] Loaded model..")
+        self._model.load_weights(os.path.join("src", "aws", "nodeworker", "Senti.h5"))
 
     def process_command(self, command: CommandPacket):
         # Enqueue for worker here!
@@ -77,9 +83,7 @@ class WorkerCore(Observable, con.MultiConnectionClient):
                         os.path.join("src", "aws", "nodeworker", "tokenizer_20000.pickle"),
                         input_data)
                     log_info("[PROGRESS] Tokenized text..")
-                    model = load_model(os.path.join("src", "aws", "nodeworker", "Senti.h5"))
-                    log_info("[PROGRESS] Loaded model..")
-                    labels = model.predict(input_sequences)
+                    labels = self._model.predict(input_sequences)
                     log_info("[PROGRESS] Predicted sequence from model..")
 
                     # Send command with completed task, results and instance id completed
