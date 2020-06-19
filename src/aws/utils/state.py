@@ -21,7 +21,7 @@ class State(ABC):
 
     def is_state(self, state) -> bool:
         if isinstance(state, InstanceState):
-            return self._state == state._state
+            return self._state == state.get_state()
         return self._state == state
 
     def is_any(self, states: Iterable[int]) -> bool:
@@ -45,7 +45,7 @@ class ProgramState(State):
     PENDING = 0  # When the instance has been started but has not yet received a task.
     RUNNING = 1  # When computing or managing.
     STOPPING = 2  # When the stop comment has been received.
-    ERROR = 3  # When an error has occured.
+    ERROR = 3  # When an error has occurred.
 
     MAPPING = {
         PENDING: 'pending',
@@ -95,7 +95,7 @@ class InstanceState(State):
         """
         if isinstance(state, str):
             state = self.map_to_int(state)
-        assert 0 <= state <= 4
+        assert 0 <= state <= 5
         super().__init__(state)
 
     def map_to_str(self, state_to_map):

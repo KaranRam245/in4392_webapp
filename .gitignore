@@ -1,5 +1,8 @@
 #Ignore .csv files and embeddings
 *.csv
+!src/data/Input.csv
+!src/data/all_task_scenario.csv
+!src/data/elasticity_scenario.csv
 *.txt
 #Ignore jupyter checkpoints
 .ipynb_checkpoints/

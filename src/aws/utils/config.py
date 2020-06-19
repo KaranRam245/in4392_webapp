@@ -39,26 +39,17 @@ LOGGING_START_INTERVAL = LOGGING_INTERVAL
 # Default name for the log file.
 DEFAULT_LOG_FILE = '/tmp/temporary'
 
+DEFAULT_JOB_LOCAL_DIRECTORY = '/tmp/jobs/'
+
 """
 Parameters for Load balancing.
 """
 # Size of a time window to check overload metrics on.
 # The time span checked is WINDOW_SIZE*HEART_BEAT_INTERVAL seconds.
-WINDOW_SIZE = 3
+WINDOW_SIZE = 2
 
-# Percentage 0-100 for which a CPU is deemed to overload.
-CPU_OVERLOAD_PERCENTAGE = 99
-
-# Product of WINDOW_SIZE and CPU_OVERLOAD_PERCENTAGE. A value greater or equal to this value
-# indicates the CPU has been overloaded during the full window size.
-CPU_OVERLOAD_PRODUCT = WINDOW_SIZE * CPU_OVERLOAD_PERCENTAGE
-
-# Percentage 0-100 for which memory is deemed to overload.
-MEM_OVERLOAD_PERCENTAGE = 100
-
-# Product of WINDOW_SIZE and MEM_OVERLOAD_PERCENTAGE. A value greater or equal to this value
-# indicates the memory has been overloaded during the full window size.
-MEM_OVERLOAD_PRODUCT = WINDOW_SIZE * MEM_OVERLOAD_PERCENTAGE
-
-# Maximum allowed jobs per worker. A value above this means there should be a new worker.
+# Maximum allowed jobs per worker. A value above this means there is a worker overloaded.
 MAX_JOBS_PER_WORKER = 5
+
+# Minimum needed jobs per worker. A value equal or below means there is a worker underloaded.
+MIN_JOBS_PER_WORKER = 1

@@ -5,7 +5,7 @@ import json
 import asyncio
 import traceback
 from abc import abstractmethod
-from typing import List
+from collections import deque
 
 from aws.utils import config
 from aws.utils.packets import HeartBeatPacket, PacketTranslator, CommandPacket, Packet
@@ -42,8 +42,9 @@ def decode_packet(data) -> Packet:
         packet_dict = json.loads(value)
         return PacketTranslator.translate(packet_dict)
     except json.JSONDecodeError as e:
-        log_error("JsonDecodeError on: {} with {}: {}".format(value, e, traceback.print_exc()))
+        log_error("JsonDecodeError on: {} with {}: {}".format(value, e, traceback.format_exc()))
         raise e
+
 
 class MultiConnectionServer:
     """
@@ -87,18 +88,20 @@ class MultiConnectionServer:
                 if data == b"":  # EOF passed.
                     break
                 packet_received = decode_packet(data)
-                packet_reponse = self.process_packet(packet_received, addr)
                 log_info("+ Received: {} from {}".format(packet_received, addr))
+                packet_reponse = self.process_packet(packet_received, addr)
 
                 log_info("- Sent: {}".format(packet_reponse))
                 data_response = encode_packet(packet_reponse)
                 writer.write(data_response)
                 await writer.drain()
                 await asyncio.sleep(config.SERVER_SLEEP_TIME)
-        except ConnectionResetError:
-            log_exception("Client {} forcibly closed its connection.".format(addr))
+        except ConnectionResetError as exc:
+            log_exception("Client {} forcibly closed its connection {}".format(addr, exc))
         except TypeError as excep:
-            log_exception(str(excep))
+            log_exception("Type error in server {} : {}".format(excep, traceback.format_exc()))
+        except Exception as exc:
+            log_exception("Exception in server {} : {}".format(exc, traceback.format_exc()))
         finally:
             log_info("Closed connection of client: {}".format(addr))
             writer.close()
@@ -109,10 +112,12 @@ class MultiConnectionClient:
     def __init__(self, host, port, sleep_time=config.CLIENT_SEND_SLEEP):
         self.host = host
         self.port = port
-        self.send_buffer: List[Packet] = []
-        self.received_packets: List[Packet] = []
+        self.send_buffer: deque[Packet] = deque()
         self.running = True
         self._sleep_time = sleep_time
+        self.connection_lost = False
+        self.last_exception = ""
+        self.last_trace = ""
 
     def send_message(self, message: Packet):
         self.send_buffer.append(message)
@@ -120,15 +125,14 @@ class MultiConnectionClient:
     def process_message(self, message):
         packet = PacketTranslator.translate(message)
         if isinstance(packet, CommandPacket):
-            self.process_command(packet['command'])
+            self.process_command(packet)
         elif isinstance(packet, HeartBeatPacket):
-            log_info("Acknowledge on my heartbeat. No additional action to take.")
             self.process_heartbeat(packet)
         else:
             log_error("I do not know this packet type: {}".format(packet['packet_type']))
 
-    def process_heartbeat(self, hearbeat: HeartBeatPacket):
-        log_info("Acknowledge on my heartbeat. No additional action to take.")
+    def process_heartbeat(self, heartbeat: HeartBeatPacket):
+        pass  # Acknowledge on my heartbeat. No additional action to take.
 
     @abstractmethod
     def process_command(self, command: CommandPacket):
@@ -141,25 +145,30 @@ class MultiConnectionClient:
         try:
             while self.running:
                 while self.send_buffer:
-                    packet_send: Packet = self.send_buffer.pop(0)
+                    packet_send: Packet = self.send_buffer.popleft()
 
                     log_info('- Sent: {}'.format(packet_send))
                     writer.write(encode_packet(packet_send))
 
                     data_received = await reader.read(1024)
                     if data_received == b"":  # EOF passed.
+                        log_info("EOF passed. Closing the connection.")
                         break
                     packet_received = decode_packet(data_received)
                     log_info('+ Received: {}'.format(packet_received))
-                    self.received_packets.append(packet_received)
-                    # TODO: process the received messages.
+                    self.process_message(packet_received)
 
                 await asyncio.sleep(self._sleep_time)
         except KeyboardInterrupt:
             pass
+        except Exception as exc:
+            log_exception("Socket closed due to an exception {}: {}".format(exc, traceback.format_exc()))
+            self.last_exception = str(exc)
+            self.last_trace = traceback.format_exc()
         finally:
-            log_info('Close the socket')
+            log_info('Close the socket [{}:{}]'.format(self.host, self.port))
             writer.close()
+            self.connection_lost = True
 
     def close(self):
         self.running = False

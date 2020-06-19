@@ -25,7 +25,7 @@ def train_tokenizer(filePath, maxVocabSize, maxSequenceLength):
 
 
 def tokenize_text(tokenizer_path, text):
-    with open(tokenizer_path) as handle:
-        tokenizer = pickle.load(tokenizer_path)
+    with open(tokenizer_path, 'rb') as handle:
+        tokenizer = pickle.load(handle)
         sequences = tokenizer.texts_to_sequences(text)
-        padded_sequences = sequence.pad_sequences(sequences, 100)
+        return sequence.pad_sequences(sequences, 100)
