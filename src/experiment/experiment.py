@@ -4,6 +4,7 @@ import tarfile
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 class Parser:
@@ -22,14 +23,14 @@ class Parser:
                 content += [line.decode('utf-8') for line in file.readlines()]
         return content
 
-    def parse(self, filename):
+    def parse(self, filename, instance):
         """
         Read a file, convert the lines to metrics, group the metrics and correct the times.
         :param filename: File to extract.
         :return: Metrics with corrected times.
         """
         content = self._read_file(filename)
-        with open('total_log.txt', 'w') as file:
+        with open('total_log{}.txt'.format(instance), 'w') as file:
             file.writelines(content)
         metric_lines = self._extract_metrics(content)
         grouped_metrics = self.group_metrics(metric_lines)
@@ -84,6 +85,8 @@ class Parser:
             metrics[metric] = [(time - min_time, value) for (time, value) in metric_values]
         return metrics
 
+
+class Plotter:
     @staticmethod
     def plot_metrics(metrics, **kwargs):
         """
@@ -92,7 +95,7 @@ class Parser:
         """
         for metric, values in metrics.items():
             x_values, y_values = zip(*values)
-            Parser._plot(x_values, y_values, title=metric, **kwargs)
+            Plotter._plot(x_values, y_values, title=metric, **kwargs)
 
     @staticmethod
     def _plot(x_values, y_values, title='', xlabel='', ylabel='', int_yticks=False):
@@ -142,10 +145,11 @@ class Parser:
             print("Charge time:\n"
                   "  - Total: {} seconds\n"
                   "  - Individual: {}".format(total_time, charge_times))
-            individual_costs = {k: '€' + str(round(v/3600*0.1, rounding)) for k, v in charge_times.items()}
+            individual_costs = {k: '€' + str(round(v / 3600 * 0.1, rounding)) for k, v in
+                                charge_times.items()}
             print("Charged cost (assuming €0.1/h charged):\n"
                   "  - Total: €{} seconds\n"
-                  "  - Individual: {}".format(total_time/3600*0.1, individual_costs))
+                  "  - Individual: {}".format(total_time / 3600 * 0.1, individual_costs))
 
     @staticmethod
     def plot_heartbeats(metrics, hb_keys, ylabels, keep_instances=None, titles=None,
@@ -178,9 +182,9 @@ class Parser:
                     show = True
                     ylabel = ylabels[idx]
                 alt_label = None if not alt_labels else alt_labels[idx]
-                Parser._heartbeat_lines(lines, min_time=min_time, title=title, ylabel=ylabel,
-                                        show=show, alt_label=alt_label, replace_id=replace_id,
-                                        correct_to_zero=correct_to_zero)
+                Plotter._heartbeat_lines(lines, min_time=min_time, title=title, ylabel=ylabel,
+                                         show=show, alt_label=alt_label, replace_id=replace_id,
+                                         correct_to_zero=correct_to_zero)
 
     @staticmethod
     def _heartbeat_lines(lines, min_time, title='', ylabel='', show=True, alt_label=None,
@@ -200,6 +204,22 @@ class Parser:
             plt.show()
 
     @staticmethod
+    def charge_time_hourly(metrics, rounding=2):
+        for _, values in metrics.items():
+            _, y_values = zip(*values)
+            # TODO finish!
+
+    @staticmethod
+    def task_finished(metrics, rounding=2):
+        task_finished_list = metrics['task_finished']
+        total_duration = 0
+        for time, task_finished in task_finished_list:
+            total_duration += task_finished['duration']
+        print(len(task_finished_list))
+        print("Average duration: {}".format(
+            round(total_duration / len(task_finished_list), rounding)))
+
+    @staticmethod
     def process(metrics, keys: list, func, **kwargs):
         global PROCESSED
         metrics = {key: value for key, value in metrics.items() if key in keys}
@@ -208,38 +228,71 @@ class Parser:
             PROCESSED[key] = True
 
 
-PROCESSED = {}
-NODE_MANAGER = 'i-01e2471c22a8d16a2'  # ALTER THIS.
-FILE_NAME = 'instance_manager_10.tgz'  # ALTER THIS
-
-
-def main():
-    global PROCESSED, NODE_MANAGER, FILE_NAME
+def main_im():
+    global PROCESSED, NODE_MANAGER, IM_FILE_NAME
     parser = Parser()
-    metrics = parser.parse(FILE_NAME)
+    metrics = parser.parse(IM_FILE_NAME, instance='im')
     PROCESSED = dict.fromkeys(list(metrics.keys()), False)
-    parser.process(metrics, ['workers'], parser.plot_metrics,
-                   xlabel='Time (in seconds)', ylabel='Workers running',
-                   int_yticks=True)
-    parser.process(metrics, ['upload_duration'],
-                   parser.statistics)
-    parser.process(metrics, ['charged_time'],
-                   parser.charge_time)
-    parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
-                   hb_keys=['cpu_usage', 'mem_usage'],
-                   ylabels=['CPU usage (in %)', 'RAM usage (in %)'],
-                   replace_id={NODE_MANAGER: 'node_manager'},
-                   titles=['CPU usage in instances', 'Memory usage in instances'])
-    parser.process(metrics, ['heartbeat'], parser.plot_heartbeats,
-                   hb_keys=['tasks_waiting', 'tasks_running'],
-                   ylabels=['Tasks'],
-                   keep_instances=[NODE_MANAGER],
-                   titles=['Tasks waiting and running in Node Manager'],
-                   alt_labels=['Tasks waiting', 'Tasks running'],
-                   same_figure=True,
-                   correct_to_zero=True)
+    plotter = Plotter()
+
+    plotter.process(metrics, ['workers'], plotter.plot_metrics,
+                    xlabel='Time (in seconds)', ylabel='Workers running',
+                    int_yticks=True)
+    plotter.process(metrics, ['upload_duration'],
+                    plotter.statistics)
+    plotter.process(metrics, ['charged_time'],
+                    plotter.charge_time)
+    plotter.process(metrics, ['heartbeat'], plotter.plot_heartbeats,
+                    hb_keys=['cpu_usage', 'mem_usage'],
+                    ylabels=['CPU usage (in %)', 'RAM usage (in %)'],
+                    replace_id={NODE_MANAGER: 'node_manager'},
+                    titles=['CPU usage in instances', 'Memory usage in instances'])
+    plotter.process(metrics, ['heartbeat'], plotter.plot_heartbeats,
+                    hb_keys=['tasks_waiting', 'tasks_running'],
+                    ylabels=['Tasks'],
+                    keep_instances=[NODE_MANAGER],
+                    titles=['Tasks waiting and running in Node Manager'],
+                    alt_labels=['Tasks waiting', 'Tasks running'],
+                    same_figure=True,
+                    correct_to_zero=True)
     print("Metrics processed: {}".format(PROCESSED))
 
 
+def main_nm():
+    global PROCESSED, NM_FILE_NAME
+    parser = Parser()
+    metrics = parser.parse(NM_FILE_NAME, instance='nm')
+    PROCESSED = dict.fromkeys(list(metrics.keys()), False)
+    plotter = Plotter()
+
+    plotter.process(metrics, ['task_finished'], plotter.task_finished)
+
+    print("Metrics processed: {}".format(PROCESSED))
+
+
+def worker_plot(path='results.csv'):
+    df = pd.read_csv(path)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    lns1 = ax.plot(df['time'], df['tasks'], label='tasks')
+    ax.set_xlabel('Time (in seconds)')
+    ax.set_ylabel('Tasks to run', color='#1f77b4')
+    ax2 = ax.twinx()
+    ax2.set_ylabel("Workers running", color='orange')
+    lns2 = ax2.plot(df['time'], df['workers'], color='orange', label='workers')
+
+    lns = lns1 + lns2
+    labs = [l.get_label() for l in lns]
+    ax.legend(lns, labs, loc=0)
+    plt.show()
+
+
+PROCESSED = {}
+NODE_MANAGER = 'i-01e2471c22a8d16a2'  # ALTER THIS.
+IM_FILE_NAME = 'instance_manager_2.tgz'  # ALTER THIS
+NM_FILE_NAME = 'node_manager_2.tgz'  # ALTER THIS
+
 if __name__ == "__main__":
-    main()
+    main_im()
+    main_nm()
+    worker_plot()
