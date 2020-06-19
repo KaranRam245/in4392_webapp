@@ -58,7 +58,7 @@ class BotoInstance:
     def instance(content):
         return BotoInstance(**content)
 
-    def __init__(self, InstanceId, PublicDnsName, PublicIpAddress, State, Tags, **kwargs):
+    def __init__(self, InstanceId, PublicDnsName, State, Tags, PublicIpAddress=None, **kwargs):
         self.instance_id = InstanceId
         self.dns = PublicDnsName
         self.public_ip = PublicIpAddress
