@@ -270,16 +270,30 @@ def main_nm():
     print("Metrics processed: {}".format(PROCESSED))
 
 
-def worker_plot(path='results.csv'):
+def worker_plot(path='results.csv', signal_path='signal_times.txt', experiment_time=1800):
     df = pd.read_csv(path)
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    ax.set_title('Experiment on the taskpool and the number of workers running')
     lns1 = ax.plot(df['time'], df['tasks'], label='tasks')
     ax.set_xlabel('Time (in seconds)')
     ax.set_ylabel('Tasks to run', color='#1f77b4')
+    ax.set_xlim(0, experiment_time)
     ax2 = ax.twinx()
     ax2.set_ylabel("Workers running", color='orange')
     lns2 = ax2.plot(df['time'], df['workers'], color='orange', label='workers')
+
+    signal_times = []
+    with open(signal_path, 'r') as file:
+        content = file.read()
+        signal_times = [int(i) for i in content[1:len(content) - 1].split(', ')]
+
+    signal_times_workers = []
+    for signal_time in signal_times:
+        signal_times_workers.append(df.iloc[signal_time].workers)
+
+    ax2.scatter(x=signal_times, y=signal_times_workers, s=10, color='red', marker='.', zorder=3,
+                label='Worker signal')
 
     lns = lns1 + lns2
     labs = [l.get_label() for l in lns]
@@ -293,6 +307,6 @@ IM_FILE_NAME = 'instance_manager_2.tgz'  # ALTER THIS
 NM_FILE_NAME = 'node_manager_2.tgz'  # ALTER THIS
 
 if __name__ == "__main__":
-    main_im()
-    main_nm()
+    # main_im()
+    # main_nm()
     worker_plot()
