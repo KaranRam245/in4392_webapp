@@ -95,7 +95,7 @@ class InstanceState(State):
         """
         if isinstance(state, str):
             state = self.map_to_int(state)
-        assert 0 <= state <= 4
+        assert 0 <= state <= 5
         super().__init__(state)
 
     def map_to_str(self, state_to_map):
